@@ -1,0 +1,9 @@
+services:
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: "${HARBOR_URL}/${HARBOR_USERNAME}/${IMAGE}:${GITHUB_SHA}"
+    container_name: nextjs
+    ports:
+      - "3000:3000"

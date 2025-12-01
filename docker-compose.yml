@@ -1,0 +1,11 @@
+services:
+  nextjs:
+    container_name: chat-app-fe
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
+    ports:
+      - "3000:3000"
