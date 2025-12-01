@@ -14,16 +14,16 @@ export const metadata: Metadata = {
   title: "Đăng ký tuyển sinh - Đại học Gia Định",
   description: "Form đăng ký nhập học và sự kiện - Đại học Gia Định",
   icons: {
-    icon: "https://giadinh.edu.vn/upload/photo/logogdu-02-5690.png",
-    shortcut: "https://giadinh.edu.vn/upload/photo/logogdu-02-5690.png",
-    apple: "https://giadinh.edu.vn/upload/photo/logogdu-02-5690.png",
+    icon: "hhttps://giadinh.edu.vn/upload/photo/logo-dai-hoc-gia-dinh-9904.png",
+    shortcut: "hhttps://giadinh.edu.vn/upload/photo/logo-dai-hoc-gia-dinh-9904.png",
+    apple: "hhttps://giadinh.edu.vn/upload/photo/logo-dai-hoc-gia-dinh-9904.png",
   },
   openGraph: {
     title: "Đăng ký tuyển sinh - Đại học Gia Định",
     description: "Form đăng ký nhập học và sự kiện - Đại học Gia Định",
-    images: ["https://giadinh.edu.vn/upload/photo/logogdu-02-5690.png"],
+    images: ["hhttps://giadinh.edu.vn/upload/photo/logo-dai-hoc-gia-dinh-9904.png"],
   },
-    generator: 'v0.app'
+    generator: 'Edu'
 }
 
 export default function RootLayout({
