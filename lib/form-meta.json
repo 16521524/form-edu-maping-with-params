@@ -1,0 +1,77 @@
+{
+  "common": {
+    "notificationChannels": ["Email", "Zalo", "Messenger", "Whatsapp"],
+    "lopOptions": [
+      { "value": "10", "label": "Lớp 10" },
+      { "value": "11", "label": "Lớp 11" },
+      { "value": "12", "label": "Lớp 12" },
+      { "value": "tot-nghiep", "label": "Đã tốt nghiệp" }
+    ],
+    "hocLucOptions": [
+      { "value": "gioi", "label": "Giỏi" },
+      { "value": "kha", "label": "Khá" },
+      { "value": "trung-binh", "label": "Trung bình" }
+    ]
+  },
+  "enrollment": {
+    "nganhHocOptions": [
+      { "value": "cong-nghe-thong-tin", "label": "Công nghệ Thông tin" },
+      { "value": "ky-thuat-phan-mem", "label": "Kỹ thuật Phần mềm" },
+      { "value": "khoa-hoc-may-tinh", "label": "Khoa học Máy tính" },
+      { "value": "ai-tri-tue-nhan-tao", "label": "AI – Trí tuệ Nhân tạo" },
+      { "value": "quan-tri-kinh-doanh", "label": "Quản trị Kinh doanh" },
+      { "value": "ke-toan", "label": "Kế toán" },
+      { "value": "marketing", "label": "Marketing" },
+      { "value": "thiet-ke-do-hoa", "label": "Thiết kế Đồ họa" }
+    ]
+  },
+  "event": {
+    "mucDichOptions": [
+      "Tìm hiểu về các ngành học",
+      "Tham quan trường đại học",
+      "Tìm hiểu học bổng và chính sách hỗ trợ",
+      "Khám phá môi trường học tập",
+      "Gặp gỡ giảng viên và sinh viên"
+    ],
+    "nguonOptions": [
+      { "value": "facebook", "label": "Facebook" },
+      { "value": "tiktok", "label": "TikTok" },
+      { "value": "instagram", "label": "Instagram" },
+      { "value": "ban-be", "label": "Bạn bè giới thiệu" },
+      { "value": "truong-thpt", "label": "Trường THPT" },
+      { "value": "website", "label": "Website trường" },
+      { "value": "bao-chi", "label": "Báo chí / Truyền thông" },
+      { "value": "khac", "label": "Khác" }
+    ],
+    "khungGioOptions": [
+      { "value": "sang", "label": "Buổi sáng (8:00 - 12:00)" },
+      { "value": "chieu", "label": "Buổi chiều (13:30 - 17:30)" },
+      { "value": "ca-ngay", "label": "Cả ngày" }
+    ],
+    "moiQuanHeOptions": [
+      { "value": "cha", "label": "Cha" },
+      { "value": "me", "label": "Mẹ" },
+      { "value": "nguoi-giam-ho", "label": "Người giám hộ" }
+    ],
+    "eventSessions": [
+      {
+        "tenSuKien": "Ngày hội tư vấn tuyển sinh 2025",
+        "ngay": "15/03/2025",
+        "khungGio": "Buổi sáng (8:00 - 12:00)",
+        "diaDiem": "Cơ sở Tân Mỹ, TP.HCM"
+      },
+      {
+        "tenSuKien": "Ngày hội tư vấn tuyển sinh 2025",
+        "ngay": "15/03/2025",
+        "khungGio": "Buổi chiều (13:30 - 17:30)",
+        "diaDiem": "Cơ sở Tân Mỹ, TP.HCM"
+      },
+      {
+        "tenSuKien": "Open Day - Công nghệ Thông tin",
+        "ngay": "22/03/2025",
+        "khungGio": "Cả ngày",
+        "diaDiem": "Cơ sở Quận 9, TP.HCM"
+      }
+    ]
+  }
+}

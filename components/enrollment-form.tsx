@@ -2,8 +2,9 @@
 
 import type React from "react"
 
-import { useSearchParams } from "next/navigation"
+import { usePathname, useSearchParams, useRouter } from "next/navigation"
 import { useEffect, useState, useRef } from "react"
+import formMeta from "@/lib/form-meta.json"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,6 +19,7 @@ interface FormData {
   // 1. Thông tin cá nhân
   hoTen: string
   ngaySinh: string
+  cccd: string
   gioiTinh: string
   soDienThoai: string
   email: string
@@ -29,9 +31,9 @@ interface FormData {
   diemTrungBinh: string
   monHocManh: string
   // 3. Thông tin chọn ngành
-  nganhDangKy: string
   nguyenVong1: string
   nguyenVong2: string
+  nguyenVong3: string
   // 4. Xác nhận
   thongBaoQua: string[]
   xacNhanThongTin: boolean
@@ -40,6 +42,7 @@ interface FormData {
 const initialFormData: FormData = {
   hoTen: "",
   ngaySinh: "",
+  cccd: "",
   gioiTinh: "",
   soDienThoai: "",
   email: "",
@@ -49,28 +52,22 @@ const initialFormData: FormData = {
   hocLuc: "",
   diemTrungBinh: "",
   monHocManh: "",
-  nganhDangKy: "",
   nguyenVong1: "",
   nguyenVong2: "",
+  nguyenVong3: "",
   thongBaoQua: [],
   xacNhanThongTin: false,
 }
 
-const nganhHocOptions = [
-  { value: "cong-nghe-thong-tin", label: "Công nghệ Thông tin" },
-  { value: "ky-thuat-phan-mem", label: "Kỹ thuật Phần mềm" },
-  { value: "khoa-hoc-may-tinh", label: "Khoa học Máy tính" },
-  { value: "ai-tri-tue-nhan-tao", label: "AI – Trí tuệ Nhân tạo" },
-  { value: "quan-tri-kinh-doanh", label: "Quản trị Kinh doanh" },
-  { value: "ke-toan", label: "Kế toán" },
-  { value: "marketing", label: "Marketing" },
-  { value: "thiet-ke-do-hoa", label: "Thiết kế Đồ họa" },
-]
+const { common: commonMeta } = formMeta
 
 export default function EnrollmentForm() {
   const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
   const [formData, setFormData] = useState<FormData>(initialFormData)
   const paramsLoaded = useRef(false)
+  const urlSynced = useRef(false)
 
   useEffect(() => {
     if (paramsLoaded.current) return
@@ -79,6 +76,7 @@ export default function EnrollmentForm() {
     const mappedData: FormData = {
       hoTen: searchParams.get("hoTen") || "",
       ngaySinh: searchParams.get("ngaySinh") || "",
+      cccd: searchParams.get("cccd") || "",
       gioiTinh: searchParams.get("gioiTinh") || "",
       soDienThoai: searchParams.get("soDienThoai") || "",
       email: searchParams.get("email") || "",
@@ -88,14 +86,59 @@ export default function EnrollmentForm() {
       hocLuc: searchParams.get("hocLuc") || "",
       diemTrungBinh: searchParams.get("diemTrungBinh") || "",
       monHocManh: searchParams.get("monHocManh") || "",
-      nganhDangKy: searchParams.get("nganhDangKy") || "",
       nguyenVong1: searchParams.get("nguyenVong1") || "",
       nguyenVong2: searchParams.get("nguyenVong2") || "",
-      thongBaoQua: [],
-      xacNhanThongTin: false,
+      nguyenVong3: searchParams.get("nguyenVong3") || "",
+      thongBaoQua: searchParams.get("thongBaoQua")?.split(",").filter(Boolean) || [],
+      xacNhanThongTin: searchParams.get("xacNhanThongTin") === "true",
     }
     setFormData(mappedData)
   }, [searchParams])
+
+  // Push form state back to URL for easy sharing
+  useEffect(() => {
+    if (!paramsLoaded.current) return
+    if (!urlSynced.current) {
+      urlSynced.current = true
+    }
+
+    const params = new URLSearchParams()
+    const addParam = (key: string, value?: string | string[] | boolean) => {
+      if (value === undefined || value === null) return
+      if (Array.isArray(value)) {
+        if (value.length === 0) return
+        params.set(key, value.join(","))
+        return
+      }
+      if (typeof value === "boolean") {
+        if (value) params.set(key, "true")
+        return
+      }
+      if (value.trim() !== "") params.set(key, value)
+    }
+
+    addParam("hoTen", formData.hoTen)
+    addParam("ngaySinh", formData.ngaySinh)
+    addParam("cccd", formData.cccd)
+    addParam("gioiTinh", formData.gioiTinh)
+    addParam("soDienThoai", formData.soDienThoai)
+    addParam("email", formData.email)
+    addParam("diaChi", formData.diaChi)
+    addParam("truongHoc", formData.truongHoc)
+    addParam("lop", formData.lop)
+    addParam("hocLuc", formData.hocLuc)
+    addParam("diemTrungBinh", formData.diemTrungBinh)
+    addParam("monHocManh", formData.monHocManh)
+    addParam("nguyenVong1", formData.nguyenVong1)
+    addParam("nguyenVong2", formData.nguyenVong2)
+    addParam("nguyenVong3", formData.nguyenVong3)
+    addParam("thongBaoQua", formData.thongBaoQua)
+    addParam("xacNhanThongTin", formData.xacNhanThongTin)
+
+    const query = params.toString()
+    const target = query ? `${pathname}?${query}` : pathname
+    router.replace(target, { scroll: false })
+  }, [formData, router, pathname])
 
   const handleInputChange = (field: keyof FormData, value: string | boolean | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -158,6 +201,17 @@ export default function EnrollmentForm() {
                   type="date"
                   value={formData.ngaySinh}
                   onChange={(e) => handleInputChange("ngaySinh", e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="cccd">Căn cước công dân *</Label>
+                <Input
+                  id="cccd"
+                  type="text"
+                  placeholder="Căn cước công dân"
+                  value={formData.cccd}
+                  onChange={(e) => handleInputChange("cccd", e.target.value)}
                   required
                 />
               </div>
@@ -236,10 +290,11 @@ export default function EnrollmentForm() {
                     <SelectValue placeholder="Chọn lớp" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="10">Lớp 10</SelectItem>
-                    <SelectItem value="11">Lớp 11</SelectItem>
-                    <SelectItem value="12">Lớp 12</SelectItem>
-                    <SelectItem value="tot-nghiep">Đã tốt nghiệp</SelectItem>
+                    {commonMeta.lopOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -250,9 +305,11 @@ export default function EnrollmentForm() {
                     <SelectValue placeholder="Chọn học lực" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="gioi">Giỏi</SelectItem>
-                    <SelectItem value="kha">Khá</SelectItem>
-                    <SelectItem value="trung-binh">Trung bình</SelectItem>
+                    {commonMeta.hocLucOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -293,30 +350,16 @@ export default function EnrollmentForm() {
             </CardHeader>
             <CardContent className="grid gap-4">
               <div>
-                <Label htmlFor="nganhDangKy">Ngành đăng ký *</Label>
-                <Select value={formData.nganhDangKy} onValueChange={(v) => handleInputChange("nganhDangKy", v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn ngành học" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {nganhHocOptions.map((nganh) => (
-                      <SelectItem key={nganh.value} value={nganh.value}>
-                        {nganh.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="nguyenVong1">Nguyện vọng 1 *</Label>
+                <Input
+                  id="nguyenVong1"
+                  value={formData.nguyenVong1}
+                  onChange={(e) => handleInputChange("nguyenVong1", e.target.value)}
+                  placeholder="Ngành học ưu tiên 1"
+                  required
+                />
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="nguyenVong1">Nguyện vọng 1</Label>
-                  <Input
-                    id="nguyenVong1"
-                    value={formData.nguyenVong1}
-                    onChange={(e) => handleInputChange("nguyenVong1", e.target.value)}
-                    placeholder="Ngành học ưu tiên 1"
-                  />
-                </div>
                 <div>
                   <Label htmlFor="nguyenVong2">Nguyện vọng 2</Label>
                   <Input
@@ -324,6 +367,15 @@ export default function EnrollmentForm() {
                     value={formData.nguyenVong2}
                     onChange={(e) => handleInputChange("nguyenVong2", e.target.value)}
                     placeholder="Ngành học ưu tiên 2"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="nguyenVong3">Nguyện vọng 3</Label>
+                  <Input
+                    id="nguyenVong3"
+                    value={formData.nguyenVong3}
+                    onChange={(e) => handleInputChange("nguyenVong3", e.target.value)}
+                    placeholder="Ngành học ưu tiên 3"
                   />
                 </div>
               </div>
@@ -342,7 +394,7 @@ export default function EnrollmentForm() {
               <div>
                 <Label className="mb-3 block">Bạn muốn nhận thông báo qua:</Label>
                 <div className="flex flex-wrap gap-4">
-                  {["Email", "Zalo", "Messenger", "Whatsapp"].map((channel) => (
+                  {commonMeta.notificationChannels.map((channel) => (
                     <div key={channel} className="flex items-center space-x-2">
                       <Checkbox
                         id={`notify-${channel}`}

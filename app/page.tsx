@@ -6,6 +6,7 @@ import { GraduationCap, Calendar } from "lucide-react"
 const sampleStudentData = {
   hoTen: "Nguyễn Văn T.",
   ngaySinh: "2007-02-21",
+  cccd: "079203000123",
   gioiTinh: "nam",
   soDienThoai: "0901234567",
   email: "nguyenvant@email.com",
@@ -15,9 +16,9 @@ const sampleStudentData = {
   hocLuc: "gioi",
   diemTrungBinh: "8.5",
   monHocManh: "Toán, Tin học, Tiếng Anh, Vật lý",
-  nganhDangKy: "cong-nghe-thong-tin",
   nguyenVong1: "Ngành Công nghệ Thông Tin",
   nguyenVong2: "Ngành AI – Trí Tuệ Nhân Tạo",
+  nguyenVong3: "Ngành Quản trị Kinh doanh",
 }
 
 const sampleEventData = {
@@ -25,6 +26,11 @@ const sampleEventData = {
   tenSuKien: "Ngày hội tư vấn tuyển sinh 2025",
   ngayThamGia: "2025-03-15",
   khungGio: "sang",
+  bietQuaNguon: "facebook",
+  hoTenPhuHuynh: "Nguyễn Văn B.",
+  soDienThoaiPhuHuynh: "0912345678",
+  emailPhuHuynh: "phuhuynh@example.com",
+  moiQuanHe: "cha",
 }
 
 // Pre-compute URLs outside component
@@ -37,7 +43,7 @@ export default function HomePage() {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-3xl font-bold text-foreground mb-4">Hệ thống Đăng ký Sinh viên</h1>
-          <p className="text-muted-foreground">Click vào các link bên dưới để test mapping URL params vào form</p>
+          {/* <p className="text-muted-foreground">Click vào các link bên dưới để test mapping URL params vào form</p> */}
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
@@ -92,12 +98,12 @@ export default function HomePage() {
             <div className="text-sm font-mono bg-muted p-4 rounded-lg overflow-x-auto">
               <p className="font-semibold mb-2 font-sans">Form Đăng ký Nhập học:</p>
               <code className="text-xs break-all">
-                ?hoTen=...&ngaySinh=...&gioiTinh=...&soDienThoai=...&email=...&diaChi=...&truongHoc=...&lop=...&hocLuc=...&diemTrungBinh=...&monHocManh=...&nganhDangKy=...&nguyenVong1=...&nguyenVong2=...
+                ?hoTen=...&ngaySinh=...&cccd=...&gioiTinh=...&soDienThoai=...&email=...&diaChi=...&truongHoc=...&lop=...&hocLuc=...&diemTrungBinh=...&monHocManh=...&nguyenVong1=...&nguyenVong2=...&nguyenVong3=...
               </code>
 
               <p className="font-semibold mt-4 mb-2 font-sans">Form Đăng ký Sự kiện:</p>
               <code className="text-xs break-all">
-                ?hoTen=...&ngaySinh=...&...&tenSuKien=...&ngayThamGia=...&khungGio=...
+                ?hoTen=...&ngaySinh=...&cccd=...&soDienThoai=...&email=...&truongHoc=...&lop=...&hoTenPhuHuynh=...&soDienThoaiPhuHuynh=...&emailPhuHuynh=...&moiQuanHe=...&tenSuKien=...&ngayThamGia=...&khungGio=...&bietQuaNguon=...
               </code>
             </div>
           </CardContent>
