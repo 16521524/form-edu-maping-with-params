@@ -17,49 +17,49 @@ import { ArrowLeft, GraduationCap, User, BookOpen, Target, CheckCircle } from "l
 import Link from "next/link"
 
 interface FormData {
-  // 1. Thông tin cá nhân
-  hoTen: string
-  ngaySinh: string
-  cccd: string
-  gioiTinh: string
-  soDienThoai: string
+  // 1. Personal info
+  fullName: string
+  birthDate: string
+  nationalId: string
+  gender: string
+  phone: string
   email: string
-  diaChi: string
-  // 2. Thông tin học tập
-  truongHoc: string
-  lop: string
-  hocLuc: string
-  diemTrungBinh: string
-  monHocManh: string
-  mangXaHoi: string
-  // 3. Thông tin chọn ngành
-  nguyenVong1: string
-  nguyenVong2: string
-  nguyenVong3: string
-  // 4. Xác nhận
-  thongBaoQua: string[]
-  xacNhanThongTin: boolean
+  address: string
+  // 2. Academic
+  highSchool: string
+  gradeLevel: string
+  academicPerformance: string
+  gpa: string
+  strongSubjects: string
+  socialLink: string
+  // 3. Preferences
+  majorPreference1: string
+  majorPreference2: string
+  majorPreference3: string
+  // 4. Confirm
+  notifyVia: string[]
+  confirmAccuracy: boolean
 }
 
 const initialFormData: FormData = {
-  hoTen: "",
-  ngaySinh: "",
-  cccd: "",
-  gioiTinh: "",
-  soDienThoai: "",
+  fullName: "",
+  birthDate: "",
+  nationalId: "",
+  gender: "",
+  phone: "",
   email: "",
-  diaChi: "",
-  truongHoc: "",
-  lop: "",
-  hocLuc: "",
-  diemTrungBinh: "",
-  monHocManh: "",
-  mangXaHoi: "",
-  nguyenVong1: "",
-  nguyenVong2: "",
-  nguyenVong3: "",
-  thongBaoQua: ["Email"],
-  xacNhanThongTin: false,
+  address: "",
+  highSchool: "",
+  gradeLevel: "",
+  academicPerformance: "",
+  gpa: "",
+  strongSubjects: "",
+  socialLink: "",
+  majorPreference1: "",
+  majorPreference2: "",
+  majorPreference3: "",
+  notifyVia: ["Email"],
+  confirmAccuracy: false,
 }
 
 const { common: commonMeta } = formMeta
@@ -70,55 +70,82 @@ export default function EnrollmentForm() {
   const router = useRouter()
   const pathname = usePathname()
   const [formData, setFormData] = useState<FormData>(initialFormData)
-  const paramsLoaded = useRef(false)
   const urlSynced = useRef(false)
+  const lastQuery = useRef<string>("")
 
   useEffect(() => {
-    if (paramsLoaded.current) return
-    paramsLoaded.current = true
+    const query = searchParams.toString()
+    if (query === lastQuery.current) return
+    lastQuery.current = query
 
-    const hasParams = searchParams.toString().length > 0
+    const hasParams = query.length > 0
     if (!hasParams) {
-      setFormData(initialFormData)
+      setFormData({
+        ...initialFormData,
+        gender: aiDefaults?.studentProfile?.gender || "",
+        gradeLevel: aiDefaults?.studentProfile?.gradeLevel || "",
+      })
       return
     }
 
     const studentDefaults = aiDefaults?.studentProfile ?? {}
     const enrollmentDefaults = aiDefaults?.enrollmentPreference ?? {}
     const defaultNotification = ["Email"]
+    const getVal = (...keys: string[]) => {
+      for (const key of keys) {
+        const value = searchParams.get(key)
+        if (value !== null) return value
+      }
+      return ""
+    }
+    const getList = (...keys: string[]) => {
+      for (const key of keys) {
+        const value = searchParams.get(key)
+        if (value) return value.split(",").filter(Boolean)
+      }
+      return undefined
+    }
+    const getBool = (keys: string[], defaultValue = false) => {
+      for (const key of keys) {
+        const value = searchParams.get(key)
+        if (value !== null) return value === "true"
+      }
+      return defaultValue
+    }
 
     const mappedData: FormData = {
-      hoTen: searchParams.get("hoTen") || studentDefaults.hoTen || "",
-      ngaySinh: searchParams.get("ngaySinh") || studentDefaults.ngaySinh || "",
-      cccd: searchParams.get("cccd") || studentDefaults.cccd || "",
-      gioiTinh: searchParams.get("gioiTinh") || studentDefaults.gioiTinh || "",
-      soDienThoai: searchParams.get("soDienThoai") || studentDefaults.soDienThoai || "",
-      email: searchParams.get("email") || studentDefaults.email || "",
-      diaChi: searchParams.get("diaChi") || studentDefaults.diaChi || "",
-      truongHoc: searchParams.get("truongHoc") || studentDefaults.truongHoc || "",
-      lop: searchParams.get("lop") || studentDefaults.lop || "",
-      hocLuc: searchParams.get("hocLuc") || studentDefaults.hocLuc || "",
-      diemTrungBinh: searchParams.get("diemTrungBinh") || studentDefaults.diemTrungBinh || "",
-      monHocManh: searchParams.get("monHocManh") || studentDefaults.monHocManh || "",
-      mangXaHoi: searchParams.get("mangXaHoi") || studentDefaults.mangXaHoi || "",
-      nguyenVong1: searchParams.get("nguyenVong1") || enrollmentDefaults.nguyenVong1 || "",
-      nguyenVong2: searchParams.get("nguyenVong2") || enrollmentDefaults.nguyenVong2 || "",
-      nguyenVong3: searchParams.get("nguyenVong3") || enrollmentDefaults.nguyenVong3 || "",
-      thongBaoQua: searchParams.get("thongBaoQua")?.split(",").filter(Boolean) || defaultNotification,
-      xacNhanThongTin: searchParams.get("xacNhanThongTin") === "true",
+      fullName: getVal("fullName", "hoTen") || studentDefaults.fullName || "",
+      birthDate: getVal("birthDate", "ngaySinh") || studentDefaults.birthDate || "",
+      nationalId: getVal("nationalId", "cccd") || studentDefaults.nationalId || "",
+      gender: getVal("gender", "gioiTinh") || studentDefaults.gender || "",
+      phone: getVal("phone", "soDienThoai") || studentDefaults.phone || "",
+      email: getVal("email", "email") || studentDefaults.email || "",
+      address: getVal("address", "diaChi") || studentDefaults.address || "",
+      highSchool: getVal("highSchool", "truongHoc") || studentDefaults.highSchool || "",
+      gradeLevel: getVal("gradeLevel", "lop") || studentDefaults.gradeLevel || "",
+      academicPerformance: getVal("academicPerformance", "hocLuc") || studentDefaults.academicPerformance || "",
+      gpa: getVal("gpa", "diemTrungBinh") || studentDefaults.gpa || "",
+      strongSubjects: getVal("strongSubjects", "monHocManh") || studentDefaults.strongSubjects || "",
+      socialLink: getVal("socialLink", "mangXaHoi") || studentDefaults.socialLink || "",
+      majorPreference1: getVal("majorPreference1", "nguyenVong1") || enrollmentDefaults.majorPreference1 || "",
+      majorPreference2: getVal("majorPreference2", "nguyenVong2") || enrollmentDefaults.majorPreference2 || "",
+      majorPreference3: getVal("majorPreference3", "nguyenVong3") || enrollmentDefaults.majorPreference3 || "",
+      notifyVia: getList("notifyVia", "thongBaoQua") || defaultNotification,
+      confirmAccuracy: getBool(["confirmAccuracy", "xacNhanThongTin"], false),
     }
-    const ensureEmailChecked = mappedData.thongBaoQua.includes("Email") ? mappedData.thongBaoQua : ["Email", ...mappedData.thongBaoQua]
+    const ensureEmailChecked = mappedData.notifyVia.includes("Email") ? mappedData.notifyVia : ["Email", ...mappedData.notifyVia]
+    const genderFallback = mappedData.gender || studentDefaults.gender || "nam"
+    const gradeFallback = mappedData.gradeLevel || studentDefaults.gradeLevel || commonMeta.lopOptions[0]?.value || ""
     setFormData({
       ...mappedData,
-      gioiTinh: mappedData.gioiTinh || studentDefaults.gioiTinh || "",
-      lop: mappedData.lop || studentDefaults.lop || "",
-      thongBaoQua: Array.from(new Set(ensureEmailChecked)),
+      gender: genderFallback,
+      gradeLevel: gradeFallback,
+      notifyVia: Array.from(new Set(ensureEmailChecked)),
     })
   }, [searchParams])
 
   // Push form state back to URL for easy sharing
   useEffect(() => {
-    if (!paramsLoaded.current) return
     if (!urlSynced.current) {
       urlSynced.current = true
     }
@@ -138,24 +165,24 @@ export default function EnrollmentForm() {
       if (value.trim() !== "") params.set(key, value)
     }
 
-    addParam("hoTen", formData.hoTen)
-    addParam("ngaySinh", formData.ngaySinh)
-    addParam("cccd", formData.cccd)
-    addParam("gioiTinh", formData.gioiTinh)
-    addParam("soDienThoai", formData.soDienThoai)
+    addParam("fullName", formData.fullName)
+    addParam("birthDate", formData.birthDate)
+    addParam("nationalId", formData.nationalId)
+    addParam("gender", formData.gender)
+    addParam("phone", formData.phone)
     addParam("email", formData.email)
-    addParam("diaChi", formData.diaChi)
-    addParam("truongHoc", formData.truongHoc)
-    addParam("lop", formData.lop)
-    addParam("hocLuc", formData.hocLuc)
-    addParam("diemTrungBinh", formData.diemTrungBinh)
-    addParam("monHocManh", formData.monHocManh)
-    addParam("mangXaHoi", formData.mangXaHoi)
-    addParam("nguyenVong1", formData.nguyenVong1)
-    addParam("nguyenVong2", formData.nguyenVong2)
-    addParam("nguyenVong3", formData.nguyenVong3)
-    addParam("thongBaoQua", formData.thongBaoQua)
-    addParam("xacNhanThongTin", formData.xacNhanThongTin)
+    addParam("address", formData.address)
+    addParam("highSchool", formData.highSchool)
+    addParam("gradeLevel", formData.gradeLevel)
+    addParam("academicPerformance", formData.academicPerformance)
+    addParam("gpa", formData.gpa)
+    addParam("strongSubjects", formData.strongSubjects)
+    addParam("socialLink", formData.socialLink)
+    addParam("majorPreference1", formData.majorPreference1)
+    addParam("majorPreference2", formData.majorPreference2)
+    addParam("majorPreference3", formData.majorPreference3)
+    addParam("notifyVia", formData.notifyVia)
+    addParam("confirmAccuracy", formData.confirmAccuracy)
 
     const query = params.toString()
     const target = query ? `${pathname}?${query}` : pathname
@@ -169,25 +196,23 @@ export default function EnrollmentForm() {
   const handleNotificationChange = (channel: string, checked: boolean) => {
     setFormData((prev) => ({
       ...prev,
-      thongBaoQua: checked
-        ? Array.from(new Set([...prev.thongBaoQua, channel]))
-        : prev.thongBaoQua.filter((c) => c !== channel),
+      notifyVia: checked ? Array.from(new Set([...prev.notifyVia, channel])) : prev.notifyVia.filter((c) => c !== channel),
     }))
   }
 
   const requiredFields: (keyof FormData)[] = [
-    "hoTen",
-    "ngaySinh",
-    "cccd",
-    "gioiTinh",
-    "soDienThoai",
+    "fullName",
+    "birthDate",
+    "nationalId",
+    "gender",
+    "phone",
     "email",
-    "diaChi",
-    "truongHoc",
-    "lop",
-    "hocLuc",
-    "diemTrungBinh",
-    "nguyenVong1",
+    "address",
+    "highSchool",
+    "gradeLevel",
+    "academicPerformance",
+    "gpa",
+    "majorPreference1",
   ]
 
   const requiredFieldsFilled = requiredFields.every((field) => {
@@ -197,7 +222,7 @@ export default function EnrollmentForm() {
     return Boolean(value)
   })
 
-  const isSubmitEnabled = requiredFieldsFilled && formData.xacNhanThongTin
+  const isSubmitEnabled = requiredFieldsFilled && formData.confirmAccuracy
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -233,39 +258,39 @@ export default function EnrollmentForm() {
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <Label htmlFor="hoTen">Họ và tên đầy đủ *</Label>
+                <Label htmlFor="fullName">Họ và tên đầy đủ *</Label>
                 <Input
-                  id="hoTen"
-                  value={formData.hoTen}
-                  onChange={(e) => handleInputChange("hoTen", e.target.value)}
+                  id="fullName"
+                  value={formData.fullName}
+                  onChange={(e) => handleInputChange("fullName", e.target.value)}
                   placeholder="Nguyễn Văn A"
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="ngaySinh">Ngày tháng năm sinh *</Label>
+                <Label htmlFor="birthDate">Ngày tháng năm sinh *</Label>
                 <Input
-                  id="ngaySinh"
+                  id="birthDate"
                   type="date"
-                  value={formData.ngaySinh}
-                  onChange={(e) => handleInputChange("ngaySinh", e.target.value)}
+                  value={formData.birthDate}
+                  onChange={(e) => handleInputChange("birthDate", e.target.value)}
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="cccd">Căn cước công dân *</Label>
+                <Label htmlFor="nationalId">Căn cước công dân *</Label>
                 <Input
-                  id="cccd"
+                  id="nationalId"
                   type="text"
                   placeholder="Căn cước công dân"
-                  value={formData.cccd}
-                  onChange={(e) => handleInputChange("cccd", e.target.value)}
+                  value={formData.nationalId}
+                  onChange={(e) => handleInputChange("nationalId", e.target.value)}
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="gioiTinh">Giới tính *</Label>
-                <Select value={formData.gioiTinh} onValueChange={(v) => handleInputChange("gioiTinh", v)}>
+                <Label htmlFor="gender">Giới tính *</Label>
+                <Select value={formData.gender} onValueChange={(v) => handleInputChange("gender", v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn giới tính" />
                   </SelectTrigger>
@@ -277,12 +302,12 @@ export default function EnrollmentForm() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="soDienThoai">Số điện thoại *</Label>
+                <Label htmlFor="phone">Số điện thoại *</Label>
                 <Input
-                  id="soDienThoai"
+                  id="phone"
                   type="tel"
-                  value={formData.soDienThoai}
-                  onChange={(e) => handleInputChange("soDienThoai", e.target.value)}
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange("phone", e.target.value)}
                   placeholder="0901234567"
                   required
                 />
@@ -299,20 +324,20 @@ export default function EnrollmentForm() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <Label htmlFor="mangXaHoi">Mạng xã hội (tùy chọn)</Label>
+                <Label htmlFor="socialLink">Mạng xã hội (tùy chọn)</Label>
                 <Input
-                  id="mangXaHoi"
-                  value={formData.mangXaHoi}
-                  onChange={(e) => handleInputChange("mangXaHoi", e.target.value)}
+                  id="socialLink"
+                  value={formData.socialLink}
+                  onChange={(e) => handleInputChange("socialLink", e.target.value)}
                   placeholder="https://facebook.com/tenban"
                 />
               </div>
               <div className="sm:col-span-2">
-                <Label htmlFor="diaChi">Địa chỉ liên hệ *</Label>
+                <Label htmlFor="address">Địa chỉ liên hệ *</Label>
                 <Textarea
-                  id="diaChi"
-                  value={formData.diaChi}
-                  onChange={(e) => handleInputChange("diaChi", e.target.value)}
+                  id="address"
+                  value={formData.address}
+                  onChange={(e) => handleInputChange("address", e.target.value)}
                   placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
                   required
                 />
@@ -331,18 +356,18 @@ export default function EnrollmentForm() {
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <Label htmlFor="truongHoc">Trường THPT đang học *</Label>
+                <Label htmlFor="highSchool">Trường THPT đang học *</Label>
                 <Input
-                  id="truongHoc"
-                  value={formData.truongHoc}
-                  onChange={(e) => handleInputChange("truongHoc", e.target.value)}
+                  id="highSchool"
+                  value={formData.highSchool}
+                  onChange={(e) => handleInputChange("highSchool", e.target.value)}
                   placeholder="Trường THPT..."
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="lop">Lớp hiện tại *</Label>
-                <Select value={formData.lop} onValueChange={(v) => handleInputChange("lop", v)}>
+                <Label htmlFor="gradeLevel">Lớp hiện tại *</Label>
+                <Select value={formData.gradeLevel} onValueChange={(v) => handleInputChange("gradeLevel", v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn lớp" />
                   </SelectTrigger>
@@ -356,8 +381,8 @@ export default function EnrollmentForm() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="hocLuc">Học lực *</Label>
-                <Select value={formData.hocLuc} onValueChange={(v) => handleInputChange("hocLuc", v)}>
+                <Label htmlFor="academicPerformance">Học lực *</Label>
+                <Select value={formData.academicPerformance} onValueChange={(v) => handleInputChange("academicPerformance", v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn học lực" />
                   </SelectTrigger>
@@ -371,25 +396,25 @@ export default function EnrollmentForm() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="diemTrungBinh">Điểm trung bình *</Label>
+                <Label htmlFor="gpa">Điểm trung bình *</Label>
                 <Input
-                  id="diemTrungBinh"
+                  id="gpa"
                   type="number"
                   step="0.1"
                   min="0"
                   max="10"
-                  value={formData.diemTrungBinh}
-                  onChange={(e) => handleInputChange("diemTrungBinh", e.target.value)}
+                  value={formData.gpa}
+                  onChange={(e) => handleInputChange("gpa", e.target.value)}
                   placeholder="8.5"
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="monHocManh">Môn học mạnh</Label>
+                <Label htmlFor="strongSubjects">Môn học mạnh</Label>
                 <Input
-                  id="monHocManh"
-                  value={formData.monHocManh}
-                  onChange={(e) => handleInputChange("monHocManh", e.target.value)}
+                  id="strongSubjects"
+                  value={formData.strongSubjects}
+                  onChange={(e) => handleInputChange("strongSubjects", e.target.value)}
                   placeholder="Toán, Lý, Hóa..."
                 />
               </div>
@@ -407,31 +432,31 @@ export default function EnrollmentForm() {
             </CardHeader>
             <CardContent className="grid gap-4">
               <div>
-                <Label htmlFor="nguyenVong1">Nguyện vọng 1 *</Label>
+                <Label htmlFor="majorPreference1">Nguyện vọng 1 *</Label>
                 <Input
-                  id="nguyenVong1"
-                  value={formData.nguyenVong1}
-                  onChange={(e) => handleInputChange("nguyenVong1", e.target.value)}
+                  id="majorPreference1"
+                  value={formData.majorPreference1}
+                  onChange={(e) => handleInputChange("majorPreference1", e.target.value)}
                   placeholder="Ngành học ưu tiên 1"
                   required
                 />
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="nguyenVong2">Nguyện vọng 2</Label>
+                  <Label htmlFor="majorPreference2">Nguyện vọng 2</Label>
                   <Input
-                    id="nguyenVong2"
-                    value={formData.nguyenVong2}
-                    onChange={(e) => handleInputChange("nguyenVong2", e.target.value)}
+                    id="majorPreference2"
+                    value={formData.majorPreference2}
+                    onChange={(e) => handleInputChange("majorPreference2", e.target.value)}
                     placeholder="Ngành học ưu tiên 2"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="nguyenVong3">Nguyện vọng 3</Label>
+                  <Label htmlFor="majorPreference3">Nguyện vọng 3</Label>
                   <Input
-                    id="nguyenVong3"
-                    value={formData.nguyenVong3}
-                    onChange={(e) => handleInputChange("nguyenVong3", e.target.value)}
+                    id="majorPreference3"
+                    value={formData.majorPreference3}
+                    onChange={(e) => handleInputChange("majorPreference3", e.target.value)}
                     placeholder="Ngành học ưu tiên 3"
                   />
                 </div>
@@ -455,7 +480,7 @@ export default function EnrollmentForm() {
                     <div key={channel} className="flex items-center space-x-2">
                       <Checkbox
                         id={`notify-${channel}`}
-                        checked={formData.thongBaoQua.includes(channel)}
+                        checked={formData.notifyVia.includes(channel)}
                         onCheckedChange={(checked) => handleNotificationChange(channel, checked as boolean)}
                       />
                       <Label htmlFor={`notify-${channel}`} className="font-normal cursor-pointer">
@@ -467,12 +492,12 @@ export default function EnrollmentForm() {
               </div>
               <div className="flex items-start space-x-2 pt-2">
                 <Checkbox
-                  id="xacNhan"
-                  checked={formData.xacNhanThongTin}
-                  onCheckedChange={(checked) => handleInputChange("xacNhanThongTin", checked as boolean)}
+                  id="confirmAccuracy"
+                  checked={formData.confirmAccuracy}
+                  onCheckedChange={(checked) => handleInputChange("confirmAccuracy", checked as boolean)}
                   required
                 />
-                <Label htmlFor="xacNhan" className="font-normal cursor-pointer leading-relaxed">
+                <Label htmlFor="confirmAccuracy" className="font-normal cursor-pointer leading-relaxed">
                   Tôi xác nhận thông tin là chính xác và đồng ý nhận thông tin từ Ban Tổ Chức.
                 </Label>
               </div>

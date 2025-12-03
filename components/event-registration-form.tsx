@@ -18,60 +18,60 @@ import { ArrowLeft, Calendar, User, CalendarDays, Target, CheckCircle } from "lu
 import Link from "next/link"
 
 interface FormData {
-  // 1. Thông tin cá nhân
-  hoTen: string
-  ngaySinh: string
-  cccd: string
-  gioiTinh: string
-  soDienThoai: string
+  // 1. Personal info
+  fullName: string
+  birthDate: string
+  nationalId: string
+  gender: string
+  phone: string
   email: string
-  truongHoc: string
-  lop: string
-  mangXaHoi: string
-  // 2. Thông tin phụ huynh
-  hoTenPhuHuynh: string
-  soDienThoaiPhuHuynh: string
-  emailPhuHuynh: string
-  moiQuanHe: string
-  // 3. Thông tin sự kiện
-  tenCauLacBo: string
-  tenSuKien: string
-  ngayThamGia: string
-  khungGio: string
+  highSchool: string
+  gradeLevel: string
+  socialLink: string
+  // 2. Parent info
+  parentName: string
+  parentPhone: string
+  parentEmail: string
+  parentRelation: string
+  // 3. Event info
+  clubName: string
+  eventName: string
+  eventDate: string
+  eventSlot: string
   selectedSessions: string[]
-  // 3. Mục đích tham gia
-  mucDichThamGia: string[]
-  bietQuaNguon: string
-  // 4. Xác nhận
-  thongBaoQua: string[]
-  dongYSuDungThongTin: boolean
-  xacNhanThongTin: boolean
+  // 3. Objectives
+  eventObjectives: string[]
+  heardFrom: string
+  // 4. Confirm
+  notifyVia: string[]
+  consentUseInfo: boolean
+  confirmAccuracy: boolean
 }
 
 const initialFormData: FormData = {
-  hoTen: "",
-  ngaySinh: "",
-  cccd: "",
-  gioiTinh: "",
-  soDienThoai: "",
+  fullName: "",
+  birthDate: "",
+  nationalId: "",
+  gender: "",
+  phone: "",
   email: "",
-  truongHoc: "",
-  lop: "",
-  mangXaHoi: "",
-  hoTenPhuHuynh: "",
-  soDienThoaiPhuHuynh: "",
-  emailPhuHuynh: "",
-  moiQuanHe: "",
-  tenCauLacBo: "",
-  tenSuKien: "",
-  ngayThamGia: "",
-  khungGio: "",
+  highSchool: "",
+  gradeLevel: "",
+  socialLink: "",
+  parentName: "",
+  parentPhone: "",
+  parentEmail: "",
+  parentRelation: "",
+  clubName: "",
+  eventName: "",
+  eventDate: "",
+  eventSlot: "",
   selectedSessions: [],
-  mucDichThamGia: [],
-  bietQuaNguon: "",
-  thongBaoQua: ["Email"],
-  dongYSuDungThongTin: true,
-  xacNhanThongTin: false,
+  eventObjectives: [],
+  heardFrom: "",
+  notifyVia: ["Email"],
+  consentUseInfo: true,
+  confirmAccuracy: false,
 }
 
 const eventMeta = formMeta.event
@@ -83,15 +83,16 @@ export default function EventRegistrationForm() {
   const router = useRouter()
   const pathname = usePathname()
   const [formData, setFormData] = useState<FormData>(initialFormData)
-  const paramsLoaded = useRef(false)
   const urlSynced = useRef(false)
+  const lastQuery = useRef<string>("")
 
   // Map URL params to form data - only run once
   useEffect(() => {
-    if (paramsLoaded.current) return
-    paramsLoaded.current = true
+    const query = searchParams.toString()
+    if (query === lastQuery.current) return
+    lastQuery.current = query
 
-    const hasParams = searchParams.toString().length > 0
+    const hasParams = query.length > 0
     if (!hasParams) {
       setFormData(initialFormData)
       return
@@ -102,6 +103,27 @@ export default function EventRegistrationForm() {
     const eventDefaults = aiDefaults?.eventPreference ?? {}
     const defaultNotification = ["Email"]
     const selectedSessionsParam = searchParams.get("selectedSessions")?.split(",").filter(Boolean) || []
+    const getVal = (...keys: string[]) => {
+      for (const key of keys) {
+        const value = searchParams.get(key)
+        if (value !== null) return value
+      }
+      return ""
+    }
+    const getList = (...keys: string[]) => {
+      for (const key of keys) {
+        const value = searchParams.get(key)
+        if (value) return value.split(",").filter(Boolean)
+      }
+      return undefined
+    }
+    const getBool = (keys: string[], defaultValue = false) => {
+      for (const key of keys) {
+        const value = searchParams.get(key)
+        if (value !== null) return value === "true"
+      }
+      return defaultValue
+    }
 
     const preselectFromEventName = (eventName?: string) => {
       if (!eventName) return [] as string[]
@@ -109,65 +131,67 @@ export default function EventRegistrationForm() {
     }
 
     const mappedData: FormData = {
-      hoTen: searchParams.get("hoTen") || studentDefaults.hoTen || "",
-      ngaySinh: searchParams.get("ngaySinh") || studentDefaults.ngaySinh || "",
-      cccd: searchParams.get("cccd") || studentDefaults.cccd || "",
-      gioiTinh: searchParams.get("gioiTinh") || studentDefaults.gioiTinh || "",
-      soDienThoai: searchParams.get("soDienThoai") || studentDefaults.soDienThoai || "",
-      email: searchParams.get("email") || studentDefaults.email || "",
-      truongHoc: searchParams.get("truongHoc") || studentDefaults.truongHoc || "",
-      lop: searchParams.get("lop") || studentDefaults.lop || "",
-      mangXaHoi: searchParams.get("mangXaHoi") || studentDefaults.mangXaHoi || "",
-      hoTenPhuHuynh: searchParams.get("hoTenPhuHuynh") || parentDefaults.hoTenPhuHuynh || "",
-      soDienThoaiPhuHuynh: searchParams.get("soDienThoaiPhuHuynh") || parentDefaults.soDienThoaiPhuHuynh || "",
-      emailPhuHuynh: searchParams.get("emailPhuHuynh") || parentDefaults.emailPhuHuynh || "",
-      moiQuanHe: searchParams.get("moiQuanHe") || parentDefaults.moiQuanHe || "",
-      tenCauLacBo:
-        searchParams.get("tenCauLacBo") ||
-        eventDefaults.tenCauLacBo ||
+      fullName: getVal("fullName", "hoTen") || studentDefaults.fullName || "",
+      birthDate: getVal("birthDate", "ngaySinh") || studentDefaults.birthDate || "",
+      nationalId: getVal("nationalId", "cccd") || studentDefaults.nationalId || "",
+      gender: getVal("gender", "gioiTinh") || studentDefaults.gender || "",
+      phone: getVal("phone", "soDienThoai") || studentDefaults.phone || "",
+      email: getVal("email", "email") || studentDefaults.email || "",
+      highSchool: getVal("highSchool", "truongHoc") || studentDefaults.highSchool || "",
+      gradeLevel: getVal("gradeLevel", "lop") || studentDefaults.gradeLevel || "",
+      socialLink: getVal("socialLink", "mangXaHoi") || studentDefaults.socialLink || "",
+      parentName: getVal("parentName", "hoTenPhuHuynh") || parentDefaults.parentName || "",
+      parentPhone: getVal("parentPhone", "soDienThoaiPhuHuynh") || parentDefaults.parentPhone || "",
+      parentEmail: getVal("parentEmail", "emailPhuHuynh") || parentDefaults.parentEmail || "",
+      parentRelation: getVal("parentRelation", "moiQuanHe") || parentDefaults.parentRelation || "",
+      clubName:
+        getVal("clubName", "tenCauLacBo") ||
+        eventDefaults.clubName ||
         eventMeta.defaultClubName ||
-        parentDefaults.tenCauLacBo ||
+        parentDefaults.clubName ||
         "",
-      tenSuKien: searchParams.get("tenSuKien") || eventDefaults.tenSuKien || "",
-      ngayThamGia: searchParams.get("ngayThamGia") || eventDefaults.ngayThamGia || "",
-      khungGio: searchParams.get("khungGio") || eventDefaults.khungGio || "",
+      eventName: getVal("eventName", "tenSuKien") || eventDefaults.eventName || "",
+      eventDate: getVal("eventDate", "ngayThamGia") || eventDefaults.eventDate || "",
+      eventSlot: getVal("eventSlot", "khungGio") || eventDefaults.eventSlot || "",
       selectedSessions: selectedSessionsParam.length
         ? selectedSessionsParam
-        : preselectFromEventName(searchParams.get("tenSuKien") || eventDefaults.tenSuKien),
-      mucDichThamGia:
-        searchParams.get("mucDichThamGia")?.split(",").filter(Boolean) ||
+        : preselectFromEventName(getVal("eventName", "tenSuKien") || eventDefaults.eventName),
+      eventObjectives: getList("eventObjectives", "mucDichThamGia") ||
         (eventMeta.mucDichOptions.length ? [eventMeta.mucDichOptions[0]] : []),
-      bietQuaNguon: searchParams.get("bietQuaNguon") || eventDefaults.bietQuaNguon || "",
-      thongBaoQua: searchParams.get("thongBaoQua")?.split(",").filter(Boolean) || defaultNotification,
-      dongYSuDungThongTin: searchParams.get("dongYSuDungThongTin") ? searchParams.get("dongYSuDungThongTin") === "true" : true,
-      xacNhanThongTin: searchParams.get("xacNhanThongTin") === "true",
+      heardFrom: getVal("heardFrom", "bietQuaNguon") || eventDefaults.heardFrom || "",
+      notifyVia: getList("notifyVia", "thongBaoQua") || defaultNotification,
+      consentUseInfo: getBool(["consentUseInfo", "dongYSuDungThongTin"], true),
+      confirmAccuracy: getBool(["confirmAccuracy", "xacNhanThongTin"], false),
     }
-    const ensureEmailChecked = mappedData.thongBaoQua.includes("Email") ? mappedData.thongBaoQua : ["Email", ...mappedData.thongBaoQua]
+    const ensureEmailChecked = mappedData.notifyVia.includes("Email") ? mappedData.notifyVia : ["Email", ...mappedData.notifyVia]
 
     const selectedSessions = mappedData.selectedSessions
     const selectedSessionDetails = eventMeta.eventSessions.filter((s) => selectedSessions.includes(s.id))
     const tenSuKienAuto = selectedSessionDetails.length
       ? Array.from(new Set(selectedSessionDetails.map((s) => s.tenSuKien))).join(" | ")
-      : mappedData.tenSuKien
-    const tenCauLacBoAuto = mappedData.tenCauLacBo || selectedSessionDetails[0]?.tenCauLacBo || ""
+      : mappedData.eventName
+    const tenCauLacBoAuto = mappedData.clubName || selectedSessionDetails[0]?.tenCauLacBo || ""
     const firstSession = selectedSessionDetails[0]
+
+    const genderFallback = mappedData.gender || studentDefaults.gender || "nam"
+    const gradeFallback = mappedData.gradeLevel || studentDefaults.gradeLevel || commonMeta.lopOptions[0]?.value || ""
+    const relationFallback = mappedData.parentRelation || parentDefaults.parentRelation || eventMeta.moiQuanHeOptions[0]?.value || ""
 
     setFormData({
       ...mappedData,
-      gioiTinh: mappedData.gioiTinh || studentDefaults.gioiTinh || "",
-      lop: mappedData.lop || studentDefaults.lop || "",
-      moiQuanHe: mappedData.moiQuanHe || parentDefaults.moiQuanHe || "",
-      tenSuKien: tenSuKienAuto,
-      tenCauLacBo: tenCauLacBoAuto,
-      ngayThamGia: firstSession?.ngay || mappedData.ngayThamGia,
-      khungGio: firstSession?.khungGioValue || mappedData.khungGio,
-      thongBaoQua: Array.from(new Set(ensureEmailChecked)),
+      gender: genderFallback,
+      gradeLevel: gradeFallback,
+      parentRelation: relationFallback,
+      eventName: tenSuKienAuto,
+      clubName: tenCauLacBoAuto,
+      eventDate: firstSession?.ngay || mappedData.eventDate,
+      eventSlot: firstSession?.khungGioValue || mappedData.eventSlot,
+      notifyVia: Array.from(new Set(ensureEmailChecked)),
     })
   }, [searchParams])
 
   // Push form state back to URL params for sharing
   useEffect(() => {
-    if (!paramsLoaded.current) return
     // avoid immediate replace before mapped data applied
     if (!urlSynced.current) {
       urlSynced.current = true
@@ -188,29 +212,29 @@ export default function EventRegistrationForm() {
       if (value.trim() !== "") params.set(key, value)
     }
 
-    addParam("hoTen", formData.hoTen)
-    addParam("ngaySinh", formData.ngaySinh)
-    addParam("cccd", formData.cccd)
-    addParam("gioiTinh", formData.gioiTinh)
-    addParam("soDienThoai", formData.soDienThoai)
+    addParam("fullName", formData.fullName)
+    addParam("birthDate", formData.birthDate)
+    addParam("nationalId", formData.nationalId)
+    addParam("gender", formData.gender)
+    addParam("phone", formData.phone)
     addParam("email", formData.email)
-    addParam("truongHoc", formData.truongHoc)
-    addParam("lop", formData.lop)
-    addParam("mangXaHoi", formData.mangXaHoi)
-    addParam("hoTenPhuHuynh", formData.hoTenPhuHuynh)
-    addParam("soDienThoaiPhuHuynh", formData.soDienThoaiPhuHuynh)
-    addParam("emailPhuHuynh", formData.emailPhuHuynh)
-    addParam("moiQuanHe", formData.moiQuanHe)
-    addParam("tenCauLacBo", formData.tenCauLacBo)
-    addParam("tenSuKien", formData.tenSuKien)
-    addParam("ngayThamGia", formData.ngayThamGia)
-    addParam("khungGio", formData.khungGio)
+    addParam("highSchool", formData.highSchool)
+    addParam("gradeLevel", formData.gradeLevel)
+    addParam("socialLink", formData.socialLink)
+    addParam("parentName", formData.parentName)
+    addParam("parentPhone", formData.parentPhone)
+    addParam("parentEmail", formData.parentEmail)
+    addParam("parentRelation", formData.parentRelation)
+    addParam("clubName", formData.clubName)
+    addParam("eventName", formData.eventName)
+    addParam("eventDate", formData.eventDate)
+    addParam("eventSlot", formData.eventSlot)
     addParam("selectedSessions", formData.selectedSessions)
-    addParam("mucDichThamGia", formData.mucDichThamGia)
-    addParam("bietQuaNguon", formData.bietQuaNguon)
-    addParam("thongBaoQua", formData.thongBaoQua)
-    addParam("dongYSuDungThongTin", formData.dongYSuDungThongTin)
-    addParam("xacNhanThongTin", formData.xacNhanThongTin)
+    addParam("eventObjectives", formData.eventObjectives)
+    addParam("heardFrom", formData.heardFrom)
+    addParam("notifyVia", formData.notifyVia)
+    addParam("consentUseInfo", formData.consentUseInfo)
+    addParam("confirmAccuracy", formData.confirmAccuracy)
 
     const query = params.toString()
     const target = query ? `${pathname}?${query}` : pathname
@@ -224,16 +248,14 @@ export default function EventRegistrationForm() {
   const handleMucDichChange = (mucDich: string, checked: boolean) => {
     setFormData((prev) => ({
       ...prev,
-      mucDichThamGia: checked ? [...prev.mucDichThamGia, mucDich] : prev.mucDichThamGia.filter((m) => m !== mucDich),
+      eventObjectives: checked ? [...prev.eventObjectives, mucDich] : prev.eventObjectives.filter((m) => m !== mucDich),
     }))
   }
 
   const handleNotificationChange = (channel: string, checked: boolean) => {
     setFormData((prev) => ({
       ...prev,
-      thongBaoQua: checked
-        ? Array.from(new Set([...prev.thongBaoQua, channel]))
-        : prev.thongBaoQua.filter((c) => c !== channel),
+      notifyVia: checked ? Array.from(new Set([...prev.notifyVia, channel])) : prev.notifyVia.filter((c) => c !== channel),
     }))
   }
 
@@ -252,21 +274,21 @@ export default function EventRegistrationForm() {
       return {
         ...prev,
         selectedSessions,
-        tenSuKien: tenSuKienAuto,
-        tenCauLacBo: prev.tenCauLacBo || firstSession?.tenCauLacBo || eventMeta.defaultClubName || "",
-        ngayThamGia: firstSession?.ngay || "",
-        khungGio: firstSession?.khungGioValue || "",
+        eventName: tenSuKienAuto,
+        clubName: prev.clubName || firstSession?.tenCauLacBo || eventMeta.defaultClubName || "",
+        eventDate: firstSession?.ngay || "",
+        eventSlot: firstSession?.khungGioValue || "",
       }
     })
   }
 
-  const requiredPersonalFields: (keyof FormData)[] = ["hoTen", "ngaySinh", "cccd", "gioiTinh", "soDienThoai", "email", "truongHoc", "lop"]
-  const requiredParentFields: (keyof FormData)[] = ["hoTenPhuHuynh", "soDienThoaiPhuHuynh", "moiQuanHe"]
-  const requiredEventFields: (keyof FormData)[] = ["tenSuKien", "bietQuaNguon"]
-  const requiredClubFields: (keyof FormData)[] = ["tenCauLacBo"]
+  const requiredPersonalFields: (keyof FormData)[] = ["fullName", "birthDate", "nationalId", "gender", "phone", "email", "highSchool", "gradeLevel"]
+  const requiredParentFields: (keyof FormData)[] = ["parentName", "parentPhone", "parentRelation"]
+  const requiredEventFields: (keyof FormData)[] = ["eventName", "heardFrom"]
+  const requiredClubFields: (keyof FormData)[] = ["clubName"]
   const requiredFields = [
     ...requiredEventFields,
-    ...(formData.dongYSuDungThongTin ? [...requiredPersonalFields, ...requiredParentFields, ...requiredClubFields] : []),
+    ...(formData.consentUseInfo ? [...requiredPersonalFields, ...requiredParentFields, ...requiredClubFields] : []),
   ]
 
   const requiredFieldsFilled = requiredFields.every((field) => {
@@ -276,8 +298,8 @@ export default function EventRegistrationForm() {
     return Boolean(value)
   })
 
-  const isSubmitEnabled = requiredFieldsFilled && formData.xacNhanThongTin
-  const isPersonalSectionDisabled = !formData.dongYSuDungThongTin
+  const isSubmitEnabled = requiredFieldsFilled && formData.confirmAccuracy
+  const isPersonalSectionDisabled = !formData.consentUseInfo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -301,11 +323,11 @@ export default function EventRegistrationForm() {
           <p className="text-muted-foreground mt-2">Điền đầy đủ thông tin để hoàn tất đăng ký</p>
           <div className="flex items-start justify-center space-x-2 mt-4">
             <Checkbox
-              id="dongYSuDungThongTin"
-              checked={formData.dongYSuDungThongTin}
-              onCheckedChange={(checked) => handleInputChange("dongYSuDungThongTin", checked as boolean)}
+              id="consentUseInfo"
+              checked={formData.consentUseInfo}
+              onCheckedChange={(checked) => handleInputChange("consentUseInfo", checked as boolean)}
             />
-            <Label htmlFor="dongYSuDungThongTin" className="font-normal cursor-pointer leading-relaxed">
+            <Label htmlFor="consentUseInfo" className="font-normal cursor-pointer leading-relaxed">
               Tôi đồng ý sử dụng những thông tin này để đăng ký nhập học.
             </Label>
           </div>
@@ -323,43 +345,43 @@ export default function EventRegistrationForm() {
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <Label htmlFor="hoTen">Họ và tên đầy đủ *</Label>
+                <Label htmlFor="fullName">Họ và tên đầy đủ *</Label>
                 <Input
-                  id="hoTen"
-                  value={formData.hoTen}
-                  onChange={(e) => handleInputChange("hoTen", e.target.value)}
+                  id="fullName"
+                  value={formData.fullName}
+                  onChange={(e) => handleInputChange("fullName", e.target.value)}
                   placeholder="Nguyễn Văn A"
-                  required={formData.dongYSuDungThongTin}
+                  required={formData.consentUseInfo}
                   disabled={isPersonalSectionDisabled}
                 />
               </div>
               <div>
-                <Label htmlFor="ngaySinh">Ngày tháng năm sinh *</Label>
+                <Label htmlFor="birthDate">Ngày tháng năm sinh *</Label>
                 <Input
-                  id="ngaySinh"
+                  id="birthDate"
                   type="date"
-                  value={formData.ngaySinh}
-                  onChange={(e) => handleInputChange("ngaySinh", e.target.value)}
-                  required={formData.dongYSuDungThongTin}
+                  value={formData.birthDate}
+                  onChange={(e) => handleInputChange("birthDate", e.target.value)}
+                  required={formData.consentUseInfo}
                   disabled={isPersonalSectionDisabled}
                 />
               </div>
               <div>
-                <Label htmlFor="cccd">CCCD *</Label>
+                <Label htmlFor="nationalId">CCCD *</Label>
                 <Input
-                  id="cccd"
-                  value={formData.cccd}
-                  onChange={(e) => handleInputChange("cccd", e.target.value)}
+                  id="nationalId"
+                  value={formData.nationalId}
+                  onChange={(e) => handleInputChange("nationalId", e.target.value)}
                   placeholder="Số căn cước công dân"
-                  required={formData.dongYSuDungThongTin}
+                  required={formData.consentUseInfo}
                   disabled={isPersonalSectionDisabled}
                 />
               </div>
               <div>
-                <Label htmlFor="gioiTinh">Giới tính *</Label>
+                <Label htmlFor="gender">Giới tính *</Label>
                 <Select
-                  value={formData.gioiTinh}
-                  onValueChange={(v) => handleInputChange("gioiTinh", v)}
+                  value={formData.gender}
+                  onValueChange={(v) => handleInputChange("gender", v)}
                   disabled={isPersonalSectionDisabled}
                 >
                   <SelectTrigger>
@@ -373,14 +395,14 @@ export default function EventRegistrationForm() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="soDienThoai">Số điện thoại *</Label>
+                <Label htmlFor="phone">Số điện thoại *</Label>
                 <Input
-                  id="soDienThoai"
+                  id="phone"
                   type="tel"
-                  value={formData.soDienThoai}
-                  onChange={(e) => handleInputChange("soDienThoai", e.target.value)}
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange("phone", e.target.value)}
                   placeholder="0901234567"
-                  required={formData.dongYSuDungThongTin}
+                  required={formData.consentUseInfo}
                   disabled={isPersonalSectionDisabled}
                 />
               </div>
@@ -392,26 +414,26 @@ export default function EventRegistrationForm() {
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
                   placeholder="email@example.com"
-                  required={formData.dongYSuDungThongTin}
+                  required={formData.consentUseInfo}
                   disabled={isPersonalSectionDisabled}
                 />
               </div>
               <div className="sm:col-span-2">
-                <Label htmlFor="truongHoc">Trường THPT đang học *</Label>
+                <Label htmlFor="highSchool">Trường THPT đang học *</Label>
                 <Input
-                  id="truongHoc"
-                  value={formData.truongHoc}
-                  onChange={(e) => handleInputChange("truongHoc", e.target.value)}
+                  id="highSchool"
+                  value={formData.highSchool}
+                  onChange={(e) => handleInputChange("highSchool", e.target.value)}
                   placeholder="Trường THPT..."
-                  required={formData.dongYSuDungThongTin}
+                  required={formData.consentUseInfo}
                   disabled={isPersonalSectionDisabled}
                 />
               </div>
               <div>
-                <Label htmlFor="lop">Lớp hiện tại *</Label>
+                <Label htmlFor="gradeLevel">Lớp hiện tại *</Label>
                 <Select
-                  value={formData.lop}
-                  onValueChange={(v) => handleInputChange("lop", v)}
+                  value={formData.gradeLevel}
+                  onValueChange={(v) => handleInputChange("gradeLevel", v)}
                   disabled={isPersonalSectionDisabled}
                 >
                   <SelectTrigger>
@@ -427,11 +449,11 @@ export default function EventRegistrationForm() {
                 </Select>
               </div>
               <div className="sm:col-span-2">
-                <Label htmlFor="mangXaHoi">Mạng xã hội (tùy chọn)</Label>
+                <Label htmlFor="socialLink">Mạng xã hội (tùy chọn)</Label>
                 <Input
-                  id="mangXaHoi"
-                  value={formData.mangXaHoi}
-                  onChange={(e) => handleInputChange("mangXaHoi", e.target.value)}
+                  id="socialLink"
+                  value={formData.socialLink}
+                  onChange={(e) => handleInputChange("socialLink", e.target.value)}
                   placeholder="https://facebook.com/tenban"
                   disabled={isPersonalSectionDisabled}
                 />
@@ -450,44 +472,44 @@ export default function EventRegistrationForm() {
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <Label htmlFor="hoTenPhuHuynh">Họ và tên phụ huynh *</Label>
+                <Label htmlFor="parentName">Họ và tên phụ huynh *</Label>
                 <Input
-                  id="hoTenPhuHuynh"
-                  value={formData.hoTenPhuHuynh}
-                  onChange={(e) => handleInputChange("hoTenPhuHuynh", e.target.value)}
+                  id="parentName"
+                  value={formData.parentName}
+                  onChange={(e) => handleInputChange("parentName", e.target.value)}
                   placeholder="Nguyễn Văn B..."
-                  required={formData.dongYSuDungThongTin}
+                  required={formData.consentUseInfo}
                   disabled={isPersonalSectionDisabled}
                 />
               </div>
               <div>
-                <Label htmlFor="soDienThoaiPhuHuynh">Số điện thoại *</Label>
+                <Label htmlFor="parentPhone">Số điện thoại *</Label>
                 <Input
-                  id="soDienThoaiPhuHuynh"
+                  id="parentPhone"
                   type="tel"
-                  value={formData.soDienThoaiPhuHuynh}
-                  onChange={(e) => handleInputChange("soDienThoaiPhuHuynh", e.target.value)}
+                  value={formData.parentPhone}
+                  onChange={(e) => handleInputChange("parentPhone", e.target.value)}
                   placeholder="090xxxxxxx"
-                  required={formData.dongYSuDungThongTin}
+                  required={formData.consentUseInfo}
                   disabled={isPersonalSectionDisabled}
                 />
               </div>
               <div>
-                <Label htmlFor="emailPhuHuynh">Email (không bắt buộc)</Label>
+                <Label htmlFor="parentEmail">Email (không bắt buộc)</Label>
                 <Input
-                  id="emailPhuHuynh"
+                  id="parentEmail"
                   type="email"
-                  value={formData.emailPhuHuynh}
-                  onChange={(e) => handleInputChange("emailPhuHuynh", e.target.value)}
+                  value={formData.parentEmail}
+                  onChange={(e) => handleInputChange("parentEmail", e.target.value)}
                   placeholder="email@example.com"
                   disabled={isPersonalSectionDisabled}
                 />
               </div>
               <div>
-                <Label htmlFor="moiQuanHe">Mối quan hệ *</Label>
+                <Label htmlFor="parentRelation">Mối quan hệ *</Label>
                 <Select
-                  value={formData.moiQuanHe}
-                  onValueChange={(v) => handleInputChange("moiQuanHe", v)}
+                  value={formData.parentRelation}
+                  onValueChange={(v) => handleInputChange("parentRelation", v)}
                   disabled={isPersonalSectionDisabled}
                 >
                   <SelectTrigger>
@@ -516,21 +538,21 @@ export default function EventRegistrationForm() {
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <Label htmlFor="tenCauLacBo">Tên câu lạc bộ (auto-fill từ link)</Label>
+                <Label htmlFor="clubName">Tên câu lạc bộ (auto-fill từ link)</Label>
                 <Input
-                  id="tenCauLacBo"
-                  value={formData.tenCauLacBo}
-                  onChange={(e) => handleInputChange("tenCauLacBo", e.target.value)}
+                  id="clubName"
+                  value={formData.clubName}
+                  onChange={(e) => handleInputChange("clubName", e.target.value)}
                   placeholder="Câu lạc bộ Robotics"
                   disabled={isPersonalSectionDisabled}
                 />
                 <p className="text-xs text-muted-foreground mt-1">* Được tự động điền dựa trên link đăng ký câu lạc bộ</p>
               </div>
               <div className="sm:col-span-2">
-                <Label htmlFor="tenSuKien">Tên sự kiện</Label>
+                <Label htmlFor="eventName">Tên sự kiện</Label>
                 <Input
-                  id="tenSuKien"
-                  value={formData.tenSuKien}
+                  id="eventName"
+                  value={formData.eventName}
                   readOnly
                   placeholder="Được tự động điền từ tick trong lịch sự kiện"
                   className="bg-muted"
@@ -598,7 +620,7 @@ export default function EventRegistrationForm() {
                     <div key={mucDich} className="flex items-center space-x-2">
                       <Checkbox
                         id={`mucDich-${mucDich}`}
-                        checked={formData.mucDichThamGia.includes(mucDich)}
+                        checked={formData.eventObjectives.includes(mucDich)}
                         onCheckedChange={(checked) => handleMucDichChange(mucDich, checked as boolean)}
                       />
                       <Label htmlFor={`mucDich-${mucDich}`} className="font-normal cursor-pointer">
@@ -609,8 +631,8 @@ export default function EventRegistrationForm() {
                 </div>
               </div>
               <div>
-                <Label htmlFor="bietQuaNguon">Bạn biết đến sự kiện qua đâu? *</Label>
-                <Select value={formData.bietQuaNguon} onValueChange={(v) => handleInputChange("bietQuaNguon", v)}>
+                <Label htmlFor="heardFrom">Bạn biết đến sự kiện qua đâu? *</Label>
+                <Select value={formData.heardFrom} onValueChange={(v) => handleInputChange("heardFrom", v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn nguồn" />
                   </SelectTrigger>
@@ -642,7 +664,7 @@ export default function EventRegistrationForm() {
                     <div key={channel} className="flex items-center space-x-2">
                       <Checkbox
                         id={`notify-${channel}`}
-                        checked={formData.thongBaoQua.includes(channel)}
+                        checked={formData.notifyVia.includes(channel)}
                         onCheckedChange={(checked) => handleNotificationChange(channel, checked as boolean)}
                       />
                       <Label htmlFor={`notify-${channel}`} className="font-normal cursor-pointer">
@@ -654,12 +676,12 @@ export default function EventRegistrationForm() {
               </div>
               <div className="flex items-start space-x-2 pt-2">
                 <Checkbox
-                  id="xacNhan"
-                  checked={formData.xacNhanThongTin}
-                  onCheckedChange={(checked) => handleInputChange("xacNhanThongTin", checked as boolean)}
+                  id="confirmAccuracy"
+                  checked={formData.confirmAccuracy}
+                  onCheckedChange={(checked) => handleInputChange("confirmAccuracy", checked as boolean)}
                   required
                 />
-                <Label htmlFor="xacNhan" className="font-normal cursor-pointer leading-relaxed">
+                <Label htmlFor="confirmAccuracy" className="font-normal cursor-pointer leading-relaxed">
                   Tôi xác nhận thông tin là chính xác và đồng ý nhận thông tin từ Ban Tổ Chức.
                 </Label>
               </div>

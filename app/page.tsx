@@ -9,8 +9,8 @@ const { studentProfile, parentProfile, enrollmentPreference, eventPreference } =
 const sampleStudentData = {
   ...studentProfile,
   ...enrollmentPreference,
-  thongBaoQua: "Email,Zalo",
-  xacNhanThongTin: "true",
+  notifyVia: "Email",
+  confirmAccuracy: "true",
 }
 
 const sampleEventData = {
@@ -18,8 +18,8 @@ const sampleEventData = {
   ...parentProfile,
   ...eventPreference,
   selectedSessions: "openday-2203",
-  xacNhanThongTin: "true",
-  dongYSuDungThongTin: "true",
+  confirmAccuracy: "true",
+  consentUseInfo: "true",
 }
 
 // Pre-compute URLs outside component
@@ -87,12 +87,12 @@ export default function HomePage() {
             <div className="text-sm font-mono bg-muted p-4 rounded-lg overflow-x-auto">
               <p className="font-semibold mb-2 font-sans">Form Đăng ký Nhập học:</p>
               <code className="text-xs break-all">
-                ?hoTen=...&ngaySinh=...&cccd=...&gioiTinh=...&soDienThoai=...&email=...&diaChi=...&truongHoc=...&lop=...&hocLuc=...&diemTrungBinh=...&monHocManh=...&mangXaHoi=...&nguyenVong1=...&nguyenVong2=...&nguyenVong3=...&thongBaoQua=Email,Zalo&xacNhanThongTin=true
+                ?fullName=...&birthDate=...&nationalId=...&gender=...&phone=...&email=...&address=...&highSchool=...&gradeLevel=...&academicPerformance=...&gpa=...&strongSubjects=...&socialLink=...&majorPreference1=...&majorPreference2=...&majorPreference3=...&notifyVia=Email,Zalo&confirmAccuracy=true
               </code>
 
               <p className="font-semibold mt-4 mb-2 font-sans">Form Đăng ký Sự kiện:</p>
               <code className="text-xs break-all">
-                ?hoTen=...&ngaySinh=...&cccd=...&soDienThoai=...&email=...&truongHoc=...&lop=...&mangXaHoi=...&hoTenPhuHuynh=...&soDienThoaiPhuHuynh=...&emailPhuHuynh=...&moiQuanHe=...&tenCauLacBo=...&tenSuKien=...&selectedSessions=...&bietQuaNguon=...&dongYSuDungThongTin=true&xacNhanThongTin=true
+                ?fullName=...&birthDate=...&nationalId=...&phone=...&email=...&highSchool=...&gradeLevel=...&socialLink=...&parentName=...&parentPhone=...&parentEmail=...&parentRelation=...&clubName=...&eventName=...&selectedSessions=...&heardFrom=...&consentUseInfo=true&confirmAccuracy=true
               </code>
             </div>
           </CardContent>
