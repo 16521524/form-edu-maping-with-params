@@ -615,10 +615,11 @@ export default function EventRegistrationForm() {
                   <Label>Lịch sự kiện tham khảo</Label>
                   <span className="text-xs text-muted-foreground">Chọn đúng ngày/khung giờ còn trống</span>
                 </div>
-                <div className="border rounded-md overflow-x-auto">
-                  <Table className="min-w-[700px]">
+                <div className="border rounded-md overflow-x-auto overflow-y-auto max-h-[200px]">
+                  <Table className="min-w-[750px]">
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-[40px]">STT</TableHead>
                         <TableHead className="w-[52px]">Chọn</TableHead>
                         <TableHead>Sự kiện</TableHead>
                         <TableHead>Ngày</TableHead>
@@ -627,10 +628,11 @@ export default function EventRegistrationForm() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {eventMeta.eventSessions.map((session) => {
+                      {eventMeta.eventSessions.map((session, idx) => {
                         const isSelected = formData.selectedSessions.includes(session.id)
                         return (
                           <TableRow key={session.id} className={isSelected ? "bg-green-50" : ""}>
+                            <TableCell className="font-medium text-center">{idx + 1}</TableCell>
                             <TableCell>
                               <Checkbox
                                 checked={isSelected}
