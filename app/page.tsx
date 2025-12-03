@@ -2,35 +2,24 @@ import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { GraduationCap, Calendar } from "lucide-react"
+import formDefaults from "@/lib/form-defaults.json"
+
+const { studentProfile, parentProfile, enrollmentPreference, eventPreference } = formDefaults
 
 const sampleStudentData = {
-  hoTen: "Nguyễn Văn T.",
-  ngaySinh: "2007-02-21",
-  cccd: "079203000123",
-  gioiTinh: "nam",
-  soDienThoai: "0901234567",
-  email: "nguyenvant@email.com",
-  diaChi: "Khu phố 1, Phường Tân Mỹ, TP Hồ Chí Minh, Việt Nam",
-  truongHoc: "Trường THPT Ngô Quyền",
-  lop: "12",
-  hocLuc: "gioi",
-  diemTrungBinh: "8.5",
-  monHocManh: "Toán, Tin học, Tiếng Anh, Vật lý",
-  nguyenVong1: "Ngành Công nghệ Thông Tin",
-  nguyenVong2: "Ngành AI – Trí Tuệ Nhân Tạo",
-  nguyenVong3: "Ngành Quản trị Kinh doanh",
+  ...studentProfile,
+  ...enrollmentPreference,
+  thongBaoQua: "Email,Zalo",
+  xacNhanThongTin: "true",
 }
 
 const sampleEventData = {
   ...sampleStudentData,
-  tenSuKien: "Ngày hội tư vấn tuyển sinh 2025",
-  ngayThamGia: "2025-03-15",
-  khungGio: "sang",
-  bietQuaNguon: "facebook",
-  hoTenPhuHuynh: "Nguyễn Văn B.",
-  soDienThoaiPhuHuynh: "0912345678",
-  emailPhuHuynh: "phuhuynh@example.com",
-  moiQuanHe: "cha",
+  ...parentProfile,
+  ...eventPreference,
+  selectedSessions: "openday-2203",
+  xacNhanThongTin: "true",
+  dongYSuDungThongTin: "true",
 }
 
 // Pre-compute URLs outside component
@@ -98,12 +87,12 @@ export default function HomePage() {
             <div className="text-sm font-mono bg-muted p-4 rounded-lg overflow-x-auto">
               <p className="font-semibold mb-2 font-sans">Form Đăng ký Nhập học:</p>
               <code className="text-xs break-all">
-                ?hoTen=...&ngaySinh=...&cccd=...&gioiTinh=...&soDienThoai=...&email=...&diaChi=...&truongHoc=...&lop=...&hocLuc=...&diemTrungBinh=...&monHocManh=...&nguyenVong1=...&nguyenVong2=...&nguyenVong3=...
+                ?hoTen=...&ngaySinh=...&cccd=...&gioiTinh=...&soDienThoai=...&email=...&diaChi=...&truongHoc=...&lop=...&hocLuc=...&diemTrungBinh=...&monHocManh=...&mangXaHoi=...&nguyenVong1=...&nguyenVong2=...&nguyenVong3=...&thongBaoQua=Email,Zalo&xacNhanThongTin=true
               </code>
 
               <p className="font-semibold mt-4 mb-2 font-sans">Form Đăng ký Sự kiện:</p>
               <code className="text-xs break-all">
-                ?hoTen=...&ngaySinh=...&cccd=...&soDienThoai=...&email=...&truongHoc=...&lop=...&hoTenPhuHuynh=...&soDienThoaiPhuHuynh=...&emailPhuHuynh=...&moiQuanHe=...&tenSuKien=...&ngayThamGia=...&khungGio=...&bietQuaNguon=...
+                ?hoTen=...&ngaySinh=...&cccd=...&soDienThoai=...&email=...&truongHoc=...&lop=...&mangXaHoi=...&hoTenPhuHuynh=...&soDienThoaiPhuHuynh=...&emailPhuHuynh=...&moiQuanHe=...&tenCauLacBo=...&tenSuKien=...&selectedSessions=...&bietQuaNguon=...&dongYSuDungThongTin=true&xacNhanThongTin=true
               </code>
             </div>
           </CardContent>

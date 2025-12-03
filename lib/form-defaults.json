@@ -1,0 +1,35 @@
+{
+  "studentProfile": {
+    "hoTen": "Nguyễn Văn T.",
+    "ngaySinh": "2007-02-21",
+    "cccd": "079203000123",
+    "gioiTinh": "nam",
+    "soDienThoai": "0901234567",
+    "email": "nguyenvant@email.com",
+    "diaChi": "1360 Huỳnh Tấn Phát, Khu phố 1, Phường Tân Mỹ, TP Hồ Chí Minh, Việt Nam",
+    "truongHoc": "Trường THPT Ngô Quyền",
+    "lop": "12",
+    "hocLuc": "gioi",
+    "diemTrungBinh": "8.5",
+    "monHocManh": "Toán, Tin học, Tiếng Anh, Vật lý",
+    "mangXaHoi": "https://facebook.com/nguyenvant"
+  },
+  "parentProfile": {
+    "hoTenPhuHuynh": "Nguyễn Văn B.",
+    "soDienThoaiPhuHuynh": "0912345678",
+    "emailPhuHuynh": "phuhuynh@example.com",
+    "moiQuanHe": "cha"
+  },
+  "enrollmentPreference": {
+    "nguyenVong1": "Ngành Công nghệ Thông Tin",
+    "nguyenVong2": "Ngành AI – Trí Tuệ Nhân Tạo",
+    "nguyenVong3": "Ngành Quản trị Kinh doanh"
+  },
+  "eventPreference": {
+    "tenCauLacBo": "Câu lạc bộ Robotics",
+    "tenSuKien": "Open Day - Công nghệ Thông tin",
+    "ngayThamGia": "2025-03-22",
+    "khungGio": "ca-ngay",
+    "bietQuaNguon": "facebook"
+  }
+}

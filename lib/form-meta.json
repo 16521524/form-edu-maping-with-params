@@ -26,6 +26,7 @@
     ]
   },
   "event": {
+    "defaultClubName": "Câu lạc bộ Robotics",
     "mucDichOptions": [
       "Tìm hiểu về các ngành học",
       "Tham quan trường đại học",
@@ -55,21 +56,33 @@
     ],
     "eventSessions": [
       {
+        "id": "tvts-1503-sang",
+        "tenCauLacBo": "Câu lạc bộ Robotics",
         "tenSuKien": "Ngày hội tư vấn tuyển sinh 2025",
-        "ngay": "15/03/2025",
+        "ngay": "2025-03-15",
+        "ngayDisplay": "15/03/2025",
         "khungGio": "Buổi sáng (8:00 - 12:00)",
+        "khungGioValue": "sang",
         "diaDiem": "Cơ sở Tân Mỹ, TP.HCM"
       },
       {
+        "id": "tvts-1503-chieu",
+        "tenCauLacBo": "Câu lạc bộ Robotics",
         "tenSuKien": "Ngày hội tư vấn tuyển sinh 2025",
-        "ngay": "15/03/2025",
+        "ngay": "2025-03-15",
+        "ngayDisplay": "15/03/2025",
         "khungGio": "Buổi chiều (13:30 - 17:30)",
+        "khungGioValue": "chieu",
         "diaDiem": "Cơ sở Tân Mỹ, TP.HCM"
       },
       {
+        "id": "openday-2203",
+        "tenCauLacBo": "Câu lạc bộ Robotics",
         "tenSuKien": "Open Day - Công nghệ Thông tin",
-        "ngay": "22/03/2025",
+        "ngay": "2025-03-22",
+        "ngayDisplay": "22/03/2025",
         "khungGio": "Cả ngày",
+        "khungGioValue": "ca-ngay",
         "diaDiem": "Cơ sở Quận 9, TP.HCM"
       }
     ]

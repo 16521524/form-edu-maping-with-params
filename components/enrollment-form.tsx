@@ -5,6 +5,7 @@ import type React from "react"
 import { usePathname, useSearchParams, useRouter } from "next/navigation"
 import { useEffect, useState, useRef } from "react"
 import formMeta from "@/lib/form-meta.json"
+import formDefaults from "@/lib/form-defaults.json"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,6 +31,7 @@ interface FormData {
   hocLuc: string
   diemTrungBinh: string
   monHocManh: string
+  mangXaHoi: string
   // 3. Thông tin chọn ngành
   nguyenVong1: string
   nguyenVong2: string
@@ -52,14 +54,16 @@ const initialFormData: FormData = {
   hocLuc: "",
   diemTrungBinh: "",
   monHocManh: "",
+  mangXaHoi: "",
   nguyenVong1: "",
   nguyenVong2: "",
   nguyenVong3: "",
-  thongBaoQua: [],
+  thongBaoQua: ["Email"],
   xacNhanThongTin: false,
 }
 
 const { common: commonMeta } = formMeta
+const aiDefaults = formDefaults
 
 export default function EnrollmentForm() {
   const searchParams = useSearchParams()
@@ -73,26 +77,43 @@ export default function EnrollmentForm() {
     if (paramsLoaded.current) return
     paramsLoaded.current = true
 
+    const hasParams = searchParams.toString().length > 0
+    if (!hasParams) {
+      setFormData(initialFormData)
+      return
+    }
+
+    const studentDefaults = aiDefaults?.studentProfile ?? {}
+    const enrollmentDefaults = aiDefaults?.enrollmentPreference ?? {}
+    const defaultNotification = ["Email"]
+
     const mappedData: FormData = {
-      hoTen: searchParams.get("hoTen") || "",
-      ngaySinh: searchParams.get("ngaySinh") || "",
-      cccd: searchParams.get("cccd") || "",
-      gioiTinh: searchParams.get("gioiTinh") || "",
-      soDienThoai: searchParams.get("soDienThoai") || "",
-      email: searchParams.get("email") || "",
-      diaChi: searchParams.get("diaChi") || "",
-      truongHoc: searchParams.get("truongHoc") || "",
-      lop: searchParams.get("lop") || "",
-      hocLuc: searchParams.get("hocLuc") || "",
-      diemTrungBinh: searchParams.get("diemTrungBinh") || "",
-      monHocManh: searchParams.get("monHocManh") || "",
-      nguyenVong1: searchParams.get("nguyenVong1") || "",
-      nguyenVong2: searchParams.get("nguyenVong2") || "",
-      nguyenVong3: searchParams.get("nguyenVong3") || "",
-      thongBaoQua: searchParams.get("thongBaoQua")?.split(",").filter(Boolean) || [],
+      hoTen: searchParams.get("hoTen") || studentDefaults.hoTen || "",
+      ngaySinh: searchParams.get("ngaySinh") || studentDefaults.ngaySinh || "",
+      cccd: searchParams.get("cccd") || studentDefaults.cccd || "",
+      gioiTinh: searchParams.get("gioiTinh") || studentDefaults.gioiTinh || "",
+      soDienThoai: searchParams.get("soDienThoai") || studentDefaults.soDienThoai || "",
+      email: searchParams.get("email") || studentDefaults.email || "",
+      diaChi: searchParams.get("diaChi") || studentDefaults.diaChi || "",
+      truongHoc: searchParams.get("truongHoc") || studentDefaults.truongHoc || "",
+      lop: searchParams.get("lop") || studentDefaults.lop || "",
+      hocLuc: searchParams.get("hocLuc") || studentDefaults.hocLuc || "",
+      diemTrungBinh: searchParams.get("diemTrungBinh") || studentDefaults.diemTrungBinh || "",
+      monHocManh: searchParams.get("monHocManh") || studentDefaults.monHocManh || "",
+      mangXaHoi: searchParams.get("mangXaHoi") || studentDefaults.mangXaHoi || "",
+      nguyenVong1: searchParams.get("nguyenVong1") || enrollmentDefaults.nguyenVong1 || "",
+      nguyenVong2: searchParams.get("nguyenVong2") || enrollmentDefaults.nguyenVong2 || "",
+      nguyenVong3: searchParams.get("nguyenVong3") || enrollmentDefaults.nguyenVong3 || "",
+      thongBaoQua: searchParams.get("thongBaoQua")?.split(",").filter(Boolean) || defaultNotification,
       xacNhanThongTin: searchParams.get("xacNhanThongTin") === "true",
     }
-    setFormData(mappedData)
+    const ensureEmailChecked = mappedData.thongBaoQua.includes("Email") ? mappedData.thongBaoQua : ["Email", ...mappedData.thongBaoQua]
+    setFormData({
+      ...mappedData,
+      gioiTinh: mappedData.gioiTinh || studentDefaults.gioiTinh || "",
+      lop: mappedData.lop || studentDefaults.lop || "",
+      thongBaoQua: Array.from(new Set(ensureEmailChecked)),
+    })
   }, [searchParams])
 
   // Push form state back to URL for easy sharing
@@ -129,6 +150,7 @@ export default function EnrollmentForm() {
     addParam("hocLuc", formData.hocLuc)
     addParam("diemTrungBinh", formData.diemTrungBinh)
     addParam("monHocManh", formData.monHocManh)
+    addParam("mangXaHoi", formData.mangXaHoi)
     addParam("nguyenVong1", formData.nguyenVong1)
     addParam("nguyenVong2", formData.nguyenVong2)
     addParam("nguyenVong3", formData.nguyenVong3)
@@ -147,9 +169,35 @@ export default function EnrollmentForm() {
   const handleNotificationChange = (channel: string, checked: boolean) => {
     setFormData((prev) => ({
       ...prev,
-      thongBaoQua: checked ? [...prev.thongBaoQua, channel] : prev.thongBaoQua.filter((c) => c !== channel),
+      thongBaoQua: checked
+        ? Array.from(new Set([...prev.thongBaoQua, channel]))
+        : prev.thongBaoQua.filter((c) => c !== channel),
     }))
   }
+
+  const requiredFields: (keyof FormData)[] = [
+    "hoTen",
+    "ngaySinh",
+    "cccd",
+    "gioiTinh",
+    "soDienThoai",
+    "email",
+    "diaChi",
+    "truongHoc",
+    "lop",
+    "hocLuc",
+    "diemTrungBinh",
+    "nguyenVong1",
+  ]
+
+  const requiredFieldsFilled = requiredFields.every((field) => {
+    const value = formData[field]
+    if (typeof value === "string") return value.trim() !== ""
+    if (Array.isArray(value)) return value.length > 0
+    return Boolean(value)
+  })
+
+  const isSubmitEnabled = requiredFieldsFilled && formData.xacNhanThongTin
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -248,6 +296,15 @@ export default function EnrollmentForm() {
                   onChange={(e) => handleInputChange("email", e.target.value)}
                   placeholder="email@example.com"
                   required
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label htmlFor="mangXaHoi">Mạng xã hội (tùy chọn)</Label>
+                <Input
+                  id="mangXaHoi"
+                  value={formData.mangXaHoi}
+                  onChange={(e) => handleInputChange("mangXaHoi", e.target.value)}
+                  placeholder="https://facebook.com/tenban"
                 />
               </div>
               <div className="sm:col-span-2">
@@ -416,16 +473,19 @@ export default function EnrollmentForm() {
                   required
                 />
                 <Label htmlFor="xacNhan" className="font-normal cursor-pointer leading-relaxed">
-                  Tôi xác nhận thông tin trên là chính xác và đồng ý với các điều khoản của trường.
+                  Tôi xác nhận thông tin là chính xác và đồng ý nhận thông tin từ Ban Tổ Chức.
                 </Label>
               </div>
+              <p className="italic text-sm text-muted-foreground">
+                Vui lòng hoàn thành đầy đủ các thông tin bắt buộc (*) trước khi gửi đăng ký.
+              </p>
             </CardContent>
           </Card>
 
           <Button
             type="submit"
             className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700"
-            disabled={!formData.xacNhanThongTin}
+            disabled={!isSubmitEnabled}
           >
             Gửi đăng ký
           </Button>
