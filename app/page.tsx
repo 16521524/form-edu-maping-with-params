@@ -2,21 +2,20 @@ import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { GraduationCap, Calendar } from "lucide-react"
-import formDefaults from "@/lib/form-defaults.json"
-
-const { studentProfile, parentProfile, enrollmentPreference, eventPreference } = formDefaults
+import enrollmentDefaults from "@/lib/form-defaults-enrollment.json"
+import eventDefaults from "@/lib/form-defaults-event.json"
 
 const sampleStudentData = {
-  ...studentProfile,
-  ...enrollmentPreference,
+  ...enrollmentDefaults.studentProfile,
+  ...enrollmentDefaults.enrollmentPreference,
   notifyVia: "Email",
   confirmAccuracy: "true",
 }
 
 const sampleEventData = {
   ...sampleStudentData,
-  ...parentProfile,
-  ...eventPreference,
+  ...eventDefaults.parentProfile,
+  ...eventDefaults.eventPreference,
   selectedSessions: "openday-2203",
   confirmAccuracy: "true",
   consentUseInfo: "true",

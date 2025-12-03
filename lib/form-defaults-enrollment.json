@@ -14,22 +14,13 @@
     "strongSubjects": "Toán, Tin học, Tiếng Anh, Vật lý",
     "socialLink": "https://facebook.com/nguyenvant"
   },
-  "parentProfile": {
-    "parentName": "Nguyễn Văn B.",
-    "parentPhone": "0912345678",
-    "parentEmail": "phuhuynh@example.com",
-    "parentRelation": "cha"
-  },
   "enrollmentPreference": {
     "majorPreference1": "Ngành Công nghệ Thông Tin",
     "majorPreference2": "Ngành AI – Trí Tuệ Nhân Tạo",
     "majorPreference3": "Ngành Quản trị Kinh doanh"
   },
-  "eventPreference": {
-    "clubName": "Câu lạc bộ Robotics",
-    "eventName": "Open Day - Công nghệ Thông tin",
-    "eventDate": "2025-03-22",
-    "eventSlot": "ca-ngay",
-    "heardFrom": "facebook"
+  "defaultsConfig": {
+    "notifyVia": ["Email"],
+    "confirmAccuracy": false
   }
 }

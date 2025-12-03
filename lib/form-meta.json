@@ -1,20 +1,20 @@
 {
   "common": {
     "notificationChannels": ["Email", "Zalo", "Messenger", "Whatsapp"],
-    "lopOptions": [
+    "gradeOptions": [
       { "value": "10", "label": "Lớp 10" },
       { "value": "11", "label": "Lớp 11" },
       { "value": "12", "label": "Lớp 12" },
       { "value": "tot-nghiep", "label": "Đã tốt nghiệp" }
     ],
-    "hocLucOptions": [
+    "academicPerformanceOptions": [
       { "value": "gioi", "label": "Giỏi" },
       { "value": "kha", "label": "Khá" },
       { "value": "trung-binh", "label": "Trung bình" }
     ]
   },
   "enrollment": {
-    "nganhHocOptions": [
+    "majorOptions": [
       { "value": "cong-nghe-thong-tin", "label": "Công nghệ Thông tin" },
       { "value": "ky-thuat-phan-mem", "label": "Kỹ thuật Phần mềm" },
       { "value": "khoa-hoc-may-tinh", "label": "Khoa học Máy tính" },
@@ -27,14 +27,14 @@
   },
   "event": {
     "defaultClubName": "Câu lạc bộ Robotics",
-    "mucDichOptions": [
+    "eventObjectiveOptions": [
       "Tìm hiểu về các ngành học",
       "Tham quan trường đại học",
       "Tìm hiểu học bổng và chính sách hỗ trợ",
       "Khám phá môi trường học tập",
       "Gặp gỡ giảng viên và sinh viên"
     ],
-    "nguonOptions": [
+    "heardFromOptions": [
       { "value": "facebook", "label": "Facebook" },
       { "value": "tiktok", "label": "TikTok" },
       { "value": "instagram", "label": "Instagram" },
@@ -44,12 +44,12 @@
       { "value": "bao-chi", "label": "Báo chí / Truyền thông" },
       { "value": "khac", "label": "Khác" }
     ],
-    "khungGioOptions": [
+    "eventSlotOptions": [
       { "value": "sang", "label": "Buổi sáng (8:00 - 12:00)" },
       { "value": "chieu", "label": "Buổi chiều (13:30 - 17:30)" },
       { "value": "ca-ngay", "label": "Cả ngày" }
     ],
-    "moiQuanHeOptions": [
+    "parentRelationOptions": [
       { "value": "cha", "label": "Cha" },
       { "value": "me", "label": "Mẹ" },
       { "value": "nguoi-giam-ho", "label": "Người giám hộ" }
@@ -57,33 +57,33 @@
     "eventSessions": [
       {
         "id": "tvts-1503-sang",
-        "tenCauLacBo": "Câu lạc bộ Robotics",
-        "tenSuKien": "Ngày hội tư vấn tuyển sinh 2025",
-        "ngay": "2025-03-15",
-        "ngayDisplay": "15/03/2025",
-        "khungGio": "Buổi sáng (8:00 - 12:00)",
-        "khungGioValue": "sang",
-        "diaDiem": "Cơ sở Tân Mỹ, TP.HCM"
+        "clubName": "Câu lạc bộ Robotics",
+        "eventName": "Ngày hội tư vấn tuyển sinh 2025",
+        "date": "2025-03-15",
+        "dateDisplay": "15/03/2025",
+        "slotLabel": "Buổi sáng (8:00 - 12:00)",
+        "slotValue": "sang",
+        "location": "Cơ sở Tân Mỹ, TP.HCM"
       },
       {
         "id": "tvts-1503-chieu",
-        "tenCauLacBo": "Câu lạc bộ Robotics",
-        "tenSuKien": "Ngày hội tư vấn tuyển sinh 2025",
-        "ngay": "2025-03-15",
-        "ngayDisplay": "15/03/2025",
-        "khungGio": "Buổi chiều (13:30 - 17:30)",
-        "khungGioValue": "chieu",
-        "diaDiem": "Cơ sở Tân Mỹ, TP.HCM"
+        "clubName": "Câu lạc bộ Robotics",
+        "eventName": "Ngày hội tư vấn tuyển sinh 2025",
+        "date": "2025-03-15",
+        "dateDisplay": "15/03/2025",
+        "slotLabel": "Buổi chiều (13:30 - 17:30)",
+        "slotValue": "chieu",
+        "location": "Cơ sở Tân Mỹ, TP.HCM"
       },
       {
         "id": "openday-2203",
-        "tenCauLacBo": "Câu lạc bộ Robotics",
-        "tenSuKien": "Open Day - Công nghệ Thông tin",
-        "ngay": "2025-03-22",
-        "ngayDisplay": "22/03/2025",
-        "khungGio": "Cả ngày",
-        "khungGioValue": "ca-ngay",
-        "diaDiem": "Cơ sở Quận 9, TP.HCM"
+        "clubName": "Câu lạc bộ Robotics",
+        "eventName": "Open Day - Công nghệ Thông tin",
+        "date": "2025-03-22",
+        "dateDisplay": "22/03/2025",
+        "slotLabel": "Cả ngày",
+        "slotValue": "ca-ngay",
+        "location": "Cơ sở Quận 9, TP.HCM"
       }
     ]
   }

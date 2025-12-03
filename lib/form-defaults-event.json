@@ -1,0 +1,32 @@
+{
+  "studentProfile": {
+    "fullName": "Nguyễn Văn T.",
+    "birthDate": "2007-02-21",
+    "nationalId": "079203000123",
+    "gender": "nam",
+    "phone": "0901234567",
+    "email": "nguyenvant@email.com",
+    "highSchool": "Trường THPT Ngô Quyền",
+    "gradeLevel": "12",
+    "socialLink": "https://facebook.com/nguyenvant"
+  },
+  "parentProfile": {
+    "parentName": "Nguyễn Văn B.",
+    "parentPhone": "0912345678",
+    "parentEmail": "phuhuynh@example.com",
+    "parentRelation": "cha"
+  },
+  "eventPreference": {
+    "clubName": "Câu lạc bộ Robotics",
+    "eventName": "Open Day - Công nghệ Thông tin",
+    "eventDate": "2025-03-22",
+    "eventSlot": "ca-ngay",
+    "heardFrom": "facebook"
+  },
+  "defaultsConfig": {
+    "notifyVia": ["Email"],
+    "eventObjectives": ["Tìm hiểu về các ngành học"],
+    "consentUseInfo": true,
+    "confirmAccuracy": false
+  }
+}
