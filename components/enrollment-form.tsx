@@ -177,7 +177,7 @@ export default function EnrollmentForm() {
     const ensuredNotify = mappedData.notifyVia ?? defaultsConfig.notifyVia ?? []
     const studentDefaults = enrollmentDefaultsData.studentProfile ?? {}
     const enrollmentDefaults = enrollmentDefaultsData.enrollmentPreference ?? {}
-    const allowedGenders = ["nam", "nu", "khac"]
+    const allowedGenders = (commonMeta.genderOptions ?? []).map((o) => o.value)
     const allowedGrades = commonMeta.gradeOptions.map((o) => o.value)
     const allowedAcademic = commonMeta.academicPerformanceOptions.map((o) => o.value)
 
@@ -385,9 +385,11 @@ export default function EnrollmentForm() {
                         <SelectValue placeholder="Chọn giới tính" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="nam">Nam</SelectItem>
-                        <SelectItem value="nu">Nữ</SelectItem>
-                        <SelectItem value="khac">Khác</SelectItem>
+                        {commonMeta.genderOptions?.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   )}

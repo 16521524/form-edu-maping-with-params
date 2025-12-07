@@ -150,11 +150,12 @@ export default function EventRegistrationForm() {
       if (fallback && allowed.includes(fallback)) return fallback
       return ""
     }
+    const allowedGenders = (commonMeta.genderOptions ?? []).map((o) => o.value)
     const mappedData: FormData = {
       fullName: prefer(getVal("fullName"), studentDefaults.fullName),
       birthDate: prefer(getVal("birthDate"), studentDefaults.birthDate),
       nationalId: prefer(getVal("nationalId"), studentDefaults.nationalId),
-      gender: ensureOption(getVal("gender"), ["nam", "nu", "khac"], studentDefaults.gender),
+      gender: ensureOption(getVal("gender"), allowedGenders, studentDefaults.gender),
       phone: prefer(getVal("phone"), studentDefaults.phone),
       email: prefer(getVal("email"), studentDefaults.email),
       highSchool: prefer(getVal("highSchool"), studentDefaults.highSchool),
@@ -439,9 +440,11 @@ export default function EventRegistrationForm() {
                         <SelectValue placeholder="Chọn giới tính" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="nam">Nam</SelectItem>
-                        <SelectItem value="nu">Nữ</SelectItem>
-                        <SelectItem value="khac">Khác</SelectItem>
+                        {commonMeta.genderOptions?.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   )}

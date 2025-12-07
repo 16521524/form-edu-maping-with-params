@@ -7,6 +7,11 @@
       { "value": "12", "label": "Lớp 12" },
       { "value": "tot-nghiep", "label": "Đã tốt nghiệp" }
     ],
+    "genderOptions": [
+      { "value": "nam", "label": "Nam" },
+      { "value": "nu", "label": "Nữ" },
+      { "value": "khac", "label": "Khác" }
+    ],
     "academicPerformanceOptions": [
       { "value": "gioi", "label": "Giỏi" },
       { "value": "kha", "label": "Khá" },
