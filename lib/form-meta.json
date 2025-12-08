@@ -1,33 +1,87 @@
 {
   "common": {
-    "notificationChannels": ["Email", "Zalo", "Messenger", "Whatsapp"],
+    "notificationChannels": ["email", "zalo", "messenger", "whatsapp"],
     "gradeOptions": [
-      { "value": "10", "label": "Lớp 10" },
-      { "value": "11", "label": "Lớp 11" },
-      { "value": "12", "label": "Lớp 12" },
-      { "value": "tot-nghiep", "label": "Đã tốt nghiệp" }
+      {
+        "value": "10",
+        "label": "Lớp 10"
+      },
+      {
+        "value": "11",
+        "label": "Lớp 11"
+      },
+      {
+        "value": "12",
+        "label": "Lớp 12"
+      },
+      {
+        "value": "graduated",
+        "label": "Đã tốt nghiệp"
+      }
     ],
     "genderOptions": [
-      { "value": "nam", "label": "Nam" },
-      { "value": "nu", "label": "Nữ" },
-      { "value": "khac", "label": "Khác" }
+      {
+        "value": "male",
+        "label": "Nam"
+      },
+      {
+        "value": "female",
+        "label": "Nữ"
+      },
+      {
+        "value": "other",
+        "label": "Khác"
+      }
     ],
     "academicPerformanceOptions": [
-      { "value": "gioi", "label": "Giỏi" },
-      { "value": "kha", "label": "Khá" },
-      { "value": "trung-binh", "label": "Trung bình" }
+      {
+        "value": "excellent",
+        "label": "Giỏi"
+      },
+      {
+        "value": "good",
+        "label": "Khá"
+      },
+      {
+        "value": "ordinary",
+        "label": "Trung bình"
+      }
     ]
   },
   "enrollment": {
     "majorOptions": [
-      { "value": "cong-nghe-thong-tin", "label": "Công nghệ Thông tin" },
-      { "value": "ky-thuat-phan-mem", "label": "Kỹ thuật Phần mềm" },
-      { "value": "khoa-hoc-may-tinh", "label": "Khoa học Máy tính" },
-      { "value": "ai-tri-tue-nhan-tao", "label": "AI – Trí tuệ Nhân tạo" },
-      { "value": "quan-tri-kinh-doanh", "label": "Quản trị Kinh doanh" },
-      { "value": "ke-toan", "label": "Kế toán" },
-      { "value": "marketing", "label": "Marketing" },
-      { "value": "thiet-ke-do-hoa", "label": "Thiết kế Đồ họa" }
+      {
+        "value": "information-technology",
+        "label": "Công nghệ Thông tin"
+      },
+      {
+        "value": "software-engineering",
+        "label": "Kỹ thuật Phần mềm"
+      },
+      {
+        "value": "computer-science",
+        "label": "Khoa học Máy tính"
+      },
+      {
+        "value": "artificial-intelligence",
+        "label": "AI – Trí tuệ Nhân tạo"
+      },
+      {
+        "value": "business-administration",
+        "label": "Quản trị Kinh doanh"
+      },
+      {
+        "value": "accountant",
+        "label": "Kế toán"
+      },
+      {
+        "value": "marketing",
+        "label": "Marketing"
+      },
+      {
+        "value": "design",
+        "label": "Thiết kế Đồ họa"
+      }
     ]
   },
   "event": {
@@ -40,24 +94,66 @@
       "Gặp gỡ giảng viên và sinh viên"
     ],
     "heardFromOptions": [
-      { "value": "facebook", "label": "Facebook" },
-      { "value": "tiktok", "label": "TikTok" },
-      { "value": "instagram", "label": "Instagram" },
-      { "value": "ban-be", "label": "Bạn bè giới thiệu" },
-      { "value": "truong-thpt", "label": "Trường THPT" },
-      { "value": "website", "label": "Website trường" },
-      { "value": "bao-chi", "label": "Báo chí / Truyền thông" },
-      { "value": "khac", "label": "Khác" }
+      {
+        "value": "facebook",
+        "label": "Facebook"
+      },
+      {
+        "value": "tiktok",
+        "label": "TikTok"
+      },
+      {
+        "value": "instagram",
+        "label": "Instagram"
+      },
+      {
+        "value": "ban-be",
+        "label": "Bạn bè giới thiệu"
+      },
+      {
+        "value": "truong-thpt",
+        "label": "Trường THPT"
+      },
+      {
+        "value": "website",
+        "label": "Website trường"
+      },
+      {
+        "value": "bao-chi",
+        "label": "Báo chí / Truyền thông"
+      },
+      {
+        "value": "khac",
+        "label": "Khác"
+      }
     ],
     "eventSlotOptions": [
-      { "value": "sang", "label": "Buổi sáng (8:00 - 12:00)" },
-      { "value": "chieu", "label": "Buổi chiều (13:30 - 17:30)" },
-      { "value": "ca-ngay", "label": "Cả ngày" }
+      {
+        "value": "sang",
+        "label": "Buổi sáng (8:00 - 12:00)"
+      },
+      {
+        "value": "chieu",
+        "label": "Buổi chiều (13:30 - 17:30)"
+      },
+      {
+        "value": "ca-ngay",
+        "label": "Cả ngày"
+      }
     ],
     "parentRelationOptions": [
-      { "value": "cha", "label": "Cha" },
-      { "value": "me", "label": "Mẹ" },
-      { "value": "nguoi-giam-ho", "label": "Người giám hộ" }
+      {
+        "value": "father",
+        "label": "Cha"
+      },
+      {
+        "value": "mother",
+        "label": "Mẹ"
+      },
+      {
+        "value": "occupation",
+        "label": "Người giám hộ"
+      }
     ],
     "eventSessions": [
       {
