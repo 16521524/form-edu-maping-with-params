@@ -107,6 +107,7 @@ export default function EventRegistrationForm() {
     const hasParams = query.length > 0
     if (!hasParams) {
       reset(initialFormData)
+      setIsHydrating(false)
       hasHydrated.current = true
       return
     }
