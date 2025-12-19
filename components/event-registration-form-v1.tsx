@@ -324,8 +324,14 @@ export default function EventRegistrationForm() {
     setValue("eventSlot", firstSession?.slotValue || "")
   }
 
-  const requiredPersonalFields: (keyof FormData)[] = ["fullName", "phone", "email", "highSchool"]
-  const requiredFields = requiredPersonalFields
+  const requiredPersonalFields: (keyof FormData)[] = ["fullName", "birthDate", "nationalId", "gender", "phone", "email", "highSchool", "gradeLevel"]
+  const requiredParentFields: (keyof FormData)[] = ["parentName", "parentPhone", "parentRelation"]
+  const requiredEventFields: (keyof FormData)[] = ["eventName", "heardFrom"]
+  const requiredClubFields: (keyof FormData)[] = ["clubName"]
+  const requiredFields = [
+    ...requiredEventFields,
+    ...(formData.consentUseInfo ? [...requiredPersonalFields, ...requiredParentFields, ...requiredClubFields] : []),
+  ]
 
   const requiredFieldsFilled = requiredFields.every((field) => {
     const value = formData[field]
@@ -334,7 +340,7 @@ export default function EventRegistrationForm() {
     return Boolean(value)
   })
 
-  const isSubmitEnabled = requiredFieldsFilled
+  const isSubmitEnabled = requiredFieldsFilled && formData.confirmAccuracy
   const isPersonalSectionDisabled = !formData.consentUseInfo
 
   const onSubmit = (data: FormData) =>
@@ -405,25 +411,27 @@ export default function EventRegistrationForm() {
                 />
               </div>
               <div>
-                <Label htmlFor="birthDate">Ngày tháng năm sinh</Label>
+                <Label htmlFor="birthDate">Ngày tháng năm sinh *</Label>
                 <Input
                   id="birthDate"
                   type="date"
+                  required={formData.consentUseInfo}
                   disabled={isPersonalSectionDisabled}
                   {...register("birthDate")}
                 />
               </div>
               <div>
-                <Label htmlFor="nationalId">CCCD</Label>
+                <Label htmlFor="nationalId">CCCD *</Label>
                 <Input
                   id="nationalId"
                   placeholder="Số căn cước công dân"
+                  required={formData.consentUseInfo}
                   disabled={isPersonalSectionDisabled}
                   {...register("nationalId")}
                 />
               </div>
               <div>
-                <Label htmlFor="gender">Giới tính</Label>
+                <Label htmlFor="gender">Giới tính *</Label>
                 <Controller
                   name="gender"
                   control={control}
@@ -476,7 +484,7 @@ export default function EventRegistrationForm() {
                 />
               </div>
               <div>
-                <Label htmlFor="gradeLevel">Lớp hiện tại</Label>
+                <Label htmlFor="gradeLevel">Lớp hiện tại *</Label>
                 <Controller
                   name="gradeLevel"
                   control={control}
@@ -519,20 +527,22 @@ export default function EventRegistrationForm() {
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <Label htmlFor="parentName">Họ và tên phụ huynh</Label>
+                <Label htmlFor="parentName">Họ và tên phụ huynh *</Label>
                 <Input
                   id="parentName"
                   placeholder="Nguyễn Văn B..."
+                  required={formData.consentUseInfo}
                   disabled={isPersonalSectionDisabled}
                   {...register("parentName")}
                 />
               </div>
               <div>
-                <Label htmlFor="parentPhone">Số điện thoại</Label>
+                <Label htmlFor="parentPhone">Số điện thoại *</Label>
                 <Input
                   id="parentPhone"
                   type="tel"
                   placeholder="090xxxxxxx"
+                  required={formData.consentUseInfo}
                   disabled={isPersonalSectionDisabled}
                   {...register("parentPhone")}
                 />
@@ -548,7 +558,7 @@ export default function EventRegistrationForm() {
                 />
               </div>
               <div>
-                <Label htmlFor="parentRelation">Mối quan hệ</Label>
+                <Label htmlFor="parentRelation">Mối quan hệ *</Label>
                 <Controller
                   name="parentRelation"
                   control={control}
@@ -586,6 +596,7 @@ export default function EventRegistrationForm() {
                 <Input
                   id="clubName"
                   placeholder="Câu lạc bộ Robotics"
+                  disabled={isPersonalSectionDisabled}
                   {...register("clubName")}
                 />
                 <p className="text-xs text-muted-foreground mt-1">* Được tự động điền dựa trên link đăng ký câu lạc bộ</p>
@@ -675,7 +686,7 @@ export default function EventRegistrationForm() {
                 </div>
               </div>
               <div>
-                <Label htmlFor="heardFrom">Bạn biết đến sự kiện qua đâu?</Label>
+                <Label htmlFor="heardFrom">Bạn biết đến sự kiện qua đâu? *</Label>
                 <Controller
                   name="heardFrom"
                   control={control}
@@ -736,7 +747,7 @@ export default function EventRegistrationForm() {
                 </Label>
               </div>
               <p className="italic text-sm text-muted-foreground">
-                Vui lòng hoàn thành đầy đủ các thông tin bắt buộc (*) trước khi hoàn tất đăng ký.
+                Vui lòng hoàn thành đầy đủ các thông tin bắt buộc (*) trước khi gửi đăng ký.
               </p>
             </CardContent>
           </Card>

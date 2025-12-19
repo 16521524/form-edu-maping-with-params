@@ -291,7 +291,20 @@ export default function EnrollmentForm() {
     setValue("notifyVia", next)
   }
 
-  const requiredFields: (keyof FormData)[] = ["fullName", "phone", "email", "highSchool", "majorPreference1"]
+  const requiredFields: (keyof FormData)[] = [
+    "fullName",
+    "birthDate",
+    "nationalId",
+    "gender",
+    "phone",
+    "email",
+    "address",
+    "highSchool",
+    "gradeLevel",
+    "academicPerformance",
+    "gpa",
+    "majorPreference1",
+  ]
 
   const requiredFieldsFilled = requiredFields.every((field) => {
     const value = formData[field]
@@ -300,7 +313,7 @@ export default function EnrollmentForm() {
     return Boolean(value)
   })
 
-  const isSubmitEnabled = requiredFieldsFilled
+  const isSubmitEnabled = requiredFieldsFilled && formData.confirmAccuracy
 
   const onSubmit = (data: FormData) =>
     new Promise<void>((resolve) => {
@@ -354,15 +367,15 @@ export default function EnrollmentForm() {
                 <Input id="fullName" placeholder="Nguyễn Văn A" required {...register("fullName")} />
               </div>
               <div>
-                <Label htmlFor="birthDate">Ngày tháng năm sinh</Label>
-                <Input id="birthDate" type="date" {...register("birthDate")} />
+                <Label htmlFor="birthDate">Ngày tháng năm sinh *</Label>
+                <Input id="birthDate" type="date" required {...register("birthDate")} />
               </div>
               <div>
-                <Label htmlFor="nationalId">Căn cước công dân</Label>
-                <Input id="nationalId" type="text" placeholder="Căn cước công dân" {...register("nationalId")} />
+                <Label htmlFor="nationalId">Căn cước công dân *</Label>
+                <Input id="nationalId" type="text" placeholder="Căn cước công dân" required {...register("nationalId")} />
               </div>
               <div>
-                <Label htmlFor="gender">Giới tính</Label>
+                <Label htmlFor="gender">Giới tính *</Label>
                 <Controller
                   name="gender"
                   control={control}
@@ -395,8 +408,13 @@ export default function EnrollmentForm() {
                 <Input id="socialLink" placeholder="https://facebook.com/tenban" {...register("socialLink")} />
               </div>
               <div className="sm:col-span-2">
-                <Label htmlFor="address">Địa chỉ liên hệ</Label>
-                <Textarea id="address" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" {...register("address")} />
+                <Label htmlFor="address">Địa chỉ liên hệ *</Label>
+                <Textarea
+                  id="address"
+                  placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
+                  required
+                  {...register("address")}
+                />
               </div>
             </CardContent>
           </Card>
@@ -416,7 +434,7 @@ export default function EnrollmentForm() {
                 <Input id="highSchool" placeholder="Trường THPT..." required {...register("highSchool")} />
               </div>
               <div>
-                <Label htmlFor="gradeLevel">Lớp hiện tại</Label>
+                <Label htmlFor="gradeLevel">Lớp hiện tại *</Label>
                 <Controller
                   name="gradeLevel"
                   control={control}
@@ -437,7 +455,7 @@ export default function EnrollmentForm() {
                 />
               </div>
               <div>
-                <Label htmlFor="academicPerformance">Học lực</Label>
+                <Label htmlFor="academicPerformance">Học lực *</Label>
                 <Controller
                   name="academicPerformance"
                   control={control}
@@ -458,8 +476,8 @@ export default function EnrollmentForm() {
                 />
               </div>
               <div>
-                <Label htmlFor="gpa">Điểm trung bình</Label>
-                <Input id="gpa" type="number" step="0.1" min="0" max="10" placeholder="8.5" {...register("gpa")} />
+                <Label htmlFor="gpa">Điểm trung bình *</Label>
+                <Input id="gpa" type="number" step="0.1" min="0" max="10" placeholder="8.5" required {...register("gpa")} />
               </div>
               <div>
                 <Label htmlFor="strongSubjects">Môn học mạnh</Label>
@@ -538,7 +556,7 @@ export default function EnrollmentForm() {
                 </Label>
               </div>
               <p className="italic text-sm text-muted-foreground">
-                Vui lòng hoàn thành đầy đủ các thông tin bắt buộc (*) trước khi hoàn tất đăng ký.
+                Vui lòng hoàn thành đầy đủ các thông tin bắt buộc (*) trước khi gửi đăng ký.
               </p>
             </CardContent>
           </Card>
@@ -554,7 +572,7 @@ export default function EnrollmentForm() {
               Đang gửi...
             </span>
           ) : (
-            "Hoàn tất đăng ký"
+            "Gửi đăng ký"
           )}
         </Button>
         </form>
