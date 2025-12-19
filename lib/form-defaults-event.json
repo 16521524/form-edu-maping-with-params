@@ -24,7 +24,7 @@
     "heardFrom": "facebook"
   },
   "defaultsConfig": {
-    "notifyVia": ["Email"],
+    "notifyVia": ["email"],
     "eventObjectives": ["Tìm hiểu về các ngành học"],
     "consentUseInfo": true,
     "confirmAccuracy": false
