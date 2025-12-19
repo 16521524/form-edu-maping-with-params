@@ -3,7 +3,7 @@
     "fullName": "Nguyễn Văn T.",
     "birthDate": "2007-02-21",
     "nationalId": "079203000123",
-    "gender": "nam",
+    "gender": "male",
     "phone": "0901234567",
     "email": "nguyenvant@email.com",
     "highSchool": "Trường THPT Ngô Quyền",
@@ -14,7 +14,7 @@
     "parentName": "Nguyễn Văn B.",
     "parentPhone": "0912345678",
     "parentEmail": "phuhuynh@example.com",
-    "parentRelation": "cha"
+    "parentRelation": "father"
   },
   "eventPreference": {
     "clubName": "Câu lạc bộ Robotics",

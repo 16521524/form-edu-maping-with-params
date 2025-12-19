@@ -3,7 +3,7 @@
     "fullName": "Nguyễn Văn T.",
     "birthDate": "2007-02-21",
     "nationalId": "079203000123",
-    "gender": "nam",
+    "gender": "male",
     "phone": "0901234567",
     "email": "nguyenvant@email.com",
     "address": "1360 Huỳnh Tấn Phát, Khu phố 1, Phường Tân Mỹ, TP Hồ Chí Minh, Việt Nam",
@@ -20,7 +20,7 @@
     "majorPreference3": "Ngành Quản trị Kinh doanh"
   },
   "defaultsConfig": {
-    "notifyVia": ["Email"],
+    "notifyVia": ["email"],
     "confirmAccuracy": false
   }
 }
