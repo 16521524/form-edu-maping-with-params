@@ -1,0 +1,27 @@
+{
+  "fullName": "Nguyen Thi B",
+  "birthDate": "2007-08-15",
+  "gender": "Nữ",
+  "address": "1360 Huỳnh Tấn Phát, Quận 7, TP Hồ Chí Minh",
+  "phone": "091234523",
+  "nationalId": "07912345611",
+  "email": "vana@example.com",
+  "socialLink": "https://google.com",
+  "eventCode": "CAMPAIGN-00992",
+  "city": "Thành phố Hồ Chí Minh",
+  "school": "THPT Lê Hồng Phong",
+  "gradeLevel": "12",
+  "academicPerformance": "Khá",
+  "gpa": "8.5",
+  "aspirations": [
+    "Học toàn thời gian tại trường",
+    "Ưu tiên học buổi sáng",
+    "Công nghệ thông tin"
+  ],
+  "notifyVia": "email",
+  "socials": [
+    { "platform": "Facebook", "link_profile": "https://facebook.com/vanatest" },
+    { "platform": "Zalo", "link_profile": "https://zalo.me/vanatest" }
+  ],
+  "confirmAccuracy": true
+}
