@@ -35,7 +35,7 @@ type FormData = {
   nationalId: string;
   email: string;
   socialLink: string;
-  eventCode: string;
+  utmCampaign: string;
   city: string;
   school: string;
   gradeLevel: string;
@@ -56,7 +56,7 @@ const initialFormData: FormData = {
   nationalId: "",
   email: "",
   socialLink: "",
-  eventCode: "",
+  utmCampaign: "",
   city: "",
   school: "",
   gradeLevel: "",
@@ -181,7 +181,7 @@ export default function CareerConsultationForm() {
       nationalId: getVal("nationalId"),
       email: getVal("email"),
       socialLink: getVal("socialLink"),
-      eventCode: getVal("eventCode"),
+      utmCampaign: getVal("utmCampaign"),
       city: getVal("city"),
       school: getVal("school"),
       gradeLevel: getVal("gradeLevel"),
@@ -232,7 +232,7 @@ export default function CareerConsultationForm() {
       nationalId: prefer(mappedData.nationalId, initialFormData.nationalId),
       email: prefer(mappedData.email, initialFormData.email),
       socialLink: prefer(mappedData.socialLink, initialFormData.socialLink),
-      eventCode: prefer(mappedData.eventCode, initialFormData.eventCode),
+      utmCampaign: prefer(mappedData.utmCampaign, initialFormData.utmCampaign),
       city: prefer(mappedData.city, initialFormData.city),
       school: prefer(mappedData.school, initialFormData.school),
       gradeLevel: ensureOption(
@@ -302,7 +302,7 @@ export default function CareerConsultationForm() {
     addParam("nationalId", formData.nationalId);
     addParam("email", formData.email);
     addParam("socialLink", formData.socialLink);
-    addParam("eventCode", formData.eventCode);
+    addParam("utmCampaign", formData.utmCampaign);
     addParam("city", formData.city);
     addParam("school", formData.school);
     addParam("gradeLevel", formData.gradeLevel);
@@ -370,10 +370,10 @@ export default function CareerConsultationForm() {
           performance: data.academicPerformance,
           preferences: data.aspirations || [],
           certificates: [],
-          campaign: data.eventCode || undefined,
+          utm_campaign: data.utmCampaign || undefined,
           social_link: data.socialLink,
           notify_vias: data.notifyVia || [],
-          social: socials
+          socials: socials
             .filter((s) => s.platform || s.link_profile)
             .map((s) => ({ platform: s.platform, link_profile: s.link_profile })),
         };
@@ -616,7 +616,7 @@ export default function CareerConsultationForm() {
             </div>
           </section>
 
-          <input type="hidden" {...register("eventCode")} />
+          <input type="hidden" {...register("utmCampaign")} />
 
           <section className={panelClass}>
             <div className="space-y-3 p-4">

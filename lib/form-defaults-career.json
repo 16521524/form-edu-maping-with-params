@@ -7,7 +7,7 @@
   "nationalId": "07912345611",
   "email": "vana@example.com",
   "socialLink": "https://google.com",
-  "eventCode": "CAMPAIGN-00992",
+  "utmCampaign": "CAMPAIGN-00992",
   "city": "Thành phố Hồ Chí Minh",
   "school": "THPT Lê Hồng Phong",
   "gradeLevel": "12",
