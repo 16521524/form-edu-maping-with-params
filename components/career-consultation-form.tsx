@@ -85,6 +85,13 @@ const inputClass =
 const selectClass =
   "h-11 w-full rounded-[10px] border border-[#cfd6e1] bg-white px-4 pr-12 text-[13px] font-medium text-slate-800 placeholder:text-[#aeb7c3] leading-[22px] shadow-[inset_0_1px_0_rgba(0,0,0,0.04)] focus:border-[#1f3f77] focus:ring-2 focus:ring-[#1f3f77]/15";
 
+const SOCIAL_OPTIONS = [
+  { value: "Facebook", label: "Facebook", icon: "/social/facebook.png" },
+  { value: "Zalo", label: "Zalo", icon: "/social/zalo.png" },
+  // { value: "TikTok", label: "TikTok", icon: "/social/tiktok.png" },
+  { value: "WhatsApp", label: "WhatsApp", icon: "/social/whatsapp.png" },
+];
+
 export default function CareerConsultationForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -119,6 +126,7 @@ export default function CareerConsultationForm() {
   const [showAspirationDropdown, setShowAspirationDropdown] = useState(false);
   const birthInputRef = useRef<HTMLInputElement | null>(null);
   const [socials, setSocials] = useState<{ platform: string; link_profile: string }[]>([]);
+  const [openSocialIndex, setOpenSocialIndex] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -616,35 +624,81 @@ export default function CareerConsultationForm() {
                 {socials.map((social, idx) => (
                   <div key={`${social.platform}-${idx}`} className="grid grid-cols-12 gap-2 items-center">
                     <div className="col-span-5 relative">
-                      <select
-                        value={social.platform}
-                        onChange={(e) => {
-                          const next = [...socials]
-                          next[idx] = { ...next[idx], platform: e.target.value }
-                          setSocials(next)
-                        }}
-                        className={cn(selectClass, "appearance-none leading-tight h-11 pr-10")}
+                      <button
+                        type="button"
+                        onClick={() => setOpenSocialIndex(openSocialIndex === idx ? null : idx)}
+                        className={cn(
+                          selectClass,
+                          "flex items-center gap-2 pr-10 text-left",
+                          openSocialIndex === idx && "border-[#1f3f77] ring-2 ring-[#1f3f77]/15"
+                        )}
                       >
-                        <option value="">Nền tảng</option>
-                        {["Facebook", "Zalo", "TikTok", "Instagram", "YouTube", "LinkedIn"].map((p) => (
-                          <option key={p} value={p}>
-                            {p}
-                          </option>
-                        ))}
-                      </select>
+                        {social.platform ? (
+                          <>
+                            <SocialIcon value={social.platform} />
+                            <span>{SOCIAL_OPTIONS.find((s) => s.value === social.platform)?.label || social.platform}</span>
+                          </>
+                        ) : (
+                          <span className="text-[#aeb7c3]">Nền tảng</span>
+                        )}
+                      </button>
                       <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                      {openSocialIndex === idx && (
+                        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
+                          {SOCIAL_OPTIONS.map((option) => (
+                            <button
+                              type="button"
+                              key={option.value}
+                              className={cn(
+                                "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-100",
+                                social.platform === option.value && "bg-[#eaf0ff]"
+                              )}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                const next = [...socials];
+                                next[idx] = { ...next[idx], platform: option.value };
+                                setSocials(next);
+                                setOpenSocialIndex(null);
+                              }}
+                            >
+                              <SocialIcon value={option.value} />
+                              <span>{option.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="col-span-6">
-                      <Input
-                        value={social.link_profile}
-                        placeholder="Dán link profile"
-                        onChange={(e) => {
-                          const next = [...socials]
-                          next[idx] = { ...next[idx], link_profile: e.target.value }
-                          setSocials(next)
-                        }}
-                        className={cn(inputClass, "h-11")}
-                      />
+                      {(() => {
+                        const platform = social.platform;
+                        const placeholder =
+                          platform === "Facebook"
+                            ? "Dán link profile Facebook"
+                            : platform === "Zalo"
+                              ? "Nhập số điện thoại Zalo"
+                              : platform === "TikTok"
+                                ? "Nhập link hoặc ID TikTok"
+                                : platform === "WhatsApp"
+                                  ? "Nhập số điện thoại WhatsApp"
+                                  : "Dán link profile";
+                        const isPhone = platform === "Zalo" || platform === "WhatsApp";
+                        const inputMode = isPhone ? "tel" : undefined;
+                        const type = isPhone ? "tel" : "text";
+                        return (
+                          <Input
+                            value={social.link_profile}
+                            placeholder={placeholder}
+                            type={type}
+                            inputMode={inputMode}
+                            onChange={(e) => {
+                              const next = [...socials]
+                              next[idx] = { ...next[idx], link_profile: e.target.value }
+                              setSocials(next)
+                            }}
+                            className={cn(inputClass, "h-11")}
+                          />
+                        )
+                      })()}
                     </div>
                     <div className="col-span-1 flex items-center justify-end pr-1">
                       <button
@@ -976,4 +1030,10 @@ function NotificationPill({ label, active, onClick }: NotificationPillProps) {
       {label}
     </button>
   );
+}
+function SocialIcon({ value }: { value: string }) {
+  const sizeClass = "h-5 w-5 rounded-full object-contain";
+  const src = SOCIAL_OPTIONS.find((s) => s.value === value)?.icon;
+  if (!src) return null;
+  return <Image src={src} alt={value} width={20} height={20} className={sizeClass} />;
 }
