@@ -420,7 +420,6 @@ export default function CareerConsultationForm() {
           preferences: data.aspirations || [],
           certificates: [],
           utm_campaign: data.utmCampaign || undefined,
-          social_link: data.socialLink,
           notify_vias: data.notifyVia || [],
           socials: socials
             .filter((s) => s.platform || s.link_profile)
