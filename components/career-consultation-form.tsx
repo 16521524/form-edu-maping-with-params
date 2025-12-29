@@ -76,8 +76,10 @@ const initialFormData: FormData = {
 
 const panelClass =
   "rounded-lg border border-[#e2e7ef] bg-white shadow-[0_8px_22px_rgba(31,63,119,0.06)]";
+
 const inputClass =
   "h-11 w-full rounded-lg border border-[#d7dde7] bg-white text-[15px] text-slate-800 placeholder:text-[#a8afbb] shadow-[inset_0_1px_0_rgba(0,0,0,0.04)] focus:border-[#1f3f77] focus:ring-2 focus:ring-[#1f3f77]/15";
+
 const selectClass =
   "h-11 w-full rounded-[10px] border border-[#cfd6e1] bg-white px-4 pr-12 text-[13px] font-medium text-slate-800 placeholder:text-[#aeb7c3] leading-[22px] shadow-[inset_0_1px_0_rgba(0,0,0,0.04)] focus:border-[#1f3f77] focus:ring-2 focus:ring-[#1f3f77]/15";
 
