@@ -38,7 +38,6 @@ type FormData = {
   phone: string;
   nationalId: string;
   email: string;
-  socialLink: string;
   utmCampaign: string;
   utmSales: string;
   city: string;
@@ -60,7 +59,6 @@ const initialFormData: FormData = {
   phone: "",
   nationalId: "",
   email: "",
-  socialLink: "",
   utmCampaign: "",
   utmSales: "",
   city: "",
@@ -234,7 +232,6 @@ export default function CareerConsultationForm() {
       phone: getVal("phone"),
       nationalId: getVal("nationalId"),
       email: getVal("email"),
-      socialLink: getVal("socialLink"),
       utmCampaign: getVal("utmCampaign"),
       utmSales: getVal("utmSales"),
       city: getVal("city"),
@@ -287,7 +284,6 @@ export default function CareerConsultationForm() {
       phone: prefer(mappedData.phone, initialFormData.phone),
       nationalId: prefer(mappedData.nationalId, initialFormData.nationalId),
       email: prefer(mappedData.email, initialFormData.email),
-      socialLink: prefer(mappedData.socialLink, initialFormData.socialLink),
       utmCampaign: prefer(mappedData.utmCampaign, initialFormData.utmCampaign),
       utmSales: prefer(mappedData.utmSales, initialFormData.utmSales),
       city: prefer(mappedData.city, initialFormData.city),
@@ -362,7 +358,6 @@ export default function CareerConsultationForm() {
     addParam("phone", formData.phone);
     addParam("nationalId", formData.nationalId);
     addParam("email", formData.email);
-    addParam("socialLink", formData.socialLink);
     addParam("utmCampaign", formData.utmCampaign);
     addParam("utmSales", formData.utmSales);
     addParam("city", formData.city);

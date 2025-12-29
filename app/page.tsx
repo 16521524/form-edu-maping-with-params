@@ -123,7 +123,7 @@ export default function HomePage() {
 
               <p className="font-semibold mt-4 mb-2 font-sans">Form Đăng ký tư vấn hướng nghiệp:</p>
               <code className="text-xs break-all">
-                ?fullName=...&birthDate=...&gender=...&address=...&phone=...&nationalId=...&email=...&socialLink=...&utmCampaign=...&city=...&school=...&gradeLevel=...&academicPerformance=...&gpa=...&aspirations=...&notifyVia=...&confirmAccuracy=true
+                ?fullName=...&birthDate=...&gender=...&address=...&phone=...&nationalId=...&email=...&utmCampaign=...&city=...&school=...&gradeLevel=...&academicPerformance=...&gpa=...&aspirations=...&notifyVia=...&confirmAccuracy=true
               </code>
             </div>
           </CardContent>
