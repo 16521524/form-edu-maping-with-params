@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server"
 
-const CAREER_POST_ENDPOINT = "https://erpnext.aurora-tech.com/api/method/lead.create_lead"
-const CAREER_POST_TOKEN = process.env.NEXT_PUBLIC_CAREER_TOKEN || "token 7c0403719248098:c307a8d2994c052"
+const FRAPPE_BASE_URL = process.env.NEXT_PUBLIC_FRAPPE_BASE_URL || 'https://erpnext.aurora-tech.com';
+
+const CAREER_POST_ENDPOINT =
+  `${FRAPPE_BASE_URL}/api/method/lead.create_lead`;
+  
+const CAREER_POST_TOKEN = process.env.NEXT_PUBLIC_FRAPPE_TOKEN || "token 7c0403719248098:c307a8d2994c052"
 
 export async function POST(req: Request): Promise<NextResponse> {
   try {

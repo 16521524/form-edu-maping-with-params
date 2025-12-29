@@ -19,7 +19,11 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { getMetadataCareer, postCareerLead } from "@/servers";
+import {
+  getMetadataCareer,
+  postCareerLead,
+  updateCampaignTotalScans,
+} from "@/servers";
 
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
@@ -85,6 +89,7 @@ export default function CareerConsultationForm() {
   const hasHydrated = useRef(false);
   const skipNextSync = useRef(false);
   const hydratedSnapshot = useRef<FormData | null>(null);
+  const campaignScanTracked = useRef(false);
   const [isHydrating, setIsHydrating] = useState(true);
   const {
     register,
@@ -141,6 +146,33 @@ export default function CareerConsultationForm() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    const campaignName = searchParams.get("utmCampaign");
+    if (!campaignName) return;
+
+    const storageKey = `campaign-scan-${campaignName}`;
+    if (campaignScanTracked.current) return;
+
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem(storageKey)) {
+      campaignScanTracked.current = true;
+      return;
+    }
+
+    const trackScan = async () => {
+      try {
+        campaignScanTracked.current = true;
+        await updateCampaignTotalScans(campaignName);
+        localStorage.setItem(storageKey, "1");
+      } catch (err) {
+        campaignScanTracked.current = false;
+        console.error("Failed to update campaign scan", err);
+      }
+    };
+
+    trackScan();
+  }, [searchParams]);
 
   useEffect(() => {
     if (!metaReady) return;

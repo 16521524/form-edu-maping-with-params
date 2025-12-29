@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server"
 
-const CAREER_META_ENDPOINT = "https://erpnext.aurora-tech.com/api/method/edu_frappe_api.api.lead.get_metadata_form"
+const FRAPPE_BASE_URL = process.env.NEXT_PUBLIC_FRAPPE_BASE_URL || 'https://erpnext.aurora-tech.com';
+
+const CAREER_META_ENDPOINT =
+  `${FRAPPE_BASE_URL}/method/edu_frappe_api.api.lead.get_metadata_form`;
 
 export async function GET(): Promise<NextResponse> {
   try {
