@@ -39,6 +39,7 @@ type FormData = {
   nationalId: string;
   email: string;
   utmCampaign: string;
+  utmCampaignQr: string;
   utmSales: string;
   city: string;
   school: string;
@@ -60,6 +61,7 @@ const initialFormData: FormData = {
   nationalId: "",
   email: "",
   utmCampaign: "",
+  utmCampaignQr: "",
   utmSales: "",
   city: "",
   school: "",
@@ -233,6 +235,7 @@ export default function CareerConsultationForm() {
       nationalId: getVal("nationalId"),
       email: getVal("email"),
       utmCampaign: getVal("utmCampaign"),
+      utmCampaignQr: getVal("utmCampaignQr"),
       utmSales: getVal("utmSales"),
       city: getVal("city"),
       school: getVal("school"),
@@ -285,6 +288,7 @@ export default function CareerConsultationForm() {
       nationalId: prefer(mappedData.nationalId, initialFormData.nationalId),
       email: prefer(mappedData.email, initialFormData.email),
       utmCampaign: prefer(mappedData.utmCampaign, initialFormData.utmCampaign),
+      utmCampaignQr: prefer(mappedData.utmCampaignQr, initialFormData.utmCampaignQr),
       utmSales: prefer(mappedData.utmSales, initialFormData.utmSales),
       city: prefer(mappedData.city, initialFormData.city),
       school: ensureOption(
@@ -359,6 +363,7 @@ export default function CareerConsultationForm() {
     addParam("nationalId", formData.nationalId);
     addParam("email", formData.email);
     addParam("utmCampaign", formData.utmCampaign);
+    addParam("utmCampaignQr", formData.utmCampaignQr);
     addParam("utmSales", formData.utmSales);
     addParam("city", formData.city);
     addParam("school", formData.school);
@@ -428,6 +433,7 @@ export default function CareerConsultationForm() {
           preferences: data.aspirations || [],
           certificates: [],
           utm_campaign: data.utmCampaign || undefined,
+          utm_campaign_qr: data.utmCampaignQr || undefined,
           utm_sales: data.utmSales || undefined,
           notify_vias: data.notifyVia || [],
           socials: socials
@@ -720,6 +726,7 @@ export default function CareerConsultationForm() {
           </section>
 
           <input type="hidden" {...register("utmCampaign")} />
+          <input type="hidden" {...register("utmCampaignQr")} />
           <input type="hidden" {...register("utmSales")} />
 
           <section className={panelClass}>

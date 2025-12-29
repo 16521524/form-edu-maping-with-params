@@ -17,6 +17,7 @@ export type CareerLeadPayload = {
   certificates: string[]
   campaign?: string
   utm_campaign?: string
+  utm_campaign_qr?: string
   utm_sales?: string
 }
 
