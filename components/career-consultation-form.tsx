@@ -103,7 +103,10 @@ export default function CareerConsultationForm() {
   const [metaOptions, setMetaOptions] = useState<{
     genders: string[];
     preferences: string[];
-  }>({ genders: [], preferences: [] });
+    states: string[];
+    schools: { value: string; display: string }[];
+  }>({ genders: [], preferences: [], states: [], schools: [] });
+  const [metaReady, setMetaReady] = useState(false);
   const [showAspirationDropdown, setShowAspirationDropdown] = useState(false);
   const birthInputRef = useRef<HTMLInputElement | null>(null);
   const [socials, setSocials] = useState<{ platform: string; link_profile: string }[]>([]);
@@ -117,6 +120,8 @@ export default function CareerConsultationForm() {
         setMetaOptions({
           genders: json.data.genders || [],
           preferences: json.data.preferences || [],
+          states: json.data.states || [],
+          schools: json.data.schools || [],
         });
       } catch (err) {
         console.warn("Could not load metadata, fallback to formMeta", err);
@@ -124,7 +129,11 @@ export default function CareerConsultationForm() {
           genders: formMeta.common.genderOptions.map((o) => o.label) || [],
           preferences:
             formMeta.enrollment.majorOptions?.map((o) => o.label) || [],
+          states: [],
+          schools: [],
         });
+      } finally {
+        if (active) setMetaReady(true);
       }
     };
     loadMeta();
@@ -134,6 +143,7 @@ export default function CareerConsultationForm() {
   }, []);
 
   useEffect(() => {
+    if (!metaReady) return;
     const query = searchParams.toString();
     if (query === lastQuery.current && hasHydrated.current) return;
     lastQuery.current = query;
@@ -204,6 +214,7 @@ export default function CareerConsultationForm() {
     const allowedAcademic = (
       formMeta.common.academicPerformanceOptions ?? []
     ).map((o) => o.value);
+    const allowedSchools = (metaOptions.schools ?? []).map((s) => s.value);
     const allowedNotification = formMeta.common.notificationChannels ?? [];
     const resolvedAspirations = (
       mappedData.aspirations ??
@@ -234,7 +245,11 @@ export default function CareerConsultationForm() {
       socialLink: prefer(mappedData.socialLink, initialFormData.socialLink),
       utmCampaign: prefer(mappedData.utmCampaign, initialFormData.utmCampaign),
       city: prefer(mappedData.city, initialFormData.city),
-      school: prefer(mappedData.school, initialFormData.school),
+      school: ensureOption(
+        mappedData.school,
+        allowedSchools,
+        initialFormData.school
+      ),
       gradeLevel: ensureOption(
         mappedData.gradeLevel,
         allowedGrades,
@@ -260,7 +275,7 @@ export default function CareerConsultationForm() {
     setAspirationInput("");
     setIsHydrating(false);
     hasHydrated.current = true;
-  }, [searchParams, reset, metaOptions]);
+  }, [searchParams, reset, metaOptions, metaReady]);
 
   useEffect(() => {
     if (!hasHydrated.current) return;
@@ -635,7 +650,10 @@ export default function CareerConsultationForm() {
               <LabeledInput
                 label="Trường học"
                 inputProps={{
-                  ...register("school"),
+                  value:
+                    metaOptions.schools.find(
+                      (s) => s.value === formData.school
+                    )?.display || formData.school,
                   className: cn(
                     inputClass,
                     "bg-[#d7dbe2] text-slate-700 border-transparent"
@@ -643,6 +661,7 @@ export default function CareerConsultationForm() {
                   readOnly: true,
                 }}
               />
+              <input type="hidden" {...register("school")} />
 
               <div className="grid grid-cols-1 gap-3">
                 <div className="space-y-2">
