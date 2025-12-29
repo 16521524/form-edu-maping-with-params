@@ -1,0 +1,381 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Pin } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { leads as defaultLeads, type Lead } from "./data";
+import {
+  getCoreRowModel,
+  useReactTable,
+  type ColumnDef,
+  type ColumnPinningState,
+} from "@tanstack/react-table";
+
+type Props = {
+  leads?: Lead[];
+};
+
+export function MobileTable({ leads = defaultLeads }: Props) {
+  const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
+    left: ["stt", "name"],
+    right: [],
+  });
+  const [atEnd, setAtEnd] = useState(false);
+  const [atStart, setAtStart] = useState(true);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const columns = useMemo<ColumnDef<Lead, any>[]>(
+    () => [
+      {
+        id: "stt",
+        header: "STT",
+        size: 90,
+        minSize: 80,
+        cell: ({ row }) => (
+          <span className="flex items-center gap-2">{row.index + 1}</span>
+        ),
+      },
+      {
+        accessorKey: "name",
+        header: "Name",
+        size: 190,
+        minSize: 160,
+        cell: ({ row }) => (
+          <a
+            href="#"
+            className="underline decoration-[1.5px] underline-offset-[3px] font-semibold text-[#1C3055]"
+          >
+            {row.original.name}
+          </a>
+        ),
+      },
+      {
+        accessorKey: "role",
+        header: "Role",
+        size: 150,
+        cell: ({ row }) => (
+          <span className="font-semibold">{row.original.role}</span>
+        ),
+      },
+      {
+        accessorKey: "stage",
+        header: "Stage",
+        size: 170,
+        cell: ({ row }) => (
+          <span className="font-semibold">{row.original.stage}</span>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        size: 160,
+        cell: ({ row }) => <StatusPill value={row.original.status} />,
+      },
+      {
+        accessorKey: "source",
+        header: "Source",
+        size: 130,
+        cell: ({ row }) => (
+          <span className="font-semibold">{row.original.source}</span>
+        ),
+      },
+      {
+        accessorKey: "segment",
+        header: "Current Segment",
+        size: 260,
+        cell: ({ row }) => (
+          <span className="font-semibold leading-snug">
+            {row.original.segment}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "leadScore",
+        header: "Lead Score",
+        size: 120,
+        cell: ({ row }) => (
+          <span className="font-semibold">{row.original.leadScore}</span>
+        ),
+      },
+      {
+        accessorKey: "conversionRate",
+        header: "Stage Conversion Rate",
+        size: 220,
+        cell: ({ row }) => (
+          <span className="font-semibold">{row.original.conversionRate}</span>
+        ),
+      },
+      {
+        accessorKey: "consultant",
+        header: "Assigned Consultant",
+        size: 200,
+        cell: ({ row }) => (
+          <span className="font-semibold leading-snug">
+            {row.original.consultant}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "major",
+        header: "Major",
+        size: 210,
+        cell: ({ row }) => (
+          <span className="font-semibold leading-snug">
+            {row.original.major}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "topic",
+        header: "Topic",
+        size: 200,
+        cell: ({ row }) => (
+          <span className="font-semibold leading-snug">
+            {row.original.topic}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
+  const table = useReactTable({
+    data: leads,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    state: { columnPinning },
+    onColumnPinningChange: setColumnPinning,
+    columnResizeMode: "onChange",
+    defaultColumn: { size: 140, minSize: 100, maxSize: 400 },
+  });
+
+  const visibleColumns = table.getVisibleLeafColumns();
+  const textColor = "#1C3055";
+  const activeBg = "#ffffff";
+  const activeShadow =
+    "inset 6px 0 12px -8px rgba(0,0,0,0.16), inset -6px 0 12px -8px rgba(0,0,0,0.16)";
+  const pinnedLeft = table.getState().columnPinning.left ?? [];
+  const lastPinned = pinnedLeft[pinnedLeft.length - 1];
+  const headerBg = "#1c2f57";
+  const gapPx = 0;
+  const template = visibleColumns.map((c) => `${c.getSize()}px`).join(" ");
+  const totalWidth =
+    visibleColumns.reduce((sum, c) => sum + c.getSize(), 0) +
+    gapPx * Math.max(visibleColumns.length - 1, 0);
+  const columnOffsets = useMemo(() => {
+    const map = new Map<string, number>();
+    let acc = 0;
+    visibleColumns.forEach((col, idx) => {
+      if (idx > 0) acc += gapPx;
+      map.set(col.id, acc);
+      acc += col.getSize();
+    });
+    return map;
+  }, [visibleColumns]);
+
+  const activeKey =
+    hoveredKey ?? table.getState().columnPinning.left?.[0] ?? null;
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const handle = () => {
+      const start = el.scrollLeft <= 2;
+      const end = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2;
+      setAtStart(start);
+      setAtEnd(end);
+    };
+    handle();
+    el.addEventListener("scroll", handle, { passive: true });
+    return () => el.removeEventListener("scroll", handle);
+  }, [totalWidth]);
+
+  const radius = 26;
+  const containerRadius = `${atStart ? radius : 0}px ${atEnd ? radius : 0}px ${atEnd ? radius : 0}px ${atStart ? radius : 0}px`;
+  const headerRadius = `${atStart ? radius - 2 : 0}px ${atEnd ? radius - 2 : 0}px 0 0`;
+
+  return (
+    <div
+      className="relative rounded-[26px] border border-[#e3e7ef] shadow-[0_16px_32px_rgba(0,0,0,0.08)] overflow-hidden bg-white"
+      style={{
+        borderRadius: containerRadius,
+        borderRightColor: atEnd ? "#e3e7ef" : "transparent",
+        borderLeftColor: atStart ? "#e3e7ef" : "transparent",
+      }}
+    >
+      <div
+        ref={scrollRef}
+        className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 bg-white"
+      >
+        <div
+          className="relative pt-0"
+          style={{
+            minWidth: totalWidth,
+          }}
+        >
+          <div className="sticky top-0 z-50">
+            <div
+              className="bg-[#1c2f57] text-white"
+              style={{ borderTopLeftRadius: headerRadius.split(" ")[0], borderTopRightRadius: headerRadius.split(" ")[1] }}
+            >
+              <div
+                className="grid gap-0 px-4 py-4 text-sm font-semibold"
+                style={{ gridTemplateColumns: template }}
+              >
+                {visibleColumns.map((col) => {
+                  const pinned = col.getIsPinned();
+                  const hovering = hoveredKey === col.id;
+                  const left =
+                    pinned === "left" ? columnOffsets.get(col.id) : undefined;
+                  const active = pinned || hovering || activeKey === col.id;
+                  const width = col.getSize();
+                  const isLastPinned = pinned && lastPinned === col.id;
+                  return (
+                    <div
+                      key={col.id}
+                      onMouseEnter={() => setHoveredKey(col.id)}
+                      onMouseLeave={() => setHoveredKey(null)}
+                      className={cn(
+                        "relative flex items-center gap-3 transition-colors px-4",
+                        "text-white",
+                        pinned && "sticky left-0 inset-y-0 z-60"
+                      )}
+                      style={
+                        pinned
+                          ? {
+                              left,
+                              width,
+                              minWidth: width,
+                              backgroundColor: headerBg,
+                              boxShadow:
+                                isLastPinned && !atEnd ? activeShadow : undefined,
+                            }
+                          : {
+                              width,
+                              minWidth: width,
+                              backgroundColor: headerBg,
+                            }
+                      }
+                    >
+                      <span className="whitespace-nowrap">
+                        {col.columnDef.header as string}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const leftPinned =
+                            table.getState().columnPinning.left ?? [];
+                          const isPinned = leftPinned.includes(col.id);
+                          const nextLeft = isPinned
+                            ? leftPinned.filter((c) => c !== col.id)
+                            : [...leftPinned, col.id];
+                          table.setColumnPinning({
+                            ...table.getState().columnPinning,
+                            left: nextLeft,
+                          });
+                        }}
+                        aria-label="Pin column"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/0 hover:bg-white/20 p-1 transition"
+                      >
+                        <Pin
+                          className={cn(
+                            "h-4 w-4",
+                            col.getIsPinned() ? "text-[#f1c40f]" : "text-white"
+                          )}
+                        />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {table.getRowModel().rows.map((row, idx) => {
+            const rowBg = idx % 2 === 1 ? "#f7f9fc" : "#ffffff";
+            return (
+              <div
+                key={row.id}
+                className="relative z-10 grid gap-0 px-4 py-0 text-sm border-b border-[#eef1f5] items-stretch"
+                style={{
+                  color: textColor,
+                  gridTemplateColumns: template,
+                  backgroundColor: rowBg,
+                  minHeight: 96,
+                }}
+              >
+                {row.getVisibleCells().map((cell) => {
+                  const column = cell.column;
+                  const pinned = column.getIsPinned();
+                  const left =
+                    pinned === "left"
+                      ? columnOffsets.get(column.id)
+                      : undefined;
+                  const active = pinned || activeKey === column.id;
+                  const width = column.getSize();
+                  const isLastPinned = pinned && lastPinned === column.id;
+                  const cellBase = cn(
+                    "relative z-10 flex h-full w-full items-center px-3",
+                    pinned && "sticky left-0 inset-y-0 z-30"
+                  );
+                  const cellStyle = pinned
+                    ? {
+                        left,
+                        width,
+                        minWidth: width,
+                        backgroundColor: active ? activeBg : rowBg,
+                        boxShadow:
+                          isLastPinned && !atEnd ? activeShadow : undefined,
+                      }
+                    : {
+                        width,
+                        minWidth: width,
+                        backgroundColor: active ? activeBg : rowBg,
+                      };
+                  return (
+                    <div
+                      key={cell.id}
+                      className={cellBase}
+                      style={cellStyle}
+                      onMouseEnter={() => setHoveredKey(column.id)}
+                      onMouseLeave={() => setHoveredKey(null)}
+                    >
+                      {cell.column.columnDef.cell?.({
+                        ...cell,
+                        getValue: cell.getValue,
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const statusColors: Record<string, { bg: string; text: string }> = {
+  Disqualified: { bg: "bg-[#ffe2e2]", text: "text-[#e64c4c]" },
+  "Profile Created": { bg: "bg-[#e6f2ff]", text: "text-[#2f7adf]" },
+  "AI Validated": { bg: "bg-[#eaf6ff]", text: "text-[#1d6fbf]" },
+  Nurturing: { bg: "bg-[#fff2dd]", text: "text-[#d0892b]" },
+  "Enrolled & Paid": { bg: "bg-[#e4f6ed]", text: "text-[#2f8f58]" },
+};
+
+function StatusPill({ value }: { value: string }) {
+  const palette = statusColors[value] || {
+    bg: "bg-slate-200",
+    text: "text-slate-700",
+  };
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold",
+        palette.bg,
+        palette.text
+      )}
+    >
+      {value}
+    </span>
+  );
+}
