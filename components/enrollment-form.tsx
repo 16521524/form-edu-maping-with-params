@@ -33,6 +33,8 @@ interface FormData {
   gpa: string
   strongSubjects: string
   socialLink: string
+  utmCampaign: string
+  utmSales: string
   // 3. Preferences
   majorPreference1: string
   majorPreference2: string
@@ -56,6 +58,8 @@ const initialFormData: FormData = {
   gpa: "",
   strongSubjects: "",
   socialLink: "",
+  utmCampaign: "",
+  utmSales: "",
   majorPreference1: "",
   majorPreference2: "",
   majorPreference3: "",
@@ -131,6 +135,8 @@ export default function EnrollmentForm() {
       gpa: getVal("gpa"),
       strongSubjects: getVal("strongSubjects"),
       socialLink: getVal("socialLink"),
+      utmCampaign: getVal("utmCampaign"),
+      utmSales: getVal("utmSales"),
       majorPreference1: getVal("majorPreference1"),
       majorPreference2: getVal("majorPreference2"),
       majorPreference3: getVal("majorPreference3"),
@@ -152,6 +158,8 @@ export default function EnrollmentForm() {
       "gpa",
       "strongSubjects",
       "socialLink",
+      "utmCampaign",
+      "utmSales",
       "majorPreference1",
       "majorPreference2",
       "majorPreference3",
@@ -195,6 +203,8 @@ export default function EnrollmentForm() {
       gpa: normalize(mappedData.gpa, studentDefaults.gpa),
       strongSubjects: normalize(mappedData.strongSubjects, studentDefaults.strongSubjects),
       socialLink: normalize(mappedData.socialLink, studentDefaults.socialLink),
+      utmCampaign: normalize(mappedData.utmCampaign, ""),
+      utmSales: normalize(mappedData.utmSales, ""),
       majorPreference1: normalize(mappedData.majorPreference1, enrollmentDefaults.majorPreference1),
       majorPreference2: normalize(mappedData.majorPreference2, enrollmentDefaults.majorPreference2),
       majorPreference3: normalize(mappedData.majorPreference3, enrollmentDefaults.majorPreference3),
@@ -215,6 +225,8 @@ export default function EnrollmentForm() {
       gpa: normalize(mappedData.gpa, studentDefaults.gpa),
       strongSubjects: normalize(mappedData.strongSubjects, studentDefaults.strongSubjects),
       socialLink: normalize(mappedData.socialLink, studentDefaults.socialLink),
+      utmCampaign: normalize(mappedData.utmCampaign, ""),
+      utmSales: normalize(mappedData.utmSales, ""),
       majorPreference1: normalize(mappedData.majorPreference1, enrollmentDefaults.majorPreference1),
       majorPreference2: normalize(mappedData.majorPreference2, enrollmentDefaults.majorPreference2),
       majorPreference3: normalize(mappedData.majorPreference3, enrollmentDefaults.majorPreference3),
@@ -272,6 +284,8 @@ export default function EnrollmentForm() {
     addParam("gpa", formData.gpa)
     addParam("strongSubjects", formData.strongSubjects)
     addParam("socialLink", formData.socialLink)
+    addParam("utmCampaign", formData.utmCampaign)
+    addParam("utmSales", formData.utmSales)
     addParam("majorPreference1", formData.majorPreference1)
     addParam("majorPreference2", formData.majorPreference2)
     addParam("majorPreference3", formData.majorPreference3)
@@ -329,6 +343,9 @@ export default function EnrollmentForm() {
           <ArrowLeft className="h-4 w-4" />
           Quay lại trang chủ
         </Link>
+
+        <input type="hidden" {...register("utmCampaign")} />
+        <input type="hidden" {...register("utmSales")} />
 
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">

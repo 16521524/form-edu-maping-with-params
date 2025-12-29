@@ -40,6 +40,7 @@ type FormData = {
   email: string;
   socialLink: string;
   utmCampaign: string;
+  utmSales: string;
   city: string;
   school: string;
   gradeLevel: string;
@@ -61,6 +62,7 @@ const initialFormData: FormData = {
   email: "",
   socialLink: "",
   utmCampaign: "",
+  utmSales: "",
   city: "",
   school: "",
   gradeLevel: "",
@@ -226,6 +228,7 @@ export default function CareerConsultationForm() {
       email: getVal("email"),
       socialLink: getVal("socialLink"),
       utmCampaign: getVal("utmCampaign"),
+      utmSales: getVal("utmSales"),
       city: getVal("city"),
       school: getVal("school"),
       gradeLevel: getVal("gradeLevel"),
@@ -278,6 +281,7 @@ export default function CareerConsultationForm() {
       email: prefer(mappedData.email, initialFormData.email),
       socialLink: prefer(mappedData.socialLink, initialFormData.socialLink),
       utmCampaign: prefer(mappedData.utmCampaign, initialFormData.utmCampaign),
+      utmSales: prefer(mappedData.utmSales, initialFormData.utmSales),
       city: prefer(mappedData.city, initialFormData.city),
       school: ensureOption(
         mappedData.school,
@@ -352,6 +356,7 @@ export default function CareerConsultationForm() {
     addParam("email", formData.email);
     addParam("socialLink", formData.socialLink);
     addParam("utmCampaign", formData.utmCampaign);
+    addParam("utmSales", formData.utmSales);
     addParam("city", formData.city);
     addParam("school", formData.school);
     addParam("gradeLevel", formData.gradeLevel);
@@ -420,6 +425,7 @@ export default function CareerConsultationForm() {
           preferences: data.aspirations || [],
           certificates: [],
           utm_campaign: data.utmCampaign || undefined,
+          utm_sales: data.utmSales || undefined,
           notify_vias: data.notifyVia || [],
           socials: socials
             .filter((s) => s.platform || s.link_profile)
@@ -665,6 +671,7 @@ export default function CareerConsultationForm() {
           </section>
 
           <input type="hidden" {...register("utmCampaign")} />
+          <input type="hidden" {...register("utmSales")} />
 
           <section className={panelClass}>
             <div className="space-y-3 p-4">

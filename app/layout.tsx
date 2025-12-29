@@ -11,16 +11,16 @@ const beVietnamPro = Be_Vietnam_Pro({
 })
 
 export const metadata: Metadata = {
-  title: "Đăng ký tuyển sinh - Đại học Gia Định",
-  description: "Form đăng ký nhập học và sự kiện - Đại học Gia Định",
+  title: "Đại học Gia Định",
+  description: "Đại học Gia Định",
   icons: {
     icon: "https://giadinh.edu.vn/upload/photo/logo-dai-hoc-gia-dinh-9904.png",
     shortcut: "https://giadinh.edu.vn/upload/photo/logo-dai-hoc-gia-dinh-9904.png",
     apple: "https://giadinh.edu.vn/upload/photo/logo-dai-hoc-gia-dinh-9904.png",
   },
   openGraph: {
-    title: "Đăng ký tuyển sinh - Đại học Gia Định",
-    description: "Form đăng ký nhập học và sự kiện - Đại học Gia Định",
+    title: "Đại học Gia Định",
+    description: "Đại học Gia Định",
     images: ["https://giadinh.edu.vn/upload/photo/logo-dai-hoc-gia-dinh-9904.png"],
   },
     generator: 'Edu'
