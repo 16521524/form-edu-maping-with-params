@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 
 import formMeta from "@/lib/form-meta.json";
-import careerDefaults from "@/lib/form-defaults-career.json";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -65,9 +64,7 @@ const initialFormData: FormData = {
   gpa: "",
   aspirations: [],
   notifyVia: [
-    careerDefaults.notifyVia ||
-      formMeta.common.notificationChannels?.[0] ||
-      "email",
+    formMeta.common.notificationChannels?.[0] || "email",
   ].filter(Boolean),
   socials: [],
   confirmAccuracy: false,
@@ -191,10 +188,10 @@ export default function CareerConsultationForm() {
       academicPerformance: getVal("academicPerformance"),
       gpa: getVal("gpa"),
       aspirations: getList("aspirations"),
-      notifyVia: getVal("notifyVia"),
+      notifyVia: getList("notifyVia"),
       confirmAccuracy: getBool(
         ["confirmAccuracy"],
-        careerDefaults.confirmAccuracy ?? false
+        initialFormData.confirmAccuracy
       ),
     };
 
@@ -210,54 +207,50 @@ export default function CareerConsultationForm() {
     const allowedNotification = formMeta.common.notificationChannels ?? [];
     const resolvedAspirations = (
       mappedData.aspirations ??
-      careerDefaults.aspirations ??
-      []
+      initialFormData.aspirations
     )
       .filter(Boolean)
       .slice(0, 3);
-    const normalizeNotifyArray = (value: string | string[] | undefined) => {
+    const normalizeNotifyArray = (value: string[] | undefined) => {
       if (Array.isArray(value)) return value.filter(Boolean);
-      if (value) return [value];
-      if (careerDefaults.notifyVia) return [careerDefaults.notifyVia];
-      if (allowedNotification[0]) return [allowedNotification[0]];
-      return [];
+      return initialFormData.notifyVia;
     };
     const resolvedNotify = normalizeNotifyArray(mappedData.notifyVia).filter(
       (item) => allowedNotification.includes(item)
     );
 
     const hydratedData = {
-      fullName: prefer(mappedData.fullName, careerDefaults.fullName),
-      birthDate: prefer(mappedData.birthDate, careerDefaults.birthDate),
+      fullName: prefer(mappedData.fullName, initialFormData.fullName),
+      birthDate: prefer(mappedData.birthDate, initialFormData.birthDate),
       gender: ensureOption(
         mappedData.gender,
         allowedGenders,
-        careerDefaults.gender
+        initialFormData.gender
       ),
-      address: prefer(mappedData.address, careerDefaults.address),
-      phone: prefer(mappedData.phone, careerDefaults.phone),
-      nationalId: prefer(mappedData.nationalId, careerDefaults.nationalId),
-      email: prefer(mappedData.email, careerDefaults.email),
-      socialLink: prefer(mappedData.socialLink, careerDefaults.socialLink),
-      eventCode: prefer(mappedData.eventCode, careerDefaults.eventCode),
-      city: prefer(mappedData.city, careerDefaults.city),
-      school: prefer(mappedData.school, careerDefaults.school),
+      address: prefer(mappedData.address, initialFormData.address),
+      phone: prefer(mappedData.phone, initialFormData.phone),
+      nationalId: prefer(mappedData.nationalId, initialFormData.nationalId),
+      email: prefer(mappedData.email, initialFormData.email),
+      socialLink: prefer(mappedData.socialLink, initialFormData.socialLink),
+      eventCode: prefer(mappedData.eventCode, initialFormData.eventCode),
+      city: prefer(mappedData.city, initialFormData.city),
+      school: prefer(mappedData.school, initialFormData.school),
       gradeLevel: ensureOption(
         mappedData.gradeLevel,
         allowedGrades,
-        careerDefaults.gradeLevel
+        initialFormData.gradeLevel
       ),
       academicPerformance: ensureOption(
         mappedData.academicPerformance,
         allowedAcademic,
-        careerDefaults.academicPerformance
+        initialFormData.academicPerformance
       ),
-      gpa: prefer(mappedData.gpa, careerDefaults.gpa),
+      gpa: prefer(mappedData.gpa, initialFormData.gpa),
       aspirations: resolvedAspirations,
-      socials: careerDefaults.socials ?? [],
+      socials: initialFormData.socials ?? [],
       notifyVia: resolvedNotify,
       confirmAccuracy:
-        mappedData.confirmAccuracy ?? careerDefaults.confirmAccuracy ?? false,
+        mappedData.confirmAccuracy ?? initialFormData.confirmAccuracy ?? false,
     };
 
     reset(hydratedData);
@@ -377,7 +370,7 @@ export default function CareerConsultationForm() {
           performance: data.academicPerformance,
           preferences: data.aspirations || [],
           certificates: [],
-          campaign: data.eventCode || careerDefaults.eventCode || undefined,
+          campaign: data.eventCode || undefined,
           social_link: data.socialLink,
           notify_vias: data.notifyVia || [],
           social: socials
