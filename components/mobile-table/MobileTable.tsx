@@ -171,18 +171,18 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
           </span>
         ),
       },
-      {
-        accessorKey: "topic",
-        header: "Topic",
-        size: 200,
-        cell: ({ row }) => (
-          <span className="font-semibold leading-snug">
-            {row.original.topic}
-          </span>
-        ),
-      },
+      // {
+      //   accessorKey: "topic",
+      //   header: "Topic",
+      //   size: 200,
+      //   cell: ({ row }) => (
+      //     <span className="font-semibold leading-snug">
+      //       {row.original.topic}
+      //     </span>
+      //   ),
+      // },
     ],
-    [handleOpenLead]
+    [handleOpenLead, page, pageSize]
   );
 
   const table = useReactTable({
@@ -255,7 +255,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
     >
       <div
         ref={scrollRef}
-        className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 bg-white"
+        className="overflow-x-auto overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 bg-white max-h-[250px]"
         aria-busy={loading}
       >
         <div
@@ -273,7 +273,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
               }}
             >
               <div
-                className="grid gap-0 px-4 py-4 text-sm font-semibold"
+                className="grid gap-0 px-4 py-4 text-sm font-semibold sticky top-0 z-10 bg-[#1c2f57]"
                 style={{ gridTemplateColumns: template }}
               >
                 {visibleColumns.map((col) => {
@@ -290,7 +290,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                       onMouseEnter={() => setHoveredKey(col.id)}
                       onMouseLeave={() => setHoveredKey(null)}
                       className={cn(
-                        "relative flex items-center gap-3 transition-colors px-4",
+                        "relative flex items-center gap-3 transition-colors px-4 overflow-hidden",
                         "text-white",
                         pinned && "sticky left-0 inset-y-0 z-60"
                       )}
@@ -331,7 +331,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                           });
                         }}
                         aria-label="Pin column"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/0 hover:bg-white/20 p-1 transition"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 transition bg-white/0 hover:bg-white/10 active:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-0"
                       >
                         <Pin
                           className={cn(

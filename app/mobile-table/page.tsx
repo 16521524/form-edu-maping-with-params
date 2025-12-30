@@ -49,7 +49,7 @@ function MobileTablePageContent() {
 
   const orderBy = searchParams.get("order_by") ?? "modified desc";
   const pageFromUrl = Number(searchParams.get("page") ?? 1);
-  const pageSize = Number(searchParams.get("page_size") ?? 3);
+  const pageSize = Number(searchParams.get("page_size") ?? 10);
   const creationFrom = searchParams.get("creation_from");
   const creationTo = searchParams.get("creation_to");
 
@@ -74,7 +74,7 @@ function MobileTablePageContent() {
         setLeads(
           (res.data || []).map((item) => mapLeadRecordToLead(item)) as Lead[]
         );
-        setPage(res.pagination.page);
+        setPage(pageFromUrl);
         setPageCount(res.pagination.total_pages);
       } catch (err) {
         console.error(err);
@@ -86,7 +86,7 @@ function MobileTablePageContent() {
     return () => {
       cancelled = true;
     };
-  }, [filtersFromUrl, orderBy, pageFromUrl, pageSize]);
+  }, [filtersFromUrl, orderBy, pageFromUrl, pageSize, creationFrom, creationTo]);
 
   const handlePageChange = (next: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -127,7 +127,6 @@ function mapLeadRecordToLead(item: LeadRecord): Lead {
     conversionRate: item.stage_conversion_rate || "—",
     consultant: item.lead_owner || "—",
     major: item.custom_major || "—",
-    topic: "—",
-    // topic: item.summary || item.custom_note || "—",
+    topic: item.topic || "—",
   };
 }

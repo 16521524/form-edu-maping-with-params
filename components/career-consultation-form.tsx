@@ -25,6 +25,7 @@ import {
   postCareerLead,
   updateCampaignTotalScans,
 } from "@/servers";
+import CareerSuccessModal from "./career-success-modal";
 
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
@@ -131,6 +132,7 @@ export default function CareerConsultationForm() {
   >([]);
   const [openSocialIndex, setOpenSocialIndex] = useState<number | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
   const requiredFields: (keyof FormData)[] = ["fullName", "phone", "email"];
 
   const requiredFieldsFilled = requiredFields.every((field) => {
@@ -472,7 +474,7 @@ export default function CareerConsultationForm() {
             })),
         };
         await postCareerLead(payload);
-        router.push("/dang-ky-tu-van-huong-nghiep/success");
+        setShowSuccess(true);
         resolve();
       } catch (err) {
         console.error("Career consultation submit failed", err);
@@ -502,12 +504,12 @@ export default function CareerConsultationForm() {
   }
 
   return (
-    <main
-      className={cn(
-        "min-h-screen bg-[#eef3f8] flex justify-center px-2",
-        inter.className
-      )}
-    >
+      <main
+        className={cn(
+          "min-h-screen bg-[#eef3f8] flex justify-center px-2",
+          inter.className
+        )}
+      >
       <style jsx global>{`
         .career-date-input::-webkit-calendar-picker-indicator {
           opacity: 0;
@@ -648,6 +650,7 @@ export default function CareerConsultationForm() {
 
               <LabeledInput
                 label="Căn cước công dân"
+                required
                 placeholder="Nhập căn cước công dân"
                 inputProps={{
                   ...register("nationalId"),
@@ -1021,7 +1024,10 @@ export default function CareerConsultationForm() {
                             handleNotifyChange(channel, Boolean(c))
                           }
                         />
-                        {channel}
+                        <span className="inline-flex items-center gap-2">
+                          <SocialIcon value={channel} />
+                          {channel}
+                        </span>
                       </label>
                     );
                   })}
@@ -1056,6 +1062,9 @@ export default function CareerConsultationForm() {
           )}
         </form>
       </div>
+      {showSuccess && (
+        <CareerSuccessModal />
+      )}
     </main>
   );
 }
