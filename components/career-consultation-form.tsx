@@ -143,7 +143,7 @@ export default function CareerConsultationForm() {
       try {
         const [json, schoolsResp] = await Promise.all([
           getMetadataCareer(),
-          getMetadataSchools(),
+          getMetadataSchools(searchParams.get("school") || undefined),
         ]);
         if (!active || !json?.data) return;
         setMetaOptions({

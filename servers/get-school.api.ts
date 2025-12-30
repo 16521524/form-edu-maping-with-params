@@ -1,14 +1,21 @@
 export type CareerMetadataSchoolResponse = {
   data?: {
-    value?: string,
-    display?: string,
-  }[]
-}
+    value?: string;
+    display?: string;
+  }[];
+};
 
-export async function getMetadataSchools(): Promise<CareerMetadataSchoolResponse> {
-  const res = await fetch("/api/career/metadata", { cache: "no-store" })
+export async function getMetadataSchools(
+  search_text: string = ""
+): Promise<CareerMetadataSchoolResponse> {
+  const qs = new URLSearchParams();
+  if (search_text) qs.set("search_text", search_text);
+
+  const url = `/api/career/school${qs.toString() ? `?${qs.toString()}` : ""}`;
+
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
-    throw new Error(`Failed to load career metadata: ${res.status}`)
+    throw new Error(`Failed to load career metadata: ${res.status}`);
   }
-  return res.json()
+  return res.json();
 }

@@ -3,14 +3,21 @@ import { NextResponse } from "next/server";
 const FRAPPE_BASE_URL =
   process.env.NEXT_PUBLIC_FRAPPE_BASE_URL || "https://erpnext.aurora-tech.com";
 
-const CAREER_SHOOL_ENDPOINT = `${FRAPPE_BASE_URL}/api/method/search.search_school`;
+const CAREER_SCHOOL_ENDPOINT = `${FRAPPE_BASE_URL}/api/method/search.search_school`;
 
- 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: Request): Promise<NextResponse> {
   try {
-    const res = await fetch(CAREER_SHOOL_ENDPOINT, {
-      cache: 'no-cache'
+    const { searchParams } = new URL(req.url);
+
+    const search_text = searchParams.get("search_text") ?? "";
+
+    const url = new URL(CAREER_SCHOOL_ENDPOINT);
+    url.searchParams.set("text", search_text);
+
+    const res = await fetch(url.toString(), {
+      cache: "no-cache",
     });
+
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch (err) {
