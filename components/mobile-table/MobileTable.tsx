@@ -11,9 +11,10 @@ import {
 
 type Props = {
   leads?: Lead[];
+  loading?: boolean;
 };
 
-export function MobileTable({ leads = defaultLeads }: Props) {
+export function MobileTable({ leads = defaultLeads, loading }: Props) {
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
   
   const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
@@ -187,6 +188,7 @@ export function MobileTable({ leads = defaultLeads }: Props) {
     visibleColumns.reduce((sum, c) => sum + c.getSize(), 0) +
     gapPx * Math.max(visibleColumns.length - 1, 0);
   const rowPadding = 32;
+  const showSkeleton = loading && leads.length === 0;
   const columnOffsets = useMemo(() => {
     const map = new Map<string, number>();
     let acc = 0;
@@ -232,6 +234,7 @@ export function MobileTable({ leads = defaultLeads }: Props) {
       <div
         ref={scrollRef}
         className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 bg-white"
+        aria-busy={loading}
       >
         <div
           className="relative pt-0"
@@ -322,7 +325,53 @@ export function MobileTable({ leads = defaultLeads }: Props) {
             </div>
           </div>
 
-          {table.getRowModel().rows.map((row, idx) => {
+          {showSkeleton
+            ? Array.from({ length: 1 }).map((_, idx) => (
+                <div
+                  key={`skeleton-${idx}`}
+                  className="relative z-10 grid gap-0 px-4 py-0 text-sm border-b border-[#eef1f5] items-stretch animate-pulse"
+                  style={{
+                    gridTemplateColumns: template,
+                    backgroundColor: idx % 2 === 1 ? "#f7f9fc" : "#ffffff",
+                    minHeight: 64,
+                  }}
+                  aria-busy="true"
+                >
+                  {visibleColumns.map((col) => {
+                    const pinned = col.getIsPinned();
+                    const left =
+                      pinned === "left"
+                        ? columnOffsets.get(col.id)
+                        : undefined;
+                    const width = col.getSize();
+                    const isLastPinned = pinned && lastPinned === col.id;
+                    const cellBase = cn(
+                      "relative z-10 flex h-full w-full items-center px-3",
+                      pinned && "sticky left-0 inset-y-0 z-30"
+                    );
+                    const cellStyle = pinned
+                      ? {
+                          left,
+                          width,
+                          minWidth: width,
+                          backgroundColor: idx % 2 === 1 ? "#f7f9fc" : "#ffffff",
+                          boxShadow:
+                            isLastPinned && !atEnd ? activeShadow : undefined,
+                        }
+                      : {
+                          width,
+                          minWidth: width,
+                          backgroundColor: idx % 2 === 1 ? "#f7f9fc" : "#ffffff",
+                        };
+                    return (
+                      <div key={`s-${col.id}`} className={cellBase} style={cellStyle}>
+                        <span className="h-3 w-16 rounded-full bg-slate-200" />
+                      </div>
+                    );
+                  })}
+                </div>
+              ))
+            : table.getRowModel().rows.map((row, idx) => {
             const rowBg = idx % 2 === 1 ? "#f7f9fc" : "#ffffff";
             return (
               <div
