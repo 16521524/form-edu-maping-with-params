@@ -5,7 +5,7 @@ const FRAPPE_BASE_URL = process.env.NEXT_PUBLIC_FRAPPE_BASE_URL || 'https://erpn
 const CAREER_POST_ENDPOINT =
   `${FRAPPE_BASE_URL}/api/method/lead.create_lead`;
   
-const CAREER_POST_TOKEN = process.env.NEXT_PUBLIC_FRAPPE_TOKEN || "token 7c0403719248098:c307a8d2994c052"
+const CAREER_POST_TOKEN = process.env.NEXT_PUBLIC_FRAPPE_TOKEN || ""
 
 export async function POST(req: Request): Promise<NextResponse> {
   try {

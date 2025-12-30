@@ -7,8 +7,7 @@ const FRAPPE_BASE_URL =
 
 const FRAPPE_TOKEN =
   process.env.NEXT_PUBLIC_FRAPPE_TOKEN ||
-  "token 7c0403719248098:c307a8d2994c052";
-  // "Bearer JW2n0jJj3wT4jsqG1sart6M4TIyDHm";
+  "";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -41,7 +40,6 @@ export async function GET(request: Request) {
     const res = await fetch(upstream.toString(), {
       headers: {
         Authorization: authHeader,
-        // Authorization: "token 7c0403719248098:c307a8d2994c052",
         "Content-Type": "application/json",
       },
       cache: "no-store",
