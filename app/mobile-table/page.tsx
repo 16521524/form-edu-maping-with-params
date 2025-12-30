@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { fetchLeads } from "@/lib/api/leads";
 import type { Lead } from "@/components/mobile-table/data";
+import type { LeadRecord } from "@/lib/types/leads";
 
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
@@ -66,7 +67,9 @@ function MobileTablePageContent() {
           pageSize,
         });
         if (cancelled) return;
-        setLeads(res.data as unknown as Lead[]);
+        setLeads(
+          (res.data || []).map((item) => mapLeadRecordToLead(item)) as Lead[]
+        );
         setPage(res.pagination.page);
         setPageCount(res.pagination.total_pages);
       } catch (err) {
@@ -102,4 +105,24 @@ function MobileTablePageContent() {
       </div>
     </main>
   );
+}
+
+function mapLeadRecordToLead(item: LeadRecord): Lead {
+  return {
+    id: item.name ?? "",
+    name: item.lead_name || "—",
+    role: item.custom_role || "—",
+    stage: item.custom_stage || "—",
+    status: item.status || "—",
+    source: item.source || "—",
+    segment: item.segment || "—",
+    leadScore:
+      typeof item.stage_position === "number"
+        ? item.stage_position.toString()
+        : "—",
+    conversionRate: item.stage_conversion_rate || "—",
+    consultant: item.lead_owner || "—",
+    major: item.custom_major || "—",
+    topic: item.summary || item.custom_note || "—",
+  };
 }

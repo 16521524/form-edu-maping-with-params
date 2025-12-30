@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 const FRAPPE_BASE_URL =
   process.env.FRAPPE_BASE_URL ??
   "https://erpnext.aurora-tech.com/api/method/lead.get_leads";
-const FRAPPE_TOKEN = process.env.NEXT_PUBLIC_FRAPPE_TOKEN || "token 7c0403719248098:c307a8d2994c052"
+
+const FRAPPE_TOKEN =
+  process.env.NEXT_PUBLIC_FRAPPE_TOKEN ||
+  "token 7c0403719248098:c307a8d2994c052";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -18,15 +22,16 @@ export async function GET(request: Request) {
   upstream.searchParams.set("page_size", pageSize);
   upstream.searchParams.set("page", page);
 
-  // Prefer Authorization from request (Flutter WebView can inject), else fallback to env
-  const incomingAuth = request.headers.get("Authorization");
-  const authHeader = incomingAuth || FRAPPE_TOKEN || '';
+  const incomingAuth = request.headers.get("authorization");
+
+   const cookieStore = await cookies();
+  const cookieAuthRaw = cookieStore.get("APP_AUTH")?.value;
+  const cookieAuth = cookieAuthRaw ? decodeURIComponent(cookieAuthRaw) : null;
+
+  const authHeader = incomingAuth || cookieAuth || FRAPPE_TOKEN || "";
 
   if (!authHeader) {
-    return NextResponse.json(
-      { message: "Missing Authorization header and FRAPPE_TOKEN env" },
-      { status: 401 }
-    );
+    return NextResponse.json({ message: "Missing auth" }, { status: 401 });
   }
 
   try {
@@ -46,8 +51,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const data = await res.json();
-    return NextResponse.json(data);
+    return NextResponse.json(await res.json());
   } catch (error) {
     return NextResponse.json(
       { message: "Request failed", error: String(error) },

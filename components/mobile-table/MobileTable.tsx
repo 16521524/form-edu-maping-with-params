@@ -28,7 +28,7 @@ export function MobileTable({ leads = defaultLeads }: Props) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const handleOpenLead = useCallback((lead: any) => {
-    const leadId = lead?.name ?? '';
+    const leadId = lead?.id ?? '';
     const payload = {
       type: "open_lead",
       leadId,

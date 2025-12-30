@@ -37,12 +37,12 @@ export function Pagination({ page, pageCount, onChange }: Props) {
         />
         {pages.map((p, idx) =>
           p === 0 ? (
-            <span key={idx} className="px-2 text-slate-500">
+            <span key={`ellipsis-${idx}`} className="px-2 text-slate-500">
               ...
             </span>
           ) : (
             <button
-              key={p}
+              key={`page-${p}`}
               onClick={() => goto(p)}
               className={cn(
                 "min-w-8 rounded-[8px] px-3 py-1.5 shadow-sm border border-[#e2e6ee] transition",
