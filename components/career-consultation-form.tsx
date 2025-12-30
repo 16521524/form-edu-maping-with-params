@@ -987,9 +987,14 @@ export default function CareerConsultationForm() {
                 <div className="relative">
                   <Input
                     value={aspirationInput}
+                    disabled={aspirations.length >= 3}
                     onChange={(e) => setAspirationInput(e.target.value)}
-                    onFocus={() => setShowAspirationDropdown(true)}
-                    onClick={() => setShowAspirationDropdown(true)}
+                    onFocus={() =>
+                      aspirations.length < 3 && setShowAspirationDropdown(true)
+                    }
+                    onClick={() =>
+                      aspirations.length < 3 && setShowAspirationDropdown(true)
+                    }
                     onBlur={() =>
                       setTimeout(() => setShowAspirationDropdown(false), 120)
                     }
@@ -999,11 +1004,19 @@ export default function CareerConsultationForm() {
                         handleAddAspiration(aspirationInput);
                       }
                     }}
-                    placeholder="Tìm kiếm ngành/ưu tiên"
-                    className={cn(inputClass, "pr-11")}
+                    placeholder={
+                      aspirations.length >= 3
+                        ? "Đã đủ 3 nguyện vọng"
+                        : "Tìm kiếm ngành/ưu tiên"
+                    }
+                    className={cn(
+                      inputClass,
+                      "pr-11",
+                      aspirations.length >= 3 && "bg-slate-100 cursor-not-allowed"
+                    )}
                   />
                   <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                  {showAspirationDropdown && (
+                  {showAspirationDropdown && aspirations.length < 3 && (
                     <div className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg">
                       {(metaOptions.preferences.length
                         ? metaOptions.preferences.map((p) =>
