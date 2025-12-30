@@ -86,7 +86,14 @@ function MobileTablePageContent() {
     return () => {
       cancelled = true;
     };
-  }, [filtersFromUrl, orderBy, pageFromUrl, pageSize, creationFrom, creationTo]);
+  }, [
+    filtersFromUrl,
+    orderBy,
+    pageFromUrl,
+    pageSize,
+    creationFrom,
+    creationTo,
+  ]);
 
   const handlePageChange = (next: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -100,12 +107,20 @@ function MobileTablePageContent() {
         {/* <div className="text-right pr-1 text-xs font-semibold text-[#1c2f57] underline">
           Grid view
         </div> */}
-        <MobileTable leads={leads} loading={loading} page={page} pageSize={pageSize} />
-        <div className="flex justify-end px-3 py-0 text-xs font-semibold text-slate-500">
+        {/* <div className="flex justify-end px-3 py-0 text-xs font-semibold text-slate-500">
           {loading ? "..." : `${leads.length}/${pageCount * pageSize || 1}`}
-        </div>
-
-        <Pagination page={page} pageCount={pageCount} onChange={handlePageChange} />
+        </div> */}
+        <MobileTable
+          leads={leads}
+          loading={loading}
+          page={page}
+          pageSize={pageSize}
+        />
+        <Pagination
+          page={page}
+          pageCount={pageCount}
+          onChange={handlePageChange}
+        />
       </div>
     </main>
   );

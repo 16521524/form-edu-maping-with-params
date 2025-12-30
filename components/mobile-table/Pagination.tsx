@@ -60,10 +60,10 @@ export function Pagination({ page, pageCount, onChange }: Props) {
         />
       </div>
 
-      <div className="flex items-center justify-center gap-4 pt-4">
+      {/* <div className="flex items-center justify-center gap-4 pt-4">
         <span className="text-[13px] font-semibold text-slate-400">Đi đến trang:</span>
         <GotoBox pageCount={pageCount} onGoto={goto} />
-      </div>
+      </div> */}
     </div>
   );
 }
