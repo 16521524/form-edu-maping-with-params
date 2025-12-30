@@ -100,7 +100,7 @@ function MobileTablePageContent() {
         {/* <div className="text-right pr-1 text-xs font-semibold text-[#1c2f57] underline">
           Grid view
         </div> */}
-        <MobileTable leads={leads} loading={loading} />
+        <MobileTable leads={leads} loading={loading} page={page} pageSize={pageSize} />
         <div className="flex justify-end px-3 py-0 text-xs font-semibold text-slate-500">
           {loading ? "..." : `${leads.length}/${pageCount * pageSize || 1}`}
         </div>

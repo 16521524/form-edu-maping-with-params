@@ -8,6 +8,7 @@ const FRAPPE_BASE_URL =
 const FRAPPE_TOKEN =
   process.env.NEXT_PUBLIC_FRAPPE_TOKEN ||
   "token 7c0403719248098:c307a8d2994c052";
+  // "Bearer JW2n0jJj3wT4jsqG1sart6M4TIyDHm";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -15,20 +16,22 @@ export async function GET(request: Request) {
   const orderBy = searchParams.get("order_by") ?? "modified desc";
   const pageSize = searchParams.get("page_size") ?? "10";
   const page = searchParams.get("page") ?? "1";
+  const creationFrom = searchParams.get("creation_from") ?? "";
+  const creationTo = searchParams.get("creation_to") ?? "";
 
   const upstream = new URL(FRAPPE_BASE_URL);
   if (filters) upstream.searchParams.set("filters", filters);
   upstream.searchParams.set("order_by", orderBy);
   upstream.searchParams.set("page_size", pageSize);
   upstream.searchParams.set("page", page);
-
-  const incomingAuth = request.headers.get("authorization");
+  upstream.searchParams.set("creation_from", creationFrom);
+  upstream.searchParams.set("creation_to", creationTo);
 
    const cookieStore = await cookies();
   const cookieAuthRaw = cookieStore.get("APP_AUTH")?.value;
   const cookieAuth = cookieAuthRaw ? decodeURIComponent(cookieAuthRaw) : null;
 
-  const authHeader = incomingAuth || cookieAuth || FRAPPE_TOKEN || "";
+  const authHeader =  cookieAuth || FRAPPE_TOKEN || "";
 
   if (!authHeader) {
     return NextResponse.json({ message: "Missing auth" }, { status: 401 });
@@ -38,6 +41,7 @@ export async function GET(request: Request) {
     const res = await fetch(upstream.toString(), {
       headers: {
         Authorization: authHeader,
+        // Authorization: "token 7c0403719248098:c307a8d2994c052",
         "Content-Type": "application/json",
       },
       cache: "no-store",

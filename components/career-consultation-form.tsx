@@ -184,7 +184,7 @@ export default function CareerConsultationForm() {
   }, []);
 
   useEffect(() => {
-    const campaignName = searchParams.get("utmCampaign");
+    const campaignName = searchParams.get("utmCampaignQr");
     if (!campaignName) return;
 
     const storageKey = `campaign-scan-${campaignName}`;
