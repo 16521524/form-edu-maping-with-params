@@ -675,7 +675,7 @@ export default function CareerConsultationForm() {
                     key={`${social.platform}-${idx}`}
                     className="grid grid-cols-12 gap-2 items-center"
                   >
-                    <div className="col-span-5 relative">
+                    <div className="col-span-6 relative">
                       <button
                         type="button"
                         onClick={() =>
@@ -733,7 +733,7 @@ export default function CareerConsultationForm() {
                         </div>
                       )}
                     </div>
-                    <div className="col-span-6">
+                    <div className="col-span-5">
                       {(() => {
                         const platform = social.platform;
                         const placeholder =

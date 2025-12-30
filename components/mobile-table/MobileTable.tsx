@@ -12,9 +12,11 @@ import {
 type Props = {
   leads?: Lead[];
   loading?: boolean;
+  page?: number;
+  pageSize?: number;
 };
 
-export function MobileTable({ leads = defaultLeads, loading }: Props) {
+export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize }: Props) {
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
 
   const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
@@ -28,22 +30,28 @@ export function MobileTable({ leads = defaultLeads, loading }: Props) {
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const handleOpenLead = useCallback((lead: Record<string, any>, event: 'open_detail' | 'open_popup') => {
-    const leadId = lead?.id ?? "";
-    const payload = {
-      type: event,
-      leadId,
-      lead,
-    };
-    if (
-      typeof window !== "undefined" &&
-      (window as any)?.ReactNativeWebView?.postMessage
-    ) {
-      (window as any).ReactNativeWebView.postMessage(JSON.stringify(payload));
-    } else if (leadId) {
-      console.log("open lead", payload);
-    }
-  }, []);
+  const handleOpenLead = useCallback(
+    (lead: Record<string, any>, event: "open_detail" | "open_popup") => {
+      const leadId = lead?.id ?? "";
+      const payload = {
+        type: event,
+        leadId,
+        lead,
+        ts: Date.now(),
+      };
+      if (
+        typeof window !== "undefined" &&
+        (window as any)?.ReactNativeWebView?.postMessage
+      ) {
+        (window as any).ReactNativeWebView.postMessage(
+          JSON.stringify(payload)
+        );
+      } else if (leadId) {
+        console.log("open lead", payload);
+      }
+    },
+    []
+  );
 
   const columns = useMemo<ColumnDef<Lead, any>[]>(
     () => [
@@ -52,14 +60,25 @@ export function MobileTable({ leads = defaultLeads, loading }: Props) {
         header: "STT",
         size: 90,
         minSize: 80,
-        cell: ({ row }) => (
-          <span className="flex items-center gap-2 font-semibold text-sm">
-            #{row.index + 1}
-            <button className="cursor-pointer" type="button" onClick={() => handleOpenLead(row.original, 'open_popup')}>
-              <Info className="h-3.5 w-3.5" strokeWidth={2.8} />
-            </button>
-          </span>
-        ),
+        cell: ({ row, table }) => {
+          const inferredPageSize =
+            pageSize ??
+            (table.getRowModel().rows.length || 1);
+          const currentPage = Number.isFinite(page) ? page : 1;
+          const stt = row.index + 1 + (currentPage - 1) * inferredPageSize;
+          return (
+            <span className="flex items-center gap-2 font-semibold text-sm">
+              #{stt}
+              <button
+                className="cursor-pointer"
+                type="button"
+                onClick={() => handleOpenLead(row.original, "open_popup")}
+              >
+                <Info className="h-3.5 w-3.5" strokeWidth={2.8} />
+              </button>
+            </span>
+          );
+        },
       },
       {
         accessorKey: "name",
