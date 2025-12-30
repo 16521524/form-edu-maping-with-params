@@ -82,10 +82,10 @@ const panelClass =
   "rounded-lg border border-[#e2e7ef] bg-white shadow-[0_8px_22px_rgba(31,63,119,0.06)]";
 
 const inputClass =
-  "h-11 w-full rounded-lg border border-[#d7dde7] bg-white text-[15px] text-slate-800 placeholder:text-[#a8afbb] shadow-[inset_0_1px_0_rgba(0,0,0,0.04)] focus:border-[#1f3f77] focus:ring-2 focus:ring-[#1f3f77]/15";
+  "h-11 w-full rounded-lg border border-[#d7dde7] bg-white text-[15px] text-slate-800 placeholder:italic placeholder:text-[#a8afbb] shadow-[inset_0_1px_0_rgba(0,0,0,0.04)] focus:border-[#1f3f77] focus:ring-2 focus:ring-[#1f3f77]/15";
 
 const selectClass =
-  "h-11 w-full rounded-[10px] border border-[#cfd6e1] bg-white px-4 pr-12 text-[13px] font-medium text-slate-800 placeholder:text-[#aeb7c3] leading-[22px] shadow-[inset_0_1px_0_rgba(0,0,0,0.04)] focus:border-[#1f3f77] focus:ring-2 focus:ring-[#1f3f77]/15";
+  "h-11 w-full rounded-[10px] border border-[#cfd6e1] bg-white px-4 pr-12 text-[13px] font-medium text-slate-800 placeholder:italic placeholder:text-[#aeb7c3] leading-[22px] shadow-[inset_0_1px_0_rgba(0,0,0,0.04)] focus:border-[#1f3f77] focus:ring-2 focus:ring-[#1f3f77]/15";
 
 const SOCIAL_OPTIONS = [
   { value: "Facebook", label: "Facebook", icon: "/social/facebook.png" },
@@ -93,6 +93,33 @@ const SOCIAL_OPTIONS = [
   // { value: "TikTok", label: "TikTok", icon: "/social/tiktok.png" },
   { value: "WhatsApp", label: "WhatsApp", icon: "/social/whatsapp.png" },
 ];
+
+const isoToDdMmYyyy = (val?: string) => {
+  if (!val) return "";
+  const match = val.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return val;
+  const [, y, m, d] = match;
+  return `${d}/${m}/${y}`;
+};
+
+const ddMmYyyyToIso = (val?: string) => {
+  if (!val) return "";
+  const match = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return val;
+  const [, d, m, y] = match;
+  return `${y}-${m}-${d}`;
+};
+
+const formatBirthInput = (raw: string) => {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  const day = digits.slice(0, 2);
+  const month = digits.slice(2, 4);
+  const year = digits.slice(4, 8);
+  let result = day;
+  if (month) result = `${day}/${month}`;
+  if (year) result = `${day}/${month}/${year}`;
+  return result;
+};
 
 export default function CareerConsultationForm() {
   const searchParams = useSearchParams();
@@ -333,7 +360,9 @@ export default function CareerConsultationForm() {
 
     const hydratedData = {
       fullName: prefer(mappedData.fullName, initialFormData.fullName),
-      birthDate: prefer(mappedData.birthDate, initialFormData.birthDate),
+      birthDate: isoToDdMmYyyy(
+        prefer(mappedData.birthDate, initialFormData.birthDate)
+      ),
       gender: ensureOption(
         mappedData.gender,
         allowedGenders,
@@ -415,7 +444,7 @@ export default function CareerConsultationForm() {
     };
 
     addParam("fullName", formData.fullName);
-    addParam("birthDate", formData.birthDate);
+        addParam("birthDate", formData.birthDate);
     addParam("gender", formData.gender);
     addParam("address", formData.address);
     addParam("phone", formData.phone);
@@ -482,7 +511,7 @@ export default function CareerConsultationForm() {
           mobile_no: data.phone,
           email: data.email,
           gender: data.gender,
-          date_of_birth: data.birthDate,
+          date_of_birth: ddMmYyyyToIso(data.birthDate),
           role: "Student",
           national_id: data.nationalId,
           province: data.city,
@@ -542,11 +571,19 @@ export default function CareerConsultationForm() {
   return (
     <main
       className={cn(
-        "min-h-screen bg-[#eef3f8] flex justify-center px-2",
+        "career-form min-h-screen bg-[#eef3f8] flex justify-center px-2",
         inter.className
       )}
     >
       <style jsx global>{`
+        .career-form input,
+        .career-form select,
+        .career-form textarea {
+          font-style: normal;
+        }
+        .career-form ::placeholder {
+          font-style: italic;
+        }
         .career-date-input::-webkit-calendar-picker-indicator {
           opacity: 0;
           display: none;
@@ -612,9 +649,19 @@ export default function CareerConsultationForm() {
                   <div className="relative">
                     <Input
                       ref={birthInputRef}
-                      type="date"
-                      {...register("birthDate")}
-                      placeholder="dd/mm/yy"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={10}
+                      {...register("birthDate", {
+                        onChange: (e) => {
+                          const formatted = formatBirthInput(e.target.value);
+                          setValue("birthDate", formatted, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          });
+                        },
+                      })}
+                      placeholder="dd/mm/yyyy"
                       className={cn(
                         inputClass,
                         "pr-11 appearance-none career-date-input"
@@ -626,12 +673,6 @@ export default function CareerConsultationForm() {
                       onClick={() => {
                         const node = birthInputRef.current;
                         if (!node) return;
-                        try {
-                          if (typeof (node as any).showPicker === "function") {
-                            (node as any).showPicker();
-                            return;
-                          }
-                        } catch {}
                         node.focus();
                       }}
                       aria-label="Chọn ngày sinh"
@@ -1072,9 +1113,9 @@ export default function CareerConsultationForm() {
                     );
                   })}
                 </div>
-                <p className="text-xs text-red-600">
+                {/* <p className="text-xs text-red-600">
                   Nhập email và thêm kênh mạng xã hội tương ứng để bật lựa chọn.
-                </p>
+                </p> */}
               </div>
             </div>
           </section>
