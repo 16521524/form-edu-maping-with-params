@@ -498,7 +498,12 @@ export default function CareerConsultationForm() {
           utm_sales: data.utmSales || undefined,
           notify_vias: data.notifyVia || [],
           socials: socials
-            .filter((s) => s.platform || s.link_profile)
+            .filter(
+              (s) =>
+                s.platform &&
+                typeof s.link_profile === "string" &&
+                s.link_profile.trim() !== ""
+            )
             .map((s) => ({
               platform: s.platform,
               link_profile: s.link_profile,
@@ -535,12 +540,12 @@ export default function CareerConsultationForm() {
   }
 
   return (
-      <main
-        className={cn(
-          "min-h-screen bg-[#eef3f8] flex justify-center px-2",
-          inter.className
-        )}
-      >
+    <main
+      className={cn(
+        "min-h-screen bg-[#eef3f8] flex justify-center px-2",
+        inter.className
+      )}
+    >
       <style jsx global>{`
         .career-date-input::-webkit-calendar-picker-indicator {
           opacity: 0;
@@ -556,18 +561,18 @@ export default function CareerConsultationForm() {
         }
       `}</style>
       <div className="w-full max-w-[430px] bg-slate-50">
-        <div className="relative h-36 w-full overflow-hidden rounded-b-lg shadow-[0_10px_24px_rgba(0,0,0,0.08)]">
+        <div className="relative h-36 sm:h-44 w-full overflow-hidden rounded-b-lg shadow-[0_10px_24px_rgba(0,0,0,0.08)]">
           <Image
             src="/assets/career/banner-top.png"
             alt="Campus cover"
             fill
             className="object-cover"
             priority
-            sizes="430px"
+            sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-slate-900/5 via-slate-900/25 to-slate-900/50" />
-          <div className="absolute inset-0 flex items-center gap-3 px-4">
-            <div className="h-[76px] w-[79px] p-2">
+          <div className="absolute inset-0 flex items-center gap-3 px-4 sm:px-5">
+            <div className="h-[68px] w-[70px] sm:h-[76px] sm:w-[79px] p-2 bg-white/80 rounded-lg shadow-sm">
               <Image
                 src="/assets/career/logo.png"
                 alt="Career logo"
@@ -578,8 +583,8 @@ export default function CareerConsultationForm() {
               />
             </div>
             <div className="text-[#0f2b5a] leading-[1.02] [text-shadow:0_3px_12px_rgba(0,0,0,0.18)]">
-              <div className="text-[32px] font-extrabold">Đăng ký tư vấn</div>
-              <div className="-mt-0 text-[32px] font-extrabold">
+              <div className="text-[28px] sm:text-[32px] font-extrabold">Đăng ký tư vấn</div>
+              <div className="-mt-0 text-[28px] sm:text-[32px] font-extrabold">
                 Hướng nghiệp
               </div>
             </div>
@@ -1123,7 +1128,11 @@ function LabeledInput({
       <label className="text-sm font-semibold text-slate-900">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
-      <Input {...inputProps} placeholder={placeholder} />
+      <Input
+        {...inputProps}
+        placeholder={placeholder}
+        className={cn("italic", inputProps?.className)}
+      />
     </div>
   );
 }
