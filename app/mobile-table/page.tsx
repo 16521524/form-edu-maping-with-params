@@ -15,6 +15,20 @@ const inter = Inter({
 });
 
 export default function MobileTablePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen grid place-items-center text-slate-600">
+          Loading...
+        </div>
+      }
+    >
+      <MobileTablePageContent />
+    </Suspense>
+  );
+}
+
+function MobileTablePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [page, setPage] = useState(1);
@@ -74,28 +88,18 @@ export default function MobileTablePage() {
   };
 
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen grid place-items-center text-slate-600">
-          Loading...
+    <main className={`min-h-screen bg-[#f2f3f6] px-4 py-0 ${inter.className}`}>
+      <div className="mx-auto w-full max-w-[460px] space-y-5">
+        {/* <div className="text-right pr-1 text-xs font-semibold text-[#1c2f57] underline">
+          Grid view
+        </div> */}
+        <MobileTable leads={leads} />
+        <div className="flex justify-end px-3 py-0 text-xs font-semibold text-slate-500">
+          {loading ? "..." : `${leads.length}/${pageCount * pageSize || 1}`}
         </div>
-      }
-    >
-      <main
-        className={`min-h-screen bg-[#f2f3f6] px-4 py-0 ${inter.className}`}
-      >
-        <div className="mx-auto w-full max-w-[460px] space-y-5">
-          {/* <div className="text-right pr-1 text-xs font-semibold text-[#1c2f57] underline">
-            Grid view
-          </div> */}
-          <MobileTable leads={leads} />
-          <div className="flex justify-end px-3 py-0 text-xs font-semibold text-slate-500">
-            {loading ? "..." : `${leads.length}/${pageCount * pageSize || 1}`}
-          </div>
 
-          <Pagination page={page} pageCount={pageCount} onChange={handlePageChange} />
-        </div>
-      </main>
-    </Suspense>
+        <Pagination page={page} pageCount={pageCount} onChange={handlePageChange} />
+      </div>
+    </main>
   );
 }
