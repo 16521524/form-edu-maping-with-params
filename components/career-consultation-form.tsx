@@ -70,9 +70,9 @@ const initialFormData: FormData = {
   academicPerformance: "",
   gpa: "",
   aspirations: [],
-  notifyVia: [
-    formMeta.common.notificationChannels?.[0] || "email",
-  ].filter(Boolean),
+  notifyVia: [formMeta.common.notificationChannels?.[0] || "email"].filter(
+    Boolean
+  ),
   socials: [],
   confirmAccuracy: false,
 };
@@ -126,7 +126,9 @@ export default function CareerConsultationForm() {
   const [metaReady, setMetaReady] = useState(false);
   const [showAspirationDropdown, setShowAspirationDropdown] = useState(false);
   const birthInputRef = useRef<HTMLInputElement | null>(null);
-  const [socials, setSocials] = useState<{ platform: string; link_profile: string }[]>([]);
+  const [socials, setSocials] = useState<
+    { platform: string; link_profile: string }[]
+  >([]);
   const [openSocialIndex, setOpenSocialIndex] = useState<number | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const requiredFields: (keyof FormData)[] = ["fullName", "phone", "email"];
@@ -284,8 +286,7 @@ export default function CareerConsultationForm() {
     const allowedSchools = (metaOptions.schools ?? []).map((s) => s.value);
     const allowedNotification = formMeta.common.notificationChannels ?? [];
     const resolvedAspirations = (
-      mappedData.aspirations ??
-      initialFormData.aspirations
+      mappedData.aspirations ?? initialFormData.aspirations
     )
       .filter(Boolean)
       .slice(0, 3);
@@ -310,7 +311,10 @@ export default function CareerConsultationForm() {
       nationalId: prefer(mappedData.nationalId, initialFormData.nationalId),
       email: prefer(mappedData.email, initialFormData.email),
       utmCampaign: prefer(mappedData.utmCampaign, initialFormData.utmCampaign),
-      utmCampaignQr: prefer(mappedData.utmCampaignQr, initialFormData.utmCampaignQr),
+      utmCampaignQr: prefer(
+        mappedData.utmCampaignQr,
+        initialFormData.utmCampaignQr
+      ),
       utmSales: prefer(mappedData.utmSales, initialFormData.utmSales),
       city: prefer(mappedData.city, initialFormData.city),
       school: ensureOption(
@@ -462,10 +466,13 @@ export default function CareerConsultationForm() {
           notify_vias: data.notifyVia || [],
           socials: socials
             .filter((s) => s.platform || s.link_profile)
-            .map((s) => ({ platform: s.platform, link_profile: s.link_profile })),
+            .map((s) => ({
+              platform: s.platform,
+              link_profile: s.link_profile,
+            })),
         };
         await postCareerLead(payload);
-        alert("Đăng ký thành công!");
+        router.push("/dang-ky-tu-van-huong-nghiep/success");
         resolve();
       } catch (err) {
         console.error("Career consultation submit failed", err);
@@ -525,13 +532,24 @@ export default function CareerConsultationForm() {
             priority
             sizes="430px"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/15 via-slate-900/25 to-slate-900/45" />
-          <div className="flex justify-center pt-8">
-            <h1 className="text-[#1A3561] text-[32px] font-semibold leading-snug drop-shadow-sm">
-              Đăng ký tư vấn
-              <br />
-              hướng nghiệp
-            </h1>
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/5 via-slate-900/25 to-slate-900/50" />
+          <div className="absolute inset-0 flex items-center gap-3 px-4">
+            <div className="h-[76px] w-[79px] p-2">
+              <Image
+                src="/assets/career/logo.png"
+                alt="Career logo"
+                width={76}
+                height={79}
+                className="h-full w-full object-contain"
+                priority
+              />
+            </div>
+            <div className="text-[#0f2b5a] leading-[1.02] [text-shadow:0_3px_12px_rgba(0,0,0,0.18)]">
+              <div className="text-[32px] font-extrabold">Đăng ký tư vấn</div>
+              <div className="-mt-0 text-[32px] font-extrabold">
+                Hướng nghiệp
+              </div>
+            </div>
           </div>
         </div>
 
@@ -649,23 +667,37 @@ export default function CareerConsultationForm() {
               />
 
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-slate-900">Mạng xã hội</p>
+                <p className="text-sm font-semibold text-slate-900">
+                  Mạng xã hội
+                </p>
                 {socials.map((social, idx) => (
-                  <div key={`${social.platform}-${idx}`} className="grid grid-cols-12 gap-2 items-center">
+                  <div
+                    key={`${social.platform}-${idx}`}
+                    className="grid grid-cols-12 gap-2 items-center"
+                  >
                     <div className="col-span-5 relative">
                       <button
                         type="button"
-                        onClick={() => setOpenSocialIndex(openSocialIndex === idx ? null : idx)}
+                        onClick={() =>
+                          setOpenSocialIndex(
+                            openSocialIndex === idx ? null : idx
+                          )
+                        }
                         className={cn(
                           selectClass,
                           "flex items-center gap-2 pr-10 text-left",
-                          openSocialIndex === idx && "border-[#1f3f77] ring-2 ring-[#1f3f77]/15"
+                          openSocialIndex === idx &&
+                            "border-[#1f3f77] ring-2 ring-[#1f3f77]/15"
                         )}
                       >
                         {social.platform ? (
                           <>
                             <SocialIcon value={social.platform} />
-                            <span>{SOCIAL_OPTIONS.find((s) => s.value === social.platform)?.label || social.platform}</span>
+                            <span>
+                              {SOCIAL_OPTIONS.find(
+                                (s) => s.value === social.platform
+                              )?.label || social.platform}
+                            </span>
                           </>
                         ) : (
                           <span className="text-[#aeb7c3]">Nền tảng</span>
@@ -680,12 +712,16 @@ export default function CareerConsultationForm() {
                               key={option.value}
                               className={cn(
                                 "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-100",
-                                social.platform === option.value && "bg-[#eaf0ff]"
+                                social.platform === option.value &&
+                                  "bg-[#eaf0ff]"
                               )}
                               onMouseDown={(e) => {
                                 e.preventDefault();
                                 const next = [...socials];
-                                next[idx] = { ...next[idx], platform: option.value };
+                                next[idx] = {
+                                  ...next[idx],
+                                  platform: option.value,
+                                };
                                 setSocials(next);
                                 setOpenSocialIndex(null);
                               }}
@@ -704,13 +740,14 @@ export default function CareerConsultationForm() {
                           platform === "Facebook"
                             ? "Dán link profile Facebook"
                             : platform === "Zalo"
-                              ? "Nhập số điện thoại Zalo"
-                              : platform === "TikTok"
-                                ? "Nhập link hoặc ID TikTok"
-                                : platform === "WhatsApp"
-                                  ? "Nhập số điện thoại WhatsApp"
-                                  : "Dán link profile";
-                        const isPhone = platform === "Zalo" || platform === "WhatsApp";
+                            ? "Nhập số điện thoại Zalo"
+                            : platform === "TikTok"
+                            ? "Nhập link hoặc ID TikTok"
+                            : platform === "WhatsApp"
+                            ? "Nhập số điện thoại WhatsApp"
+                            : "Dán link profile";
+                        const isPhone =
+                          platform === "Zalo" || platform === "WhatsApp";
                         const inputMode = isPhone ? "tel" : undefined;
                         const type = isPhone ? "tel" : "text";
                         return (
@@ -720,19 +757,24 @@ export default function CareerConsultationForm() {
                             type={type}
                             inputMode={inputMode}
                             onChange={(e) => {
-                              const next = [...socials]
-                              next[idx] = { ...next[idx], link_profile: e.target.value }
-                              setSocials(next)
+                              const next = [...socials];
+                              next[idx] = {
+                                ...next[idx],
+                                link_profile: e.target.value,
+                              };
+                              setSocials(next);
                             }}
                             className={cn(inputClass, "h-11")}
                           />
-                        )
+                        );
                       })()}
                     </div>
                     <div className="col-span-1 flex items-center justify-end pr-1">
                       <button
                         type="button"
-                        onClick={() => setSocials(socials.filter((_, i) => i !== idx))}
+                        onClick={() =>
+                          setSocials(socials.filter((_, i) => i !== idx))
+                        }
                         className="h-8 w-8 flex items-center justify-center text-slate-600 hover:text-slate-800"
                         aria-label="Xóa mạng xã hội"
                       >
@@ -744,7 +786,9 @@ export default function CareerConsultationForm() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setSocials([...socials, { platform: "", link_profile: "" }])}
+                  onClick={() =>
+                    setSocials([...socials, { platform: "", link_profile: "" }])
+                  }
                   className="w-full h-11"
                 >
                   + Thêm nền tảng
@@ -775,9 +819,8 @@ export default function CareerConsultationForm() {
                 label="Trường học"
                 inputProps={{
                   value:
-                    metaOptions.schools.find(
-                      (s) => s.value === formData.school
-                    )?.display || formData.school,
+                    metaOptions.schools.find((s) => s.value === formData.school)
+                      ?.display || formData.school,
                   className: cn(
                     inputClass,
                     "bg-[#d7dbe2] text-slate-700 border-transparent"
@@ -884,7 +927,9 @@ export default function CareerConsultationForm() {
                     <div className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg">
                       {(metaOptions.preferences.length
                         ? metaOptions.preferences.map((p) =>
-                            typeof p === "string" ? p : p.display || p.value || ""
+                            typeof p === "string"
+                              ? p
+                              : p.display || p.value || ""
                           )
                         : formMeta.enrollment.majorOptions.map((m) => m.label)
                       )
@@ -1072,5 +1117,7 @@ function SocialIcon({ value }: { value: string }) {
   const sizeClass = "h-5 w-5 rounded-full object-contain";
   const src = SOCIAL_OPTIONS.find((s) => s.value === value)?.icon;
   if (!src) return null;
-  return <Image src={src} alt={value} width={20} height={20} className={sizeClass} />;
+  return (
+    <Image src={src} alt={value} width={20} height={20} className={sizeClass} />
+  );
 }
