@@ -332,7 +332,7 @@ export function MobileTable({ leads = defaultLeads }: Props) {
                   color: textColor,
                   gridTemplateColumns: template,
                   backgroundColor: rowBg,
-                  minHeight: 96,
+                  minHeight: 64,
                 }}
               >
                 {row.getVisibleCells().map((cell) => {
