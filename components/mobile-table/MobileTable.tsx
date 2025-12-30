@@ -196,6 +196,15 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
   });
 
   const visibleColumns = table.getVisibleLeafColumns();
+  const pinnedIds = table.getState().columnPinning.left ?? [];
+  const orderedColumns = useMemo(() => {
+    const map = new Map(visibleColumns.map((c) => [c.id, c]));
+    const pinnedList = pinnedIds
+      .map((id) => map.get(id))
+      .filter((c): c is (typeof visibleColumns)[number] => Boolean(c));
+    const remaining = visibleColumns.filter((c) => !pinnedIds.includes(c.id));
+    return [...pinnedList, ...remaining];
+  }, [visibleColumns, pinnedIds]);
   const textColor = "#1C3055";
   const activeBg = "#ffffff";
   const activeShadow =
@@ -204,23 +213,23 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
   const lastPinned = pinnedLeft[pinnedLeft.length - 1];
   const headerBg = "#1c2f57";
   const gapPx = 0;
-  const template = visibleColumns.map((c) => `${c.getSize()}px`).join(" ");
+  const template = orderedColumns.map((c) => `${c.getSize()}px`).join(" ");
   const totalWidth =
-    visibleColumns.reduce((sum, c) => sum + c.getSize(), 0) +
-    gapPx * Math.max(visibleColumns.length - 1, 0);
+    orderedColumns.reduce((sum, c) => sum + c.getSize(), 0) +
+    gapPx * Math.max(orderedColumns.length - 1, 0);
   const rowPadding = 32;
   const showSkeleton = loading && leads.length === 0;
   const showEmpty = !loading && leads.length === 0;
   const columnOffsets = useMemo(() => {
     const map = new Map<string, number>();
     let acc = 0;
-    visibleColumns.forEach((col, idx) => {
+    orderedColumns.forEach((col, idx) => {
       if (idx > 0) acc += gapPx;
       map.set(col.id, acc);
       acc += col.getSize();
     });
     return map;
-  }, [visibleColumns]);
+  }, [orderedColumns]);
 
   const activeKey =
     hoveredKey ?? table.getState().columnPinning.left?.[0] ?? null;
@@ -276,7 +285,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                 className="grid gap-0 px-4 py-4 text-sm font-semibold sticky top-0 z-10 bg-[#1c2f57]"
                 style={{ gridTemplateColumns: template }}
               >
-                {visibleColumns.map((col) => {
+                {orderedColumns.map((col) => {
                   const pinned = col.getIsPinned();
                   const hovering = hoveredKey === col.id;
                   const left =
@@ -369,7 +378,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                   }}
                   aria-busy="true"
                 >
-                  {visibleColumns.map((col) => {
+                  {orderedColumns.map((col) => {
                     const pinned = col.getIsPinned();
                     const left =
                       pinned === "left" ? columnOffsets.get(col.id) : undefined;
@@ -420,7 +429,11 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                       minHeight: 64,
                     }}
                   >
-                    {row.getVisibleCells().map((cell) => {
+                    {orderedColumns.map((col) => {
+                      const cell = row
+                        .getVisibleCells()
+                        .find((c) => c.column.id === col.id);
+                      if (!cell) return null;
                       const column = cell.column;
                       const pinned = column.getIsPinned();
                       const left =
