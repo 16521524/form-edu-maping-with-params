@@ -56,8 +56,6 @@ const initialFormData: FormData = {
   gpa: "",
   strongSubjects: "",
   socialLink: "",
-  utmCampaign: "",
-  utmSales: "",
   majorPreference1: "",
   majorPreference2: "",
   majorPreference3: "",

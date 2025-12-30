@@ -2,7 +2,7 @@ export type CareerMetadataResponse = {
   data?: {
     genders?: string[]
     preferences?: string[]
-    states?: string[]
+    provinces?: string[]
     schools?: { value: string; display: string }[]
     streams?: string[]
     grades?: string[]

@@ -3,20 +3,13 @@ import { NextResponse } from "next/server";
 const FRAPPE_BASE_URL =
   process.env.NEXT_PUBLIC_FRAPPE_BASE_URL || "https://erpnext.aurora-tech.com";
 
-const CAREER_META_ENDPOINT = `${FRAPPE_BASE_URL}/api/method/meta.get_metadata`;
+const CAREER_SHOOL_ENDPOINT = `${FRAPPE_BASE_URL}/api/method/search.search_school`;
 
-const FRAPPE_TOKEN =
-  process.env.NEXT_PUBLIC_FRAPPE_TOKEN ||
-  "token 7c0403719248098:c307a8d2994c052";
-
+ 
 export async function GET(): Promise<NextResponse> {
   try {
-    const res = await fetch(CAREER_META_ENDPOINT, {
-      method: "GET",
-      headers: {
-        Authorization: FRAPPE_TOKEN,
-        "Content-Type": "application/json",
-      },
+    const res = await fetch(CAREER_SHOOL_ENDPOINT, {
+      cache: 'no-cache'
     });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });

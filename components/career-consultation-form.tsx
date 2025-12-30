@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
   getMetadataCareer,
+  getMetadataSchools,
   postCareerLead,
   updateCampaignTotalScans,
 } from "@/servers";
@@ -127,18 +128,38 @@ export default function CareerConsultationForm() {
   const birthInputRef = useRef<HTMLInputElement | null>(null);
   const [socials, setSocials] = useState<{ platform: string; link_profile: string }[]>([]);
   const [openSocialIndex, setOpenSocialIndex] = useState<number | null>(null);
+  const requiredFields: (keyof FormData)[] = ["fullName", "phone", "email"];
+
+  const requiredFieldsFilled = requiredFields.every((field) => {
+    const value = watch(field);
+    if (typeof value === "string") return value.trim() !== "";
+    if (Array.isArray(value)) return value.length > 0;
+    return Boolean(value);
+  });
 
   useEffect(() => {
     let active = true;
     const loadMeta = async () => {
       try {
-        const json = await getMetadataCareer();
+        const [json, schoolsResp] = await Promise.all([
+          getMetadataCareer(),
+          getMetadataSchools(),
+        ]);
         if (!active || !json?.data) return;
         setMetaOptions({
-          genders: json.data.genders || [],
+          genders: (json.data.genders || []).map((g: any) =>
+            typeof g === "string" ? g : g.display || g.value || ""
+          ),
           preferences: json.data.preferences || [],
-          states: json.data.states || [],
-          schools: json.data.schools || [],
+          states: (json.data.provinces || []).map(
+            (p: any) => p.display || p.value || String(p)
+          ),
+          schools: (schoolsResp.data || [])
+            .map((s: any) => ({
+              value: s?.value ?? s?.display ?? "",
+              display: s?.display ?? s?.value ?? "",
+            }))
+            .filter((s: any) => s.value || s.display),
         });
       } catch (err) {
         console.warn("Could not load metadata, fallback to formMeta", err);
@@ -425,6 +446,7 @@ export default function CareerConsultationForm() {
           date_of_birth: data.birthDate,
           role: "Student",
           national_id: data.nationalId,
+          province: data.city,
           state: data.city,
           school_name: data.school,
           class_stream: "",
@@ -855,7 +877,9 @@ export default function CareerConsultationForm() {
                   {showAspirationDropdown && (
                     <div className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg">
                       {(metaOptions.preferences.length
-                        ? metaOptions.preferences
+                        ? metaOptions.preferences.map((p) =>
+                            typeof p === "string" ? p : p.display || p.value || ""
+                          )
                         : formMeta.enrollment.majorOptions.map((m) => m.label)
                       )
                         .filter((option) =>
@@ -969,7 +993,9 @@ export default function CareerConsultationForm() {
           </label>
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={
+              isSubmitting || !watch("confirmAccuracy") || !requiredFieldsFilled
+            }
             className="w-full h-11 rounded-md bg-[#1a3561] text-white text-[15px] font-semibold hover:bg-[#18335f]"
           >
             {isSubmitting ? "Đang gửi..." : "Đăng ký"}

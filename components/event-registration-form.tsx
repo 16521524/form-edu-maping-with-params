@@ -334,7 +334,7 @@ export default function EventRegistrationForm() {
     return Boolean(value)
   })
 
-  const isSubmitEnabled = requiredFieldsFilled
+  const isSubmitEnabled = requiredFieldsFilled && formData.consentUseInfo && formData.confirmAccuracy
   const isPersonalSectionDisabled = !formData.consentUseInfo
 
   const onSubmit = (data: FormData) =>

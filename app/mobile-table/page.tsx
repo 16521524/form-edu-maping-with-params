@@ -49,7 +49,9 @@ function MobileTablePageContent() {
 
   const orderBy = searchParams.get("order_by") ?? "modified desc";
   const pageFromUrl = Number(searchParams.get("page") ?? 1);
-  const pageSize = Number(searchParams.get("page_size") ?? 10);
+  const pageSize = Number(searchParams.get("page_size") ?? 3);
+  const creationFrom = searchParams.get("creation_from");
+  const creationTo = searchParams.get("creation_to");
 
   useEffect(() => {
     setPage(pageFromUrl);
@@ -65,6 +67,8 @@ function MobileTablePageContent() {
           orderBy,
           page: pageFromUrl,
           pageSize,
+          creationFrom,
+          creationTo,
         });
         if (cancelled) return;
         setLeads(
@@ -123,6 +127,7 @@ function mapLeadRecordToLead(item: LeadRecord): Lead {
     conversionRate: item.stage_conversion_rate || "—",
     consultant: item.lead_owner || "—",
     major: item.custom_major || "—",
-    topic: item.summary || item.custom_note || "—",
+    topic: "—",
+    // topic: item.summary || item.custom_note || "—",
   };
 }
