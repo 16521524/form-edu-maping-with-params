@@ -128,6 +128,7 @@ export default function CareerConsultationForm() {
   const birthInputRef = useRef<HTMLInputElement | null>(null);
   const [socials, setSocials] = useState<{ platform: string; link_profile: string }[]>([]);
   const [openSocialIndex, setOpenSocialIndex] = useState<number | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const requiredFields: (keyof FormData)[] = ["fullName", "phone", "email"];
 
   const requiredFieldsFilled = requiredFields.every((field) => {
@@ -438,6 +439,7 @@ export default function CareerConsultationForm() {
   const onSubmit = (data: FormData) =>
     new Promise<void>(async (resolve, reject) => {
       try {
+        setSubmitError(null);
         const payload = {
           full_name: data.fullName,
           mobile_no: data.phone,
@@ -467,7 +469,11 @@ export default function CareerConsultationForm() {
         resolve();
       } catch (err) {
         console.error("Career consultation submit failed", err);
-        alert("Gửi thất bại, vui lòng thử lại.");
+        const messageFromApi =
+          (err as any)?.detail?.[0]?.message ||
+          (err as any)?.message ||
+          "Gửi thất bại, vui lòng thử lại.";
+        setSubmitError(messageFromApi);
         reject(err);
       }
     });
@@ -1000,6 +1006,9 @@ export default function CareerConsultationForm() {
           >
             {isSubmitting ? "Đang gửi..." : "Đăng ký"}
           </Button>
+          {submitError && (
+            <p className="text-sm text-red-600 text-center">{submitError}</p>
+          )}
         </form>
       </div>
     </main>

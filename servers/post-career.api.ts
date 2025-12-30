@@ -35,10 +35,18 @@ export async function postCareerLead(payload: CareerLeadPayload): Promise<Career
     body: JSON.stringify(payload),
   })
 
+  const json = await res.json().catch(() => null)
+
   if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`Failed to submit career lead: ${res.status} - ${text}`)
+    const errorMessage =
+      json?.message ||
+      (typeof json === "string" ? json : "") ||
+      `Không thể nộp hồ sơ ứng tuyển nghề nghiệp: ${res.status}`
+    const errors = Array.isArray(json?.errors) ? json.errors : undefined
+    const err = new Error(errorMessage)
+    ;(err as any).detail = errors
+    throw err
   }
 
-  return res.json()
+  return json || {}
 }
