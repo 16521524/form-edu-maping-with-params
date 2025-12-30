@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Pin } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Info, Pin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { leads as defaultLeads, type Lead } from "./data";
 import {
@@ -15,13 +15,35 @@ type Props = {
 
 export function MobileTable({ leads = defaultLeads }: Props) {
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+  
   const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
     left: ["stt", "name"],
     right: [],
   });
+
   const [atEnd, setAtEnd] = useState(false);
+
   const [atStart, setAtStart] = useState(true);
+
   const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  const handleOpenLead = useCallback((lead: any) => {
+    const leadId = lead?.name ?? '';
+    const payload = {
+      type: "open_lead",
+      leadId,
+      lead,
+    };
+    if (
+      typeof window !== "undefined" &&
+      (window as any)?.ReactNativeWebView?.postMessage
+    ) {
+      (window as any).ReactNativeWebView.postMessage(JSON.stringify(payload));
+    } else if (leadId) {
+      console.log("open lead", payload);
+    }
+  }, []);
+
   const columns = useMemo<ColumnDef<Lead, any>[]>(
     () => [
       {
@@ -30,7 +52,10 @@ export function MobileTable({ leads = defaultLeads }: Props) {
         size: 90,
         minSize: 80,
         cell: ({ row }) => (
-          <span className="flex items-center gap-2">{row.index + 1}</span>
+          <span className="flex items-center gap-2 font-semibold text-sm">
+            #{row.index + 1}
+            <Info className="h-3.5 w-3.5" strokeWidth={2.8} />
+          </span>
         ),
       },
       {
@@ -39,12 +64,13 @@ export function MobileTable({ leads = defaultLeads }: Props) {
         size: 190,
         minSize: 160,
         cell: ({ row }) => (
-          <a
-            href="#"
+          <button
+            type="button"
+            onClick={() => handleOpenLead(row.original)}
             className="underline decoration-[1.5px] underline-offset-[3px] font-semibold text-[#1C3055]"
           >
             {row.original.name}
-          </a>
+          </button>
         ),
       },
       {
@@ -134,7 +160,7 @@ export function MobileTable({ leads = defaultLeads }: Props) {
         ),
       },
     ],
-    []
+    [handleOpenLead]
   );
 
   const table = useReactTable({
@@ -160,6 +186,7 @@ export function MobileTable({ leads = defaultLeads }: Props) {
   const totalWidth =
     visibleColumns.reduce((sum, c) => sum + c.getSize(), 0) +
     gapPx * Math.max(visibleColumns.length - 1, 0);
+  const rowPadding = 32;
   const columnOffsets = useMemo(() => {
     const map = new Map<string, number>();
     let acc = 0;
@@ -177,9 +204,10 @@ export function MobileTable({ leads = defaultLeads }: Props) {
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    const slack = 12;
     const handle = () => {
-      const start = el.scrollLeft <= 2;
-      const end = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2;
+      const start = el.scrollLeft <= slack;
+      const end = el.scrollLeft + el.clientWidth >= el.scrollWidth - slack;
       setAtStart(start);
       setAtEnd(end);
     };
@@ -189,17 +217,17 @@ export function MobileTable({ leads = defaultLeads }: Props) {
   }, [totalWidth]);
 
   const radius = 26;
-  const containerRadius = `${atStart ? radius : 0}px ${atEnd ? radius : 0}px ${atEnd ? radius : 0}px ${atStart ? radius : 0}px`;
-  const headerRadius = `${atStart ? radius - 2 : 0}px ${atEnd ? radius - 2 : 0}px 0 0`;
+  const containerRadius = `${atStart ? radius : 0}px ${atEnd ? radius : 0}px ${
+    atEnd ? radius : 0
+  }px ${atStart ? radius : 0}px`;
+  const headerRadius = `${atStart ? radius - 2 : 0}px ${
+    atEnd ? radius - 2 : 0
+  }px 0 0`;
 
   return (
     <div
-      className="relative rounded-[26px] border border-[#e3e7ef] shadow-[0_16px_32px_rgba(0,0,0,0.08)] overflow-hidden bg-white"
-      style={{
-        borderRadius: containerRadius,
-        borderRightColor: atEnd ? "#e3e7ef" : "transparent",
-        borderLeftColor: atStart ? "#e3e7ef" : "transparent",
-      }}
+      className="relative rounded-[26px] border border-[#e3e7ef] shadow-[0_16px_32px_rgba(0,0,0,0.08)] overflow-hidden bg-white transition-[border-radius] duration-200"
+      style={{ borderRadius: containerRadius }}
     >
       <div
         ref={scrollRef}
@@ -208,13 +236,16 @@ export function MobileTable({ leads = defaultLeads }: Props) {
         <div
           className="relative pt-0"
           style={{
-            minWidth: totalWidth,
+            minWidth: totalWidth + rowPadding,
           }}
         >
           <div className="sticky top-0 z-50">
             <div
               className="bg-[#1c2f57] text-white"
-              style={{ borderTopLeftRadius: headerRadius.split(" ")[0], borderTopRightRadius: headerRadius.split(" ")[1] }}
+              style={{
+                borderTopLeftRadius: headerRadius.split(" ")[0],
+                borderTopRightRadius: headerRadius.split(" ")[1],
+              }}
             >
               <div
                 className="grid gap-0 px-4 py-4 text-sm font-semibold"
@@ -246,7 +277,9 @@ export function MobileTable({ leads = defaultLeads }: Props) {
                               minWidth: width,
                               backgroundColor: headerBg,
                               boxShadow:
-                                isLastPinned && !atEnd ? activeShadow : undefined,
+                                isLastPinned && !atEnd
+                                  ? activeShadow
+                                  : undefined,
                             }
                           : {
                               width,
