@@ -133,7 +133,12 @@ export default function CareerConsultationForm() {
   const [openSocialIndex, setOpenSocialIndex] = useState<number | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const requiredFields: (keyof FormData)[] = ["fullName", "phone", "email"];
+  const requiredFields: (keyof FormData)[] = [
+    "fullName",
+    "phone",
+    "email",
+    "nationalId",
+  ];
 
   const requiredFieldsFilled = requiredFields.every((field) => {
     const value = watch(field);
@@ -141,6 +146,32 @@ export default function CareerConsultationForm() {
     if (Array.isArray(value)) return value.length > 0;
     return Boolean(value);
   });
+  const emailReady = (watch("email") || "").trim() !== "";
+  const socialReadySet = new Set(
+    socials
+      .filter(
+        (s) =>
+          s.platform &&
+          typeof s.link_profile === "string" &&
+          s.link_profile.trim() !== ""
+      )
+      .map((s) => s.platform)
+      .filter(Boolean)
+  );
+  const channelPlatformMap: Record<string, string | null> = {
+    email: null,
+    messenger: "Facebook",
+    zalo: "Zalo",
+    whatsapp: "WhatsApp",
+  };
+  const canSelectChannel = (channel: string) => {
+    const key = channel.toLowerCase();
+    if (key === "email") return emailReady;
+    const platform = channelPlatformMap[key] ?? channel;
+    return platform ? socialReadySet.has(platform) : false;
+  };
+  const submitDisabled =
+    isSubmitting || !watch("confirmAccuracy") || !requiredFieldsFilled;
 
   useEffect(() => {
     let active = true;
@@ -1008,11 +1039,13 @@ export default function CareerConsultationForm() {
                     const checked = (formData.notifyVia || []).includes(
                       channel
                     );
+                    const enabled = canSelectChannel(channel);
                     return (
                       <label
                         key={channel}
                         className={cn(
-                          "flex items-center gap-2 text-sm capitalize transition-colors cursor-pointer",
+                          "flex items-center gap-2 text-sm capitalize transition-colors",
+                          enabled ? "cursor-pointer" : "cursor-not-allowed opacity-60",
                           checked
                             ? "border-[#1f3f77] bg-white text-[#1f3f77]"
                             : "border-[#d7dde7] bg-white text-slate-700 hover:border-[#1f3f77]"
@@ -1020,7 +1053,9 @@ export default function CareerConsultationForm() {
                       >
                         <Checkbox
                           checked={checked}
+                          disabled={!enabled}
                           onCheckedChange={(c) =>
+                            enabled &&
                             handleNotifyChange(channel, Boolean(c))
                           }
                         />
@@ -1032,6 +1067,9 @@ export default function CareerConsultationForm() {
                     );
                   })}
                 </div>
+                <p className="text-xs text-red-600">
+                  Nhập email và thêm kênh mạng xã hội tương ứng để bật lựa chọn.
+                </p>
               </div>
             </div>
           </section>
@@ -1050,9 +1088,7 @@ export default function CareerConsultationForm() {
           </label>
           <Button
             type="submit"
-            disabled={
-              isSubmitting || !watch("confirmAccuracy") || !requiredFieldsFilled
-            }
+            disabled={submitDisabled}
             className="w-full h-11 rounded-md bg-[#1a3561] text-white text-[15px] font-semibold hover:bg-[#18335f]"
           >
             {isSubmitting ? "Đang gửi..." : "Đăng ký"}
