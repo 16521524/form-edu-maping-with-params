@@ -36,6 +36,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ message: "Missing auth" }, { status: 401 });
   }
 
+  console.log('[DEBUG-TOKEN]', {
+    cookieAuth: cookieAuth ? true : false,
+  });
+  
   try {
     const res = await fetch(upstream.toString(), {
       headers: {
