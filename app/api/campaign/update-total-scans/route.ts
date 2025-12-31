@@ -1,13 +1,10 @@
 import { NextResponse } from "next/server";
 
-const FRAPPE_BASE_URL = process.env.NEXT_PUBLIC_FRAPPE_BASE_URL || 'https://erpnext.aurora-tech.com';
+const FRAPPE_BASE_URL = process.env.NEXT_PUBLIC_FRAPPE_BASE_URL || "";
 
-const CAMPAIGN_SCAN_ENDPOINT =
-  `${FRAPPE_BASE_URL}/api/method/campaign.update_total_scans`;
-  
-const CAMPAIGN_SCAN_TOKEN =
-  process.env.NEXT_PUBLIC_FRAPPE_TOKEN ||
-  "token 7c0403719248098:c307a8d2994c052";
+const CAMPAIGN_SCAN_ENDPOINT = `${FRAPPE_BASE_URL}/api/method/campaign.update_total_scans`;
+
+const CAMPAIGN_SCAN_TOKEN = process.env.NEXT_PUBLIC_FRAPPE_TOKEN || "";
 
 export async function PUT(req: Request): Promise<NextResponse> {
   try {
