@@ -103,7 +103,7 @@ export default function CareerSuccessModal() {
               alt="Zalo"
               className="h-6 w-6 rounded-full"
             />
-            Nhận tư vấn qua Zalo
+            Theo dõi Zalo ngay
           </a>
         </div>
       </div>
