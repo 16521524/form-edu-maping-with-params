@@ -8,6 +8,10 @@ const FRAPPE_TOKEN = process.env.NEXT_PUBLIC_FRAPPE_TOKEN || "";
 
 export async function GET(): Promise<NextResponse> {
   try {
+    console.log("[DEBUG-TOKEN]", {
+      cookieAuth: FRAPPE_TOKEN,
+    });
+
     const res = await fetch(CAREER_META_ENDPOINT, {
       method: "GET",
       headers: {
