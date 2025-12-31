@@ -30,7 +30,7 @@ export async function GET(request: Request) {
   const cookieAuthRaw = cookieStore.get("APP_AUTH")?.value;
   const cookieAuth = cookieAuthRaw ? decodeURIComponent(cookieAuthRaw) : null;
 
-  const authHeader =  cookieAuth || "";
+  const authHeader =  cookieAuth || FRAPPE_TOKEN || "";
 
   if (!authHeader) {
     return NextResponse.json({ message: "Missing auth" }, { status: 401 });
