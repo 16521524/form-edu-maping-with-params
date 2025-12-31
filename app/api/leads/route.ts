@@ -37,7 +37,7 @@ export async function GET(request: Request) {
   }
 
   console.log('[DEBUG-TOKEN]', {
-    cookieAuth: cookieAuth ? true : false,
+    cookieAuth: cookieAuth,
   });
   
   try {
