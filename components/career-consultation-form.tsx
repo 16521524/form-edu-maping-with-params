@@ -199,6 +199,7 @@ export default function CareerConsultationForm() {
   };
   const submitDisabled =
     isSubmitting || !watch("confirmAccuracy") || !requiredFieldsFilled;
+  const phoneNumber = (watch("phone") || "").trim();
 
   useEffect(() => {
     let active = true;
@@ -502,6 +503,27 @@ export default function CareerConsultationForm() {
     setValue("notifyVia", next);
   };
 
+  const handleSelectSocialPlatform = (idx: number, platform: string) => {
+    setSocials((prev) => {
+      const next = [...prev];
+      const currentEntry = next[idx] || { platform: "", link_profile: "" };
+      const hasPhone = Boolean(phoneNumber);
+      const shouldAutofill =
+        hasPhone &&
+        (platform === "Zalo" || platform === "WhatsApp") &&
+        !(currentEntry.link_profile || "").trim();
+      next[idx] = {
+        ...currentEntry,
+        platform,
+        link_profile: shouldAutofill
+          ? phoneNumber
+          : currentEntry.link_profile || "",
+      };
+      return next;
+    });
+    setOpenSocialIndex(null);
+  };
+
   const onSubmit = (data: FormData) =>
     new Promise<void>(async (resolve, reject) => {
       try {
@@ -797,13 +819,7 @@ export default function CareerConsultationForm() {
                               )}
                               onMouseDown={(e) => {
                                 e.preventDefault();
-                                const next = [...socials];
-                                next[idx] = {
-                                  ...next[idx],
-                                  platform: option.value,
-                                };
-                                setSocials(next);
-                                setOpenSocialIndex(null);
+                                handleSelectSocialPlatform(idx, option.value);
                               }}
                             >
                               <SocialIcon value={option.value} />
