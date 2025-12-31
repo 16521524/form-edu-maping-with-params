@@ -196,7 +196,9 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
   });
 
   const visibleColumns = table.getVisibleLeafColumns();
+
   const pinnedIds = table.getState().columnPinning.left ?? [];
+
   const orderedColumns = useMemo(() => {
     const map = new Map(visibleColumns.map((c) => [c.id, c]));
     const pinnedList = pinnedIds
@@ -205,6 +207,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
     const remaining = visibleColumns.filter((c) => !pinnedIds.includes(c.id));
     return [...pinnedList, ...remaining];
   }, [visibleColumns, pinnedIds]);
+  
   const textColor = "#1C3055";
   const activeBg = "#ffffff";
   const activeShadow =
