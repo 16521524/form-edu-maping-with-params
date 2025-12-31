@@ -1,11 +1,12 @@
 services:
   nextjs:
-    container_name: chat-app-fe
+    container_name: admission-form-fe
     build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      - NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
+      - NEXT_PUBLIC_FRAPPE_TOKEN=$NEXT_PUBLIC_FRAPPE_TOKEN
+      - NEXT_PUBLIC_FRAPPE_TOKEN=$NEXT_PUBLIC_FRAPPE_TOKEN
     ports:
       - "3000:3000"
