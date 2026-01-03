@@ -54,6 +54,13 @@ type FormData = {
   confirmAccuracy: boolean;
 };
 
+type OptionItem = {
+  value: string;
+  display: string;
+  text_color?: string;
+  background_color?: string;
+};
+
 const initialFormData: FormData = {
   fullName: "",
   birthDate: "",
@@ -77,6 +84,30 @@ const initialFormData: FormData = {
   socials: [],
   confirmAccuracy: false,
 };
+
+const fallbackGenderOptions: OptionItem[] =
+  formMeta.common.genderOptions?.map((o) => ({
+    value: o.value,
+    display: o.label,
+  })) || [];
+
+const fallbackGradeOptions: OptionItem[] =
+  formMeta.common.gradeOptions?.map((o) => ({
+    value: o.value,
+    display: o.label,
+  })) || [];
+
+const fallbackPerformanceOptions: OptionItem[] =
+  formMeta.common.academicPerformanceOptions?.map((o) => ({
+    value: o.value,
+    display: o.label,
+  })) || [];
+
+const fallbackPreferenceOptions: OptionItem[] =
+  formMeta.enrollment.majorOptions?.map((o) => ({
+    value: o.value,
+    display: o.label,
+  })) || [];
 
 const panelClass =
   "rounded-lg border border-[#e2e7ef] bg-white shadow-[0_8px_22px_rgba(31,63,119,0.06)]";
@@ -121,6 +152,45 @@ const formatBirthInput = (raw: string) => {
   return result;
 };
 
+const toOptionItem = (item: any): OptionItem | null => {
+  if (!item) return null;
+  if (typeof item === "string") {
+    return { value: String(item), display: String(item) };
+  }
+  const value = item.value ?? item.display;
+  const display = item.display ?? item.value;
+  if (!value && !display) return null;
+  return {
+    value: String(value),
+    display: String(display),
+    text_color: item.text_color,
+    background_color: item.background_color,
+  };
+};
+
+const normalizeOptions = (
+  source: any,
+  fallback: OptionItem[] = []
+): OptionItem[] => {
+  if (Array.isArray(source)) {
+    const normalized = source.map(toOptionItem).filter(Boolean) as OptionItem[];
+    if (normalized.length) return normalized;
+  }
+  return fallback;
+};
+
+const coerceToValue = (
+  raw: string | undefined,
+  options: OptionItem[]
+): string | undefined => {
+  if (!raw) return raw;
+  const byValue = options.find((opt) => opt.value === raw);
+  if (byValue) return byValue.value;
+  const byDisplay = options.find((opt) => opt.display === raw);
+  if (byDisplay) return byDisplay.value;
+  return raw;
+};
+
 export default function CareerConsultationForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -146,11 +216,20 @@ export default function CareerConsultationForm() {
   const aspirations = watch("aspirations") || [];
   const [aspirationInput, setAspirationInput] = useState("");
   const [metaOptions, setMetaOptions] = useState<{
-    genders: string[];
-    preferences: string[];
-    states: string[];
-    schools: { value: string; display: string }[];
-  }>({ genders: [], preferences: [], states: [], schools: [] });
+    genders: OptionItem[];
+    preferences: OptionItem[];
+    provinces: OptionItem[];
+    grades: OptionItem[];
+    performances: OptionItem[];
+    schools: OptionItem[];
+  }>({
+    genders: [],
+    preferences: [],
+    provinces: [],
+    grades: [],
+    performances: [],
+    schools: [],
+  });
   const [metaReady, setMetaReady] = useState(false);
   const [showAspirationDropdown, setShowAspirationDropdown] = useState(false);
   const birthInputRef = useRef<HTMLInputElement | null>(null);
@@ -160,6 +239,18 @@ export default function CareerConsultationForm() {
   const [openSocialIndex, setOpenSocialIndex] = useState<number | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const genderOptions =
+    metaOptions.genders.length > 0 ? metaOptions.genders : fallbackGenderOptions;
+  const gradeOptions =
+    metaOptions.grades.length > 0 ? metaOptions.grades : fallbackGradeOptions;
+  const performanceOptions =
+    metaOptions.performances.length > 0
+      ? metaOptions.performances
+      : fallbackPerformanceOptions;
+  const preferenceOptions =
+    metaOptions.preferences.length > 0
+      ? metaOptions.preferences
+      : fallbackPreferenceOptions;
   const requiredFields: (keyof FormData)[] = [
     "fullName",
     "phone",
@@ -200,6 +291,14 @@ export default function CareerConsultationForm() {
   const submitDisabled =
     isSubmitting || !watch("confirmAccuracy") || !requiredFieldsFilled;
   const phoneNumber = (watch("phone") || "").trim();
+  const cityDisplay =
+    metaOptions.provinces.find((p) => p.value === formData.city)?.display ||
+    formData.city;
+  const schoolDisplay =
+    metaOptions.schools.find((s) => s.value === formData.school)?.display ||
+    formData.school;
+  const getPreferenceDisplay = (value: string) =>
+    preferenceOptions.find((opt) => opt.value === value)?.display || value;
 
   useEffect(() => {
     let active = true;
@@ -209,29 +308,41 @@ export default function CareerConsultationForm() {
           getMetadataCareer(),
           getMetadataSchools(searchParams.get("school") || undefined),
         ]);
-        if (!active || !json?.data) return;
+        if (!active) return;
+        const data = json?.data ?? {};
+        const genders = normalizeOptions(data.genders, fallbackGenderOptions);
+        const preferences = normalizeOptions(
+          data.preferences,
+          fallbackPreferenceOptions
+        );
+        const provinces = normalizeOptions(data.provinces, []);
+        const grades = normalizeOptions(data.grades, fallbackGradeOptions);
+        const performances = normalizeOptions(
+          data.performances,
+          fallbackPerformanceOptions
+        );
+        const schools = normalizeOptions(
+          (schoolsResp.data && schoolsResp.data.length
+            ? schoolsResp.data
+            : data.schools),
+          []
+        ).filter((s) => s.value || s.display);
         setMetaOptions({
-          genders: (json.data.genders || []).map((g: any) =>
-            typeof g === "string" ? g : g.display || g.value || ""
-          ),
-          preferences: json.data.preferences || [],
-          states: (json.data.provinces || []).map(
-            (p: any) => p.display || p.value || String(p)
-          ),
-          schools: (schoolsResp.data || [])
-            .map((s: any) => ({
-              value: s?.value ?? s?.display ?? "",
-              display: s?.display ?? s?.value ?? "",
-            }))
-            .filter((s: any) => s.value || s.display),
+          genders,
+          preferences,
+          provinces,
+          grades,
+          performances,
+          schools,
         });
       } catch (err) {
         console.warn("Could not load metadata, fallback to formMeta", err);
         setMetaOptions({
-          genders: formMeta.common.genderOptions.map((o) => o.label) || [],
-          preferences:
-            formMeta.enrollment.majorOptions?.map((o) => o.label) || [],
-          states: [],
+          genders: fallbackGenderOptions,
+          preferences: fallbackPreferenceOptions,
+          provinces: [],
+          grades: fallbackGradeOptions,
+          performances: fallbackPerformanceOptions,
           schools: [],
         });
       } finally {
@@ -306,6 +417,7 @@ export default function CareerConsultationForm() {
       fallback: string | undefined
     ) => {
       if (value === "") return "";
+      if (allowed.length === 0) return value ?? fallback ?? "";
       if (value && allowed.includes(value)) return value;
       if (fallback && allowed.includes(fallback)) return fallback;
       return "";
@@ -335,21 +447,28 @@ export default function CareerConsultationForm() {
       ),
     };
 
-    const allowedGenders = metaOptions.genders.length
-      ? metaOptions.genders
-      : (formMeta.common.genderOptions ?? []).map((o) => o.value);
-    const allowedGrades = (formMeta.common.gradeOptions ?? []).map(
-      (o) => o.value
+    const normalizedGender = coerceToValue(mappedData.gender, genderOptions);
+    const normalizedGrade = coerceToValue(mappedData.gradeLevel, gradeOptions);
+    const normalizedPerformance = coerceToValue(
+      mappedData.academicPerformance,
+      performanceOptions
     );
-    const allowedAcademic = (
-      formMeta.common.academicPerformanceOptions ?? []
-    ).map((o) => o.value);
+    const normalizedCity = coerceToValue(mappedData.city, metaOptions.provinces);
+    const normalizedSchool = coerceToValue(mappedData.school, metaOptions.schools);
+    const normalizedAspirations = (mappedData.aspirations || []).map((item) =>
+      coerceToValue(item, preferenceOptions)
+    );
+
+    const allowedGenders = genderOptions.map((o) => o.value);
+    const allowedGrades = gradeOptions.map((o) => o.value);
+    const allowedAcademic = performanceOptions.map((o) => o.value);
+    const allowedProvinces = metaOptions.provinces.map((p) => p.value);
     const allowedSchools = (metaOptions.schools ?? []).map((s) => s.value);
     const allowedNotification = formMeta.common.notificationChannels ?? [];
     const resolvedAspirations = (
-      mappedData.aspirations ?? initialFormData.aspirations
+      normalizedAspirations ?? initialFormData.aspirations
     )
-      .filter(Boolean)
+      .filter((item): item is string => Boolean(item))
       .slice(0, 3);
     const normalizeNotifyArray = (value: string[] | undefined) => {
       if (Array.isArray(value)) return value.filter(Boolean);
@@ -365,7 +484,7 @@ export default function CareerConsultationForm() {
         prefer(mappedData.birthDate, initialFormData.birthDate)
       ),
       gender: ensureOption(
-        mappedData.gender,
+        normalizedGender,
         allowedGenders,
         initialFormData.gender
       ),
@@ -379,19 +498,23 @@ export default function CareerConsultationForm() {
         initialFormData.utmCampaignQr
       ),
       utmSales: prefer(mappedData.utmSales, initialFormData.utmSales),
-      city: prefer(mappedData.city, initialFormData.city),
+      city: ensureOption(
+        normalizedCity,
+        allowedProvinces,
+        initialFormData.city
+      ),
       school: ensureOption(
-        mappedData.school,
+        normalizedSchool,
         allowedSchools,
         initialFormData.school
       ),
       gradeLevel: ensureOption(
-        mappedData.gradeLevel,
+        normalizedGrade,
         allowedGrades,
         initialFormData.gradeLevel
       ),
       academicPerformance: ensureOption(
-        mappedData.academicPerformance,
+        normalizedPerformance,
         allowedAcademic,
         initialFormData.academicPerformance
       ),
@@ -717,15 +840,9 @@ export default function CareerConsultationForm() {
                       )}
                     >
                       <option value="">Chọn giới tính</option>
-                      {(metaOptions.genders.length
-                        ? metaOptions.genders.map((g) => ({
-                            value: g,
-                            label: g,
-                          }))
-                        : formMeta.common.genderOptions
-                      ).map((option) => (
+                      {genderOptions.map((option) => (
                         <option key={option.value} value={option.value}>
-                          {option.label}
+                          {option.display}
                         </option>
                       ))}
                     </select>
@@ -902,14 +1019,16 @@ export default function CareerConsultationForm() {
               <LabeledInput
                 label="Tỉnh/Thành phố"
                 inputProps={{
-                  ...register("city"),
+                  value: cityDisplay,
                   className: cn(
                     inputClass,
                     "bg-[#d7dbe2] text-slate-700 border-transparent"
                   ),
                   readOnly: true,
+                  tabIndex: -1,
                 }}
               />
+              <input type="hidden" {...register("city")} />
 
               <LabeledInput
                 label="Trường học"
@@ -940,9 +1059,9 @@ export default function CareerConsultationForm() {
                       )}
                     >
                       <option value="">Chọn lớp</option>
-                      {formMeta.common.gradeOptions.map((option) => (
+                      {gradeOptions.map((option) => (
                         <option key={option.value} value={option.value}>
-                          {option.label}
+                          {option.display}
                         </option>
                       ))}
                     </select>
@@ -965,13 +1084,11 @@ export default function CareerConsultationForm() {
                       )}
                     >
                       <option value="">Chọn học lực</option>
-                      {formMeta.common.academicPerformanceOptions.map(
-                        (option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        )
-                      )}
+                      {performanceOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.display}
+                        </option>
+                      ))}
                     </select>
                     <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#1f3f77]" />
                   </div>
@@ -1034,16 +1151,9 @@ export default function CareerConsultationForm() {
                   <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
                   {showAspirationDropdown && aspirations.length < 3 && (
                     <div className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg">
-                      {(metaOptions.preferences.length
-                        ? metaOptions.preferences.map((p) =>
-                            typeof p === "string"
-                              ? p
-                              : p.display || p.value || ""
-                          )
-                        : formMeta.enrollment.majorOptions.map((m) => m.label)
-                      )
+                      {preferenceOptions
                         .filter((option) =>
-                          option
+                          option.display
                             .toLowerCase()
                             .includes(aspirationInput.toLowerCase())
                         )
@@ -1051,26 +1161,31 @@ export default function CareerConsultationForm() {
                         .map((option) => (
                           <button
                             type="button"
-                            key={option}
+                            key={option.value}
                             className={cn(
                               "flex w-full items-center justify-between px-3 py-2 text-left text-sm",
-                              aspirations.includes(option)
+                              aspirations.includes(option.value)
                                 ? "bg-[#eaf0ff]"
                                 : "hover:bg-slate-100"
                             )}
                             onMouseDown={(e) => {
                               e.preventDefault();
-                              handleAddAspiration(option);
+                              handleAddAspiration(option.value);
                             }}
                           >
-                            <span>{option}</span>
-                            {aspirations.includes(option) && (
+                            <span>{option.display}</span>
+                            {aspirations.includes(option.value) && (
                               <Check className="h-4 w-4 text-[#1f3f77]" />
                             )}
                           </button>
                         ))}
                       {aspirationInput &&
-                        !metaOptions.preferences.includes(aspirationInput) &&
+                        !preferenceOptions.some(
+                          (opt) =>
+                            opt.display.toLowerCase() ===
+                              aspirationInput.toLowerCase() ||
+                            opt.value === aspirationInput
+                        ) &&
                         !aspirations.includes(aspirationInput) && (
                           <button
                             type="button"
@@ -1094,7 +1209,7 @@ export default function CareerConsultationForm() {
                       onClick={() => handleRemoveAspiration(item)}
                       className="inline-flex items-center gap-2 rounded-[5px] border border-[#1A3561] bg-white px-3 py-1 text-sm text-slate-800 hover:bg-slate-100"
                     >
-                      {item}
+                      {getPreferenceDisplay(item)}
                       <span className="text-slate-500">×</span>
                     </button>
                   ))}

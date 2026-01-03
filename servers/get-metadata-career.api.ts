@@ -1,13 +1,24 @@
+export type MetadataOption = {
+  value?: string
+  display?: string
+  text_color?: string
+  background_color?: string
+}
+
 export type CareerMetadataResponse = {
   data?: {
-    genders?: string[]
-    preferences?: string[]
-    provinces?: string[]
-    schools?: { value: string; display: string }[]
-    streams?: string[]
-    grades?: string[]
-    performances?: string[]
-    certificates?: string[]
+    genders?: MetadataOption[]
+    preferences?: MetadataOption[]
+    provinces?: MetadataOption[]
+    schools?: MetadataOption[]
+    streams?: MetadataOption[]
+    grades?: MetadataOption[]
+    performances?: MetadataOption[]
+    certificates?: MetadataOption[]
+    campaigns?: MetadataOption[]
+    campaign_qr_statuses?: MetadataOption[]
+    lead_statuses?: MetadataOption[]
+    lead_stages?: MetadataOption[]
   }
 }
 
