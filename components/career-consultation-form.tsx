@@ -221,6 +221,10 @@ export default function CareerConsultationForm() {
   const skipNextSync = useRef(false);
   const hydratedSnapshot = useRef<FormData | null>(null);
   const campaignScanTracked = useRef(false);
+  const initialCampaignName = useRef<string | null>(null);
+  if (initialCampaignName.current === null) {
+    initialCampaignName.current = searchParams.get("utmCampaignQr");
+  }
   const [isHydrating, setIsHydrating] = useState(true);
   const {
     register,
@@ -416,7 +420,7 @@ export default function CareerConsultationForm() {
   }, []);
 
   useEffect(() => {
-    const campaignName = searchParams.get("utmCampaignQr");
+    const campaignName = initialCampaignName.current;
     if (!campaignName) return;
 
     const storageKey = `campaign-scan-${campaignName}`;
@@ -440,7 +444,7 @@ export default function CareerConsultationForm() {
     };
 
     trackScan();
-  }, [searchParams]);
+  }, []);
 
   useEffect(() => {
     if (!metaReady) return;
