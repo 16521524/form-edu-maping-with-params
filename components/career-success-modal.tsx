@@ -105,6 +105,35 @@ export default function CareerSuccessModal() {
             />
             Theo dõi Zalo ngay
           </a>
+          
+          <a
+            href="https://www.tiktok.com/@daihocgiadinh"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="
+              mx-auto
+              inline-flex items-center justify-center gap-3
+              w-full sm:w-[92%]
+              h-[56px] sm:h-[68px]
+              rounded-full
+              bg-[#00294D]
+              px-6 sm:px-8
+              text-[14px]
+              font-semibold
+              text-white
+              shadow-[0_14px_26px_rgba(0,41,77,0.25)]
+              transition
+              hover:brightness-110
+              active:scale-[0.99]
+            "
+          >
+            <img
+              src="/social/tiktok.png"
+              alt="Tiktok"
+              className="h-6 w-6 rounded-full bg-white p-[3px] object-contain"
+            />
+            Theo dõi Tiktok ngay
+          </a>
         </div>
       </div>
     </div>
