@@ -19,6 +19,7 @@ export type CareerMetadataResponse = {
     campaign_qr_statuses?: MetadataOption[]
     lead_statuses?: MetadataOption[]
     lead_stages?: MetadataOption[]
+    roles?: MetadataOption[]
   }
 }
 

@@ -1,87 +1,293 @@
 {
+  "message": "Successfully",
+  "data": {
+    "provinces": [
+      { "value": "Thành phố Huế", "display": "Thành phố Huế" },
+      { "value": "Thành phố Hải Phòng", "display": "Thành phố Hải Phòng" },
+      { "value": "Thành phố Cần Thơ", "display": "Thành phố Cần Thơ" },
+      { "value": "Thành phố Đà Nẵng", "display": "Thành phố Đà Nẵng" },
+      { "value": "Thành phố Hà Nội", "display": "Thành phố Hà Nội" },
+      { "value": "Thành phố Hồ Chí Minh", "display": "Thành phố Hồ Chí Minh" },
+      { "value": "Cà Mau", "display": "Cà Mau" },
+      { "value": "An Giang", "display": "An Giang" },
+      { "value": "Đồng Tháp", "display": "Đồng Tháp" },
+      { "value": "Vĩnh Long", "display": "Vĩnh Long" },
+      { "value": "Tây Ninh", "display": "Tây Ninh" },
+      { "value": "Đồng Nai", "display": "Đồng Nai" },
+      { "value": "Lâm Đồng", "display": "Lâm Đồng" },
+      { "value": "Đắk Lắk", "display": "Đắk Lắk" },
+      { "value": "Gia Lai", "display": "Gia Lai" },
+      { "value": "Khánh Hòa", "display": "Khánh Hòa" },
+      { "value": "Quảng Ngãi", "display": "Quảng Ngãi" },
+      { "value": "Quảng Trị", "display": "Quảng Trị" },
+      { "value": "Hà Tĩnh", "display": "Hà Tĩnh" },
+      { "value": "Nghệ An", "display": "Nghệ An" },
+      { "value": "Thanh Hóa", "display": "Thanh Hóa" },
+      { "value": "Lai Châu", "display": "Lai Châu" },
+      { "value": "Điện Biên", "display": "Điện Biên" },
+      { "value": "Sơn La", "display": "Sơn La" },
+      { "value": "Lạng Sơn", "display": "Lạng Sơn" },
+      { "value": "Thái Nguyên", "display": "Thái Nguyên" },
+      { "value": "Lào Cai", "display": "Lào Cai" },
+      { "value": "Tuyên Quang", "display": "Tuyên Quang" },
+      { "value": "Cao Bằng", "display": "Cao Bằng" },
+      { "value": "Phú Thọ", "display": "Phú Thọ" },
+      { "value": "Ninh Bình", "display": "Ninh Bình" },
+      { "value": "Hưng Yên", "display": "Hưng Yên" },
+      { "value": "Bắc Ninh", "display": "Bắc Ninh" },
+      { "value": "Quảng Ninh", "display": "Quảng Ninh" }
+    ],
+    "schools": [
+      { "value": "3971", "display": "Học ở nước ngoài" },
+      { "value": "3972", "display": "Quân nhân, Công an tại ngũ" },
+      { "value": "3973", "display": "THPT Nguyễn Trãi-Ba Đình" },
+      { "value": "3974", "display": "THPT Phan Đình Phùng" },
+      { "value": "3975", "display": "THPT Phạm Hồng Thái" },
+      { "value": "3976", "display": "TH,THCS&THPT Thực nghiệm Khoa học Giáo dục" },
+      { "value": "3977", "display": "THPT Đinh Tiên Hoàng-Ba Đình" },
+      { "value": "3978", "display": "THPT Hoàng Long" },
+      { "value": "3979", "display": "GDNN-GDTX quận Ba Đình" },
+      { "value": "3980", "display": "GDTX Ba Đình" },
+      { "value": "3981", "display": "CĐ nghề Hùng Vương" },
+      { "value": "3982", "display": "CĐ nghề VIGLACERA" },
+      { "value": "3983", "display": "THPT Trần Phú-Hoàn Kiếm" },
+      { "value": "3984", "display": "THPT Việt Đức" },
+      { "value": "3985", "display": "GDNN-GDTX Nguyễn Văn Tố quận Hoàn Kiếm" },
+      { "value": "3986", "display": "GDTX Nguyễn Văn Tố" },
+      { "value": "3987", "display": "Cao đẳng Nghệ thuật Hà Nội" },
+      { "value": "3988", "display": "TC nghề đồng hồ - điện tử - tin học HN" },
+      { "value": "3989", "display": "THPT Đoàn Kết-Hai Bà Trưng" },
+      { "value": "3990", "display": "THPT Thăng Long" },
+      { "value": "3991", "display": "THPT Trần Nhân Tông" },
+      { "value": "3992", "display": "THPT Đông Kinh" },
+      { "value": "3993", "display": "THPT Hoàng Diệu" },
+      { "value": "3994", "display": "THPT Hồng Hà" },
+      { "value": "3995", "display": "THPT Mai Hắc Đế" },
+      { "value": "3996", "display": "THCS&THPT Tạ Quang Bửu" },
+      { "value": "3997", "display": "THPT Văn Hiến" },
+      { "value": "3998", "display": "TH,THCS&THPT Vinschool" },
+      { "value": "3999", "display": "THPT Hòa Bình-La Trobe-Hà Nội" },
+      { "value": "4000", "display": "GDNN-GDTX quận Hai Bà Trưng" },
+      { "value": "4001", "display": "GDTX Hai Bà Trưng" },
+      { "value": "4002", "display": "CĐ nghề Bách Khoa Hà Nội" },
+      { "value": "4003", "display": "CĐ nghề KT công nghệ LOD - Phân hiệu HN" },
+      { "value": "4004", "display": "TC nghề Dân lập Công nghệ Thăng Long" },
+      { "value": "4005", "display": "THPT Đống Đa" },
+      { "value": "4006", "display": "THPT Hoàng Cầu" },
+      { "value": "4007", "display": "THPT Kim Liên" },
+      { "value": "4008", "display": "THPT Lê Quý Đôn-Đống Đa" },
+      { "value": "4009", "display": "THPT Phan Huy Chú-Đống Đa" },
+      { "value": "4010", "display": "THPT Quang Trung-Đống Đa" },
+      { "value": "4011", "display": "THCS&THPT Alfred Nobel" },
+      { "value": "4012", "display": "THPT Bắc Hà-Đống Đa" },
+      { "value": "4013", "display": "THPT Hà Nội" },
+      { "value": "4014", "display": "THPT Nguyễn Văn Huyên" },
+      { "value": "4015", "display": "THPT Phùng Khắc Khoan" },
+      { "value": "4016", "display": "THPT Văn Lang" },
+      { "value": "4017", "display": "THCS&THPT TH School" },
+      { "value": "4018", "display": "GDNN-GDTX quận Đống Đa" },
+      { "value": "4019", "display": "GDTX Đống Đa" },
+      { "value": "4020", "display": "Học viện âm nhạc QGVN" },
+      { "value": "4021", "display": "Đại học Văn Hóa Nghệ thuật Quân đội" },
+      { "value": "4022", "display": "CĐ Kỹ thuật thiết bị y tế" },
+      { "value": "4023", "display": "CĐ nghề Công nghiệp Hà Nội" },
+      { "value": "4024", "display": "TC nghề Công đoàn Việt Nam" },
+      { "value": "4025", "display": "TC nghề may và thời trang Hà Nội" },
+      { "value": "4026", "display": "TC nghề Nấu ăn và Nghiệp vụ khách sạn HN" },
+      { "value": "4027", "display": "TC nghề thông tin và truyền thông HN" },
+      { "value": "4028", "display": "Trường Nghệ thuật Quân đội" },
+      { "value": "4029", "display": "THPT Chu Văn An" },
+      { "value": "4030", "display": "THPT Tây Hồ" },
+      { "value": "4031", "display": "THPT Đông Đô" },
+      { "value": "4032", "display": "THPT Hà Nội Academy" },
+      { "value": "4033", "display": "THPT Phan Chu Trinh" },
+      { "value": "4034", "display": "TH,THCS,THPT Song ngữ QT Horizon" },
+      { "value": "4035", "display": "GDNN-GDTX quận Tây Hồ" },
+      { "value": "4036", "display": "GDTX Tây Hồ" },
+      { "value": "4037", "display": "TC nghề Kỹ nghệ thực hành HIPT" },
+      { "value": "4038", "display": "THPT Cầu Giấy" },
+      { "value": "4039", "display": "THPT chuyên Đại học Sư phạm" },
+      { "value": "4040", "display": "THPT chuyên Hà Nội-Amsterdam" },
+      { "value": "4041", "display": "THPT chuyên Ngoại ngữ" },
+      { "value": "4042", "display": "THCS và THPT Nguyễn Tất Thành" },
+      { "value": "4043", "display": "THPT Yên Hòa" },
+      { "value": "4044", "display": "THPT Einstein" },
+      { "value": "4045", "display": "PTDL Hermann Gmeiner" },
+      { "value": "4046", "display": "THPT Hồng Bàng" },
+      { "value": "4047", "display": "THCS&THPT Lương Thế Vinh" },
+      { "value": "4048", "display": "THPT Lương Văn Can" },
+      { "value": "4049", "display": "THPT Lý Thái Tổ" },
+      { "value": "4050", "display": "THCS&THPT Nguyễn Bỉnh Khiêm-Cầu Giấy" },
+      { "value": "4051", "display": "THCS và THPT Nguyễn Siêu" },
+      { "value": "4052", "display": "THPT Global" },
+      { "value": "4053", "display": "TH,THCS&THPT Đa Trí Tuệ" },
+      { "value": "4054", "display": "GDNN-GDTX quận Cầu Giấy" },
+      { "value": "4055", "display": "GDTX&DN Cầu Giấy" },
+      { "value": "4056", "display": "Trung cấp NT Xiếc và Tạp kỹ Việt Nam" },
+      { "value": "4057", "display": "Cao đẳng Sư phạm Trung ương" },
+      { "value": "4058", "display": "Học viện Múa Việt Nam" },
+      { "value": "4059", "display": "CĐ nghề cơ điện Hà Nội" },
+      { "value": "4060", "display": "CĐ nghề Phú Châu" },
+      { "value": "4061", "display": "CĐ nghề Trần Hưng Đạo" },
+      { "value": "4062", "display": "Trường CĐ Múa Việt Nam" },
+      { "value": "4063", "display": "THPT chuyên Khoa học tự nhiên" },
+      { "value": "4064", "display": "THPT Nhân Chính" },
+      { "value": "4065", "display": "THPT Trần Hưng Đạo-Thanh Xuân" },
+      { "value": "4066", "display": "THPT Khương Đình" },
+      { "value": "4067", "display": "THPT chuyên Khoa học Xã hội và Nhân văn" },
+      { "value": "4068", "display": "THPT Đào Duy Từ" },
+      { "value": "4069", "display": "THPT Đại Việt" },
+      { "value": "4070", "display": "THPT Hồ Tùng Mậu" }
+    ],
+    "streams": [
+      { "value": "D14", "display": "D14" },
+      { "value": "D10", "display": "D10" },
+      { "value": "D09", "display": "D09" },
+      { "value": "D08", "display": "D08" },
+      { "value": "D07", "display": "D07" },
+      { "value": "D01", "display": "D01" },
+      { "value": "C00", "display": "C00" },
+      { "value": "B00", "display": "B00" },
+      { "value": "A01", "display": "A01" },
+      { "value": "A00", "display": "A00" }
+    ],
+    "grades": [
+      { "value": "Đã TN", "display": "Đã TN" },
+      { "value": "12", "display": "12" },
+      { "value": "11", "display": "11" },
+      { "value": "10", "display": "10" }
+    ],
+    "performances": [
+      { "value": "Kém", "display": "Kém" },
+      { "value": "Yếu", "display": "Yếu" },
+      { "value": "Trung bình", "display": "Trung bình" },
+      { "value": "Khá", "display": "Khá" },
+      { "value": "Giỏi", "display": "Giỏi" },
+      { "value": "Xuất sắc", "display": "Xuất sắc" }
+    ],
+    "certificates": [
+      { "value": "Học sinh giỏi Toán cấp Tỉnh", "display": "Học sinh giỏi Toán cấp Tỉnh" },
+      { "value": "HSG Toán Tỉnh - Nhì Olympic Toán QG", "display": "HSG Toán Tỉnh - Nhì Olympic Toán QG" },
+      { "value": "HSG Toán Tỉnh - Nhất Olympic Toán QG", "display": "HSG Toán Tỉnh - Nhất Olympic Toán QG" },
+      { "value": "HSG Hóa học cấp Tỉnh", "display": "HSG Hóa học cấp Tỉnh" },
+      { "value": "HSG Vật lý cấp Tỉnh", "display": "HSG Vật lý cấp Tỉnh" },
+      { "value": "HSG Toán cấp Quốc gia", "display": "HSG Toán cấp Quốc gia" },
+      { "value": "HSG Toán cấp Tỉnh", "display": "HSG Toán cấp Tỉnh" },
+      { "value": "HSG Toán cấp Trường", "display": "HSG Toán cấp Trường" },
+      { "value": "Chứng chỉ tiếng Anh VSTEP B2", "display": "Chứng chỉ tiếng Anh VSTEP B2" },
+      { "value": "Chứng chỉ tiếng Anh VSTEP B1", "display": "Chứng chỉ tiếng Anh VSTEP B1" },
+      { "value": "Chứng chỉ TOEIC 750", "display": "Chứng chỉ TOEIC 750" },
+      { "value": "Chứng chỉ TOEIC 600", "display": "Chứng chỉ TOEIC 600" },
+      { "value": "Chứng chỉ TOEIC 450", "display": "Chứng chỉ TOEIC 450" },
+      { "value": "Chứng chỉ IELTS 6.0", "display": "Chứng chỉ IELTS 6.0" },
+      { "value": "Chứng chỉ IELTS 5.0", "display": "Chứng chỉ IELTS 5.0" },
+      { "value": "Chứng chỉ IELTS 4.5", "display": "Chứng chỉ IELTS 4.5" },
+      { "value": "Hạng nhì HSG cấp Tỉnh môn Sinh", "display": "Hạng nhì HSG cấp Tỉnh môn Sinh" },
+      { "value": "Chứng chỉ IELTS 6.5", "display": "Chứng chỉ IELTS 6.5" }
+    ],
+    "preferences": [
+      { "value": "7340301", "display": "Kế toán" },
+      { "value": "7340205", "display": "Công nghệ tài chính" },
+      { "value": "7340201", "display": "Tài chính - Ngân hàng" },
+      { "value": "7220204", "display": "Ngôn ngữ Trung Quốc" },
+      { "value": "7310401", "display": "Tâm lý học" },
+      { "value": "7310608", "display": "Đông phương học" },
+      { "value": "7220201", "display": "Ngôn ngữ Anh" },
+      { "value": "7380107", "display": "Luật kinh tế" },
+      { "value": "7380101", "display": "Luật" },
+      { "value": "7510605", "display": "Logistics và quản lý chuỗi cung ứng" },
+      { "value": "7810103", "display": "Quản trị dịch vụ du lịch và lữ hành" },
+      { "value": "7810201", "display": "Quản trị khách sạn" },
+      { "value": "7340115", "display": "Marketing" },
+      { "value": "7340101", "display": "Quản trị kinh doanh" },
+      { "value": "7340122", "display": "Thương mại điện tử" },
+      { "value": "7340121", "display": "Kinh doanh thương mại" },
+      { "value": "7340120", "display": "Kinh doanh quốc tế" },
+      { "value": "7320108", "display": "Quan hệ công chúng" },
+      { "value": "7320106", "display": "Công nghệ truyền thông" },
+      { "value": "7320104", "display": "Truyền thông đa phương tiện" },
+      { "value": "7480102", "display": "Mạng máy tính và truyền thông dữ liệu" },
+      { "value": "7480103", "display": "Kỹ thuật phần mềm" },
+      { "value": "7480201", "display": "Công nghệ thông tin" },
+      { "value": "7720603", "display": "Kỹ thuật phục hồi chức năng" },
+      { "value": "7480107", "display": "Trí tuệ nhân tạo" },
+      { "value": "7720501", "display": "Răng Hàm Mặt" },
+      { "value": "7720301", "display": "Điều Dưỡng" }
+    ],
+    "genders": [
+      { "value": "Nữ", "display": "Nữ" },
+      { "value": "Nam", "display": "Nam" },
+      { "value": "Khác", "display": "Khác" }
+    ],
+    "campaign_qr_statuses": [
+      { "value": "Upcoming", "display": "Upcoming", "text_color": "#3292DE", "background_color": "#E8F2FB" },
+      { "value": "Ongoing", "display": "Ongoing", "text_color": "#50B566", "background_color": "#EBF7EE" },
+      { "value": "Expiring Soon", "display": "Expiring Soon", "text_color": "#E4A33A", "background_color": "#FFF4E1" },
+      { "value": "Expired", "display": "Expired", "text_color": "#FF6063", "background_color": "#FFEAEB" },
+      { "value": "Inactive", "display": "Inactive", "text_color": "#FF6063", "background_color": "#FFEAEB" }
+    ],
+    "lead_statuses": [
+      { "value": "Negotiated", "display": "Negotiated", "text_color": "#50B566", "background_color": "#EBF7EE" },
+      { "value": "Signed", "display": "Signed", "text_color": "#50B566", "background_color": "#EBF7EE" },
+      { "value": "Deposited", "display": "Deposited", "text_color": "#50B566", "background_color": "#EBF7EE" },
+      { "value": "Paid", "display": "Paid", "text_color": "#50B566", "background_color": "#EBF7EE" },
+      { "value": "Eligible", "display": "Eligible", "text_color": "#3292DE", "background_color": "#E8F2FB" },
+      { "value": "Documented", "display": "Documented", "text_color": "#3292DE", "background_color": "#E8F2FB" },
+      { "value": "Clarified", "display": "Clarified", "text_color": "#3292DE", "background_color": "#E8F2FB" },
+      { "value": "Submitted", "display": "Submitted", "text_color": "#3292DE", "background_color": "#E8F2FB" },
+      { "value": "Selected", "display": "Selected", "text_color": "#50B566", "background_color": "#EBF7EE" },
+      { "value": "Consulted", "display": "Consulted", "text_color": "#3292DE", "background_color": "#E8F2FB" },
+      { "value": "Profiled", "display": "Profiled", "text_color": "#3292DE", "background_color": "#E8F2FB" },
+      { "value": "Requested", "display": "Requested", "text_color": "#50B566", "background_color": "#EBF7EE" },
+      { "value": "Researched", "display": "Researched", "text_color": "#3292DE", "background_color": "#E8F2FB" },
+      { "value": "Engaged", "display": "Engaged", "text_color": "#50B566", "background_color": "#EBF7EE" },
+      { "value": "Contacted", "display": "Contacted", "text_color": "#3292DE", "background_color": "#E8F2FB" }
+    ],
+    "lead_stages": [
+      { "value": "Decision", "display": "Decision", "text_color": "#50B566", "background_color": "#EBF7EE" },
+      { "value": "Qualifying", "display": "Qualifying", "text_color": "#E4A33A", "background_color": "#FFF4E1" },
+      { "value": "Engagement", "display": "Engagement", "text_color": "#3292DE", "background_color": "#E8F2FB" },
+      { "value": "Prospecting", "display": "Prospecting", "text_color": "#50B566", "background_color": "#EBF7EE" },
+      { "value": "Advising", "display": "Advising", "text_color": "#50B566", "background_color": "#EBF7EE" }
+    ],
+    "campaigns": [
+      { "value": "CAMPAIGN-00992", "display": "Tuyển sinh 2026" }
+    ],
+    "roles": [
+      { "value": "Student", "display": "Student" },
+      { "value": "Parent", "display": "Parent" },
+      { "value": "Guardian", "display": "Guardian" }
+    ]
+  },
   "common": {
     "notificationChannels": ["email", "zalo", "messenger", "whatsapp"],
     "gradeOptions": [
-      {
-        "value": "10",
-        "label": "Lớp 10"
-      },
-      {
-        "value": "11",
-        "label": "Lớp 11"
-      },
-      {
-        "value": "12",
-        "label": "Lớp 12"
-      },
-      {
-        "value": "graduated",
-        "label": "Đã tốt nghiệp"
-      }
+      { "value": "10", "label": "Lớp 10" },
+      { "value": "11", "label": "Lớp 11" },
+      { "value": "12", "label": "Lớp 12" },
+      { "value": "graduated", "label": "Đã tốt nghiệp" }
     ],
     "genderOptions": [
-      {
-        "value": "male",
-        "label": "Nam"
-      },
-      {
-        "value": "female",
-        "label": "Nữ"
-      },
-      {
-        "value": "other",
-        "label": "Khác"
-      }
+      { "value": "male", "label": "Nam" },
+      { "value": "female", "label": "Nữ" },
+      { "value": "other", "label": "Khác" }
     ],
     "academicPerformanceOptions": [
-      {
-        "value": "excellent",
-        "label": "Giỏi"
-      },
-      {
-        "value": "good",
-        "label": "Khá"
-      },
-      {
-        "value": "ordinary",
-        "label": "Trung bình"
-      }
+      { "value": "excellent", "label": "Giỏi" },
+      { "value": "good", "label": "Khá" },
+      { "value": "ordinary", "label": "Trung bình" }
     ]
   },
   "enrollment": {
     "majorOptions": [
-      {
-        "value": "information-technology",
-        "label": "Công nghệ Thông tin"
-      },
-      {
-        "value": "software-engineering",
-        "label": "Kỹ thuật Phần mềm"
-      },
-      {
-        "value": "computer-science",
-        "label": "Khoa học Máy tính"
-      },
-      {
-        "value": "artificial-intelligence",
-        "label": "AI – Trí tuệ Nhân tạo"
-      },
-      {
-        "value": "business-administration",
-        "label": "Quản trị Kinh doanh"
-      },
-      {
-        "value": "accountant",
-        "label": "Kế toán"
-      },
-      {
-        "value": "marketing",
-        "label": "Marketing"
-      },
-      {
-        "value": "design",
-        "label": "Thiết kế Đồ họa"
-      }
+      { "value": "information-technology", "label": "Công nghệ Thông tin" },
+      { "value": "software-engineering", "label": "Kỹ thuật Phần mềm" },
+      { "value": "computer-science", "label": "Khoa học Máy tính" },
+      { "value": "artificial-intelligence", "label": "AI – Trí tuệ Nhân tạo" },
+      { "value": "business-administration", "label": "Quản trị Kinh doanh" },
+      { "value": "accountant", "label": "Kế toán" },
+      { "value": "marketing", "label": "Marketing" },
+      { "value": "design", "label": "Thiết kế Đồ họa" }
     ]
   },
   "event": {
@@ -94,66 +300,24 @@
       "Gặp gỡ giảng viên và sinh viên"
     ],
     "heardFromOptions": [
-      {
-        "value": "facebook",
-        "label": "Facebook"
-      },
-      {
-        "value": "tiktok",
-        "label": "TikTok"
-      },
-      {
-        "value": "instagram",
-        "label": "Instagram"
-      },
-      {
-        "value": "ban-be",
-        "label": "Bạn bè giới thiệu"
-      },
-      {
-        "value": "truong-thpt",
-        "label": "Trường THPT"
-      },
-      {
-        "value": "website",
-        "label": "Website trường"
-      },
-      {
-        "value": "bao-chi",
-        "label": "Báo chí / Truyền thông"
-      },
-      {
-        "value": "khac",
-        "label": "Khác"
-      }
+      { "value": "facebook", "label": "Facebook" },
+      { "value": "tiktok", "label": "TikTok" },
+      { "value": "instagram", "label": "Instagram" },
+      { "value": "ban-be", "label": "Bạn bè giới thiệu" },
+      { "value": "truong-thpt", "label": "Trường THPT" },
+      { "value": "website", "label": "Website trường" },
+      { "value": "bao-chi", "label": "Báo chí / Truyền thông" },
+      { "value": "khac", "label": "Khác" }
     ],
     "eventSlotOptions": [
-      {
-        "value": "sang",
-        "label": "Buổi sáng (8:00 - 12:00)"
-      },
-      {
-        "value": "chieu",
-        "label": "Buổi chiều (13:30 - 17:30)"
-      },
-      {
-        "value": "ca-ngay",
-        "label": "Cả ngày"
-      }
+      { "value": "sang", "label": "Buổi sáng (8:00 - 12:00)" },
+      { "value": "chieu", "label": "Buổi chiều (13:30 - 17:30)" },
+      { "value": "ca-ngay", "label": "Cả ngày" }
     ],
     "parentRelationOptions": [
-      {
-        "value": "father",
-        "label": "Cha"
-      },
-      {
-        "value": "mother",
-        "label": "Mẹ"
-      },
-      {
-        "value": "occupation",
-        "label": "Người giám hộ"
-      }
+      { "value": "father", "label": "Cha" },
+      { "value": "mother", "label": "Mẹ" },
+      { "value": "occupation", "label": "Người giám hộ" }
     ],
     "eventSessions": [
       {

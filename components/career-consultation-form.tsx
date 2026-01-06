@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import Image from "next/image";
@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import {
   getMetadataCareer,
   getMetadataSchools,
+  getCampaigns,
   postCareerLead,
   updateCampaignTotalScans,
 } from "@/servers";
@@ -43,6 +44,7 @@ type FormData = {
   utmCampaign: string;
   utmCampaignQr: string;
   utmSales: string;
+  role: string;
   city: string;
   school: string;
   gradeLevel: string;
@@ -61,6 +63,27 @@ type OptionItem = {
   background_color?: string;
 };
 
+const mapDataOptions = (items: any[] | undefined): OptionItem[] => {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((item) => {
+      if (!item) return null;
+      const value = item.value ?? item.display;
+      const display = item.display ?? item.value;
+      if (!value && !display) return null;
+      return {
+        value: String(value ?? ""),
+        display: String(display ?? value ?? ""),
+        text_color: item.text_color,
+        background_color: item.background_color,
+      };
+    })
+    .filter(Boolean) as OptionItem[];
+};
+
+const metaData = (formMeta as any).data ?? {};
+const metaCampaigns: OptionItem[] = mapDataOptions(metaData.campaigns);
+
 const initialFormData: FormData = {
   fullName: "",
   birthDate: "",
@@ -72,6 +95,7 @@ const initialFormData: FormData = {
   utmCampaign: "",
   utmCampaignQr: "",
   utmSales: "",
+  role: "",
   city: "",
   school: "",
   gradeLevel: "",
@@ -86,28 +110,25 @@ const initialFormData: FormData = {
 };
 
 const fallbackGenderOptions: OptionItem[] =
-  formMeta.common.genderOptions?.map((o) => ({
-    value: o.value,
-    display: o.label,
-  })) || [];
+  mapDataOptions(metaData.genders);
 
 const fallbackGradeOptions: OptionItem[] =
-  formMeta.common.gradeOptions?.map((o) => ({
-    value: o.value,
-    display: o.label,
-  })) || [];
+  mapDataOptions(metaData.grades);
 
 const fallbackPerformanceOptions: OptionItem[] =
-  formMeta.common.academicPerformanceOptions?.map((o) => ({
-    value: o.value,
-    display: o.label,
-  })) || [];
+  mapDataOptions(metaData.performances);
+
+const fallbackRoleOptions: OptionItem[] =
+  mapDataOptions(metaData.roles).length > 0
+    ? mapDataOptions(metaData.roles)
+    : [
+        { value: "Student", display: "Student" },
+        { value: "Parent", display: "Parent" },
+        { value: "Guardian", display: "Guardian" },
+      ];
 
 const fallbackPreferenceOptions: OptionItem[] =
-  formMeta.enrollment.majorOptions?.map((o) => ({
-    value: o.value,
-    display: o.label,
-  })) || [];
+  mapDataOptions(metaData.preferences);
 
 const panelClass =
   "rounded-lg border border-[#e2e7ef] bg-white shadow-[0_8px_22px_rgba(31,63,119,0.06)]";
@@ -222,6 +243,8 @@ export default function CareerConsultationForm() {
     grades: OptionItem[];
     performances: OptionItem[];
     schools: OptionItem[];
+    campaigns: OptionItem[];
+    roles: OptionItem[];
   }>({
     genders: [],
     preferences: [],
@@ -229,6 +252,8 @@ export default function CareerConsultationForm() {
     grades: [],
     performances: [],
     schools: [],
+    campaigns: [],
+    roles: [],
   });
   const [metaReady, setMetaReady] = useState(false);
   const [showAspirationDropdown, setShowAspirationDropdown] = useState(false);
@@ -247,6 +272,8 @@ export default function CareerConsultationForm() {
     metaOptions.performances.length > 0
       ? metaOptions.performances
       : fallbackPerformanceOptions;
+  const roleOptions =
+    metaOptions.roles.length > 0 ? metaOptions.roles : fallbackRoleOptions;
   const preferenceOptions =
     metaOptions.preferences.length > 0
       ? metaOptions.preferences
@@ -257,6 +284,7 @@ export default function CareerConsultationForm() {
     "email",
     "nationalId",
   ];
+  const selectedRole = formData.role || "";
 
   const requiredFieldsFilled = requiredFields.every((field) => {
     const value = watch(field);
@@ -297,6 +325,23 @@ export default function CareerConsultationForm() {
   const schoolDisplay =
     metaOptions.schools.find((s) => s.value === formData.school)?.display ||
     formData.school;
+  const campaignDisplay = useMemo(() => {
+    const utmCampaign =
+      formData.utmCampaign || searchParams.get("utmCampaign") || "";
+    if (!utmCampaign) return "";
+    const normalizedCampaign = coerceToValue(
+      utmCampaign,
+      metaOptions.campaigns
+    );
+    const matched =
+      metaOptions.campaigns.find(
+        (c) =>
+          c.value === normalizedCampaign ||
+          c.display === normalizedCampaign ||
+          c.value === utmCampaign
+      ) || null;
+    return matched?.display || normalizedCampaign || utmCampaign;
+  }, [formData.utmCampaign, metaOptions.campaigns, searchParams]);
   const getPreferenceDisplay = (value: string) =>
     preferenceOptions.find((opt) => opt.value === value)?.display || value;
 
@@ -308,6 +353,7 @@ export default function CareerConsultationForm() {
           getMetadataCareer(),
           getMetadataSchools(searchParams.get("school") || undefined),
         ]);
+        const campaignsResp = await getCampaigns();
         if (!active) return;
         const data = json?.data ?? {};
         const genders = normalizeOptions(data.genders, fallbackGenderOptions);
@@ -321,6 +367,16 @@ export default function CareerConsultationForm() {
           data.performances,
           fallbackPerformanceOptions
         );
+        const campaignsFromApi =
+          campaignsResp?.data?.map((item: any) => ({
+            value: item.name,
+            display: item.campaign_name || item.name,
+          })) || [];
+        const campaigns = normalizeOptions(
+          campaignsFromApi,
+          metaCampaigns || []
+        );
+        const roles = normalizeOptions(data.roles, fallbackRoleOptions);
         const schools = normalizeOptions(
           (schoolsResp.data && schoolsResp.data.length
             ? schoolsResp.data
@@ -334,6 +390,8 @@ export default function CareerConsultationForm() {
           grades,
           performances,
           schools,
+          campaigns,
+          roles,
         });
       } catch (err) {
         console.warn("Could not load metadata, fallback to formMeta", err);
@@ -344,6 +402,8 @@ export default function CareerConsultationForm() {
           grades: fallbackGradeOptions,
           performances: fallbackPerformanceOptions,
           schools: [],
+          campaigns: metaCampaigns,
+          roles: fallbackRoleOptions,
         });
       } finally {
         if (active) setMetaReady(true);
@@ -434,6 +494,7 @@ export default function CareerConsultationForm() {
       utmCampaign: getVal("utmCampaign"),
       utmCampaignQr: getVal("utmCampaignQr"),
       utmSales: getVal("utmSales"),
+      role: getVal("role"),
       city: getVal("city"),
       school: getVal("school"),
       gradeLevel: getVal("gradeLevel"),
@@ -455,6 +516,7 @@ export default function CareerConsultationForm() {
     );
     const normalizedCity = coerceToValue(mappedData.city, metaOptions.provinces);
     const normalizedSchool = coerceToValue(mappedData.school, metaOptions.schools);
+    const normalizedRole = coerceToValue(mappedData.role, roleOptions);
     const normalizedAspirations = (mappedData.aspirations || []).map((item) =>
       coerceToValue(item, preferenceOptions)
     );
@@ -464,7 +526,14 @@ export default function CareerConsultationForm() {
     const allowedAcademic = performanceOptions.map((o) => o.value);
     const allowedProvinces = metaOptions.provinces.map((p) => p.value);
     const allowedSchools = (metaOptions.schools ?? []).map((s) => s.value);
+    const allowedRoles = roleOptions.map((o) => o.value);
     const allowedNotification = formMeta.common.notificationChannels ?? [];
+    const resolvedRole = (() => {
+      const candidate = normalizedRole || initialFormData.role;
+      if (!candidate) return "";
+      if (allowedRoles.length === 0) return candidate;
+      return allowedRoles.includes(candidate) ? candidate : "";
+    })();
     const resolvedAspirations = (
       normalizedAspirations ?? initialFormData.aspirations
     )
@@ -518,6 +587,7 @@ export default function CareerConsultationForm() {
         allowedAcademic,
         initialFormData.academicPerformance
       ),
+      role: resolvedRole,
       gpa: prefer(mappedData.gpa, initialFormData.gpa),
       aspirations: resolvedAspirations,
       socials: initialFormData.socials ?? [],
@@ -568,7 +638,7 @@ export default function CareerConsultationForm() {
     };
 
     addParam("fullName", formData.fullName);
-        addParam("birthDate", formData.birthDate);
+    addParam("birthDate", formData.birthDate);
     addParam("gender", formData.gender);
     addParam("address", formData.address);
     addParam("phone", formData.phone);
@@ -577,6 +647,7 @@ export default function CareerConsultationForm() {
     addParam("utmCampaign", formData.utmCampaign);
     addParam("utmCampaignQr", formData.utmCampaignQr);
     addParam("utmSales", formData.utmSales);
+    addParam("role", formData.role);
     addParam("city", formData.city);
     addParam("school", formData.school);
     addParam("gradeLevel", formData.gradeLevel);
@@ -651,13 +722,18 @@ export default function CareerConsultationForm() {
     new Promise<void>(async (resolve, reject) => {
       try {
         setSubmitError(null);
+        const fallbackRole = roleOptions[0]?.value || "Student";
+        const primaryRole =
+          data.role && data.role.trim()
+            ? data.role
+            : fallbackRole || "Student";
         const payload = {
           full_name: data.fullName,
           mobile_no: data.phone,
           email: data.email,
           gender: data.gender,
           date_of_birth: ddMmYyyyToIso(data.birthDate),
-          role: "Student",
+          role: primaryRole,
           national_id: data.nationalId,
           province: data.city,
           state: data.city,
@@ -765,10 +841,20 @@ export default function CareerConsultationForm() {
               />
             </div>
             <div className="text-[#0f2b5a] leading-[1.02] [text-shadow:0_3px_12px_rgba(0,0,0,0.18)]">
-              <div className="text-[28px] sm:text-[32px] font-extrabold">Đăng ký tư vấn</div>
-              <div className="-mt-0 text-[28px] sm:text-[32px] font-extrabold">
-                Hướng nghiệp
-              </div>
+              {campaignDisplay ? (
+                <div className="text-[28px] sm:text-[32px] font-extrabold leading-[1.08] whitespace-pre-line">
+                  {campaignDisplay}
+                </div>
+              ) : (
+                <>
+                  <div className="text-[28px] sm:text-[32px] font-extrabold">
+                    Đăng ký tư vấn
+                  </div>
+                  <div className="-mt-0 text-[28px] sm:text-[32px] font-extrabold">
+                    Hướng nghiệp
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -785,6 +871,55 @@ export default function CareerConsultationForm() {
                 placeholder="Nhập họ và tên"
                 inputProps={{ ...register("fullName"), className: inputClass }}
               />
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">
+                  Người tạo hồ sơ
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {roleOptions.map((option) => {
+                    const checked = selectedRole === option.value;
+                    return (
+                      <label
+                        key={option.value}
+                        className={cn(
+                          "flex items-center gap-2 py-2 text-sm font-medium transition-colors cursor-pointer",
+                          checked
+                            ? ""
+                            : "hover:border-[#1f3f77]"
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          className="sr-only"
+                          checked={checked}
+                          onChange={() =>
+                            setValue("role", option.value || "", {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            })
+                          }
+                        />
+                        <span className="inline-flex items-center gap-2">
+                          <span
+                            className={cn(
+                              "flex h-4 w-4 items-center justify-center rounded-full border",
+                              checked
+                                ? "border-[#1f3f77] bg-[#1f3f77]"
+                                : "border-[#c7cfdb]"
+                            )}
+                          >
+                            {checked && (
+                              <span className="h-2 w-2 rounded-full bg-white" />
+                            )}
+                          </span>
+                          {option.display}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
 
               <div className="flex flex-col gap-3">
                 <div className="space-y-2">
