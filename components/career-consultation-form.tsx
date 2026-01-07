@@ -452,23 +452,41 @@ export default function CareerConsultationForm() {
     if (query === lastQuery.current && hasHydrated.current) return;
     lastQuery.current = query;
 
-    const getVal = (key: keyof FormData) => {
+    const safeDecode = (value: string) => {
+      try {
+        return decodeURIComponent(value);
+      } catch {
+        return value;
+      }
+    };
+    const decodeParam = (value: string) => {
+      const withSpaces = value.replace(/\+/g, " ");
+      const decodedOnce = safeDecode(withSpaces);
+      const decodedTwice = safeDecode(decodedOnce);
+      return decodedTwice;
+    };
+    const getDecoded = (key: keyof FormData) => {
       const value = searchParams.get(key);
       if (value === null) return undefined;
-      if (value === "__empty") return "";
-      return value;
+      return decodeParam(value);
+    };
+    const getVal = (key: keyof FormData) => {
+      const decoded = getDecoded(key);
+      if (decoded === undefined) return undefined;
+      if (decoded === "__empty") return "";
+      return decoded;
     };
     const getList = (key: keyof FormData) => {
-      const value = searchParams.get(key);
-      if (value === null) return undefined;
-      if (value === "none") return [];
-      if (value) return value.split(",").filter(Boolean);
+      const decoded = getDecoded(key);
+      if (decoded === undefined) return undefined;
+      if (decoded === "none") return [];
+      if (decoded) return decoded.split(",").filter(Boolean);
       return undefined;
     };
     const getBool = (keys: string[], defaultValue = false) => {
       for (const key of keys) {
-        const value = searchParams.get(key);
-        if (value !== null) return value === "true";
+        const value = getDecoded(key as keyof FormData);
+        if (value !== undefined) return value === "true";
       }
       return defaultValue;
     };
