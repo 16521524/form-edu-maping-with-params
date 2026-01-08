@@ -6,10 +6,10 @@ export function middleware(req: NextRequest) {
 
   const cookieAuthRaw = req.cookies.get("APP_AUTH")?.value;
 
-    console.log('MIDDLEWARE', {
-      cookieAuthRaw,
-      authFromHeader,
-    });
+  console.log('MIDDLEWARE', {
+    cookieAuthRaw,
+    authFromHeader,
+  });
 
   const cookieAuthDecoded = cookieAuthRaw ? decodeURIComponent(cookieAuthRaw) : null;
   const cookieAuth =
