@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 export function middleware(req: NextRequest) {
   const auth = req.headers.get("authorization");
-  
+  console.log('[DEBUG-TOKEN-AUTH]', auth);
 
   const requestHeaders = new Headers(req.headers);
   if (auth && !requestHeaders.has("authorization")) {
