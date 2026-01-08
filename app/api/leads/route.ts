@@ -5,12 +5,11 @@ const FRAPPE_BASE_URL =
   process.env.FRAPPE_BASE_URL ??
   "https://erpnext.aurora-tech.com/api/method/lead.get_leads";
 
-const FRAPPE_TOKEN =
-  process.env.NEXT_PUBLIC_FRAPPE_TOKEN ||
-  "";
+const FRAPPE_TOKEN = process.env.NEXT_PUBLIC_FRAPPE_TOKEN || "";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
+
   const filters = searchParams.get("filters");
   const orderBy = searchParams.get("order_by") ?? "modified desc";
   const pageSize = searchParams.get("page_size") ?? "10";
@@ -26,31 +25,30 @@ export async function GET(request: Request) {
   upstream.searchParams.set("creation_from", creationFrom);
   upstream.searchParams.set("creation_to", creationTo);
 
-  const cookieStore = await cookies();
-  const cookieAuthRaw = cookieStore.get("APP_AUTH")?.value;
-
-  const cookieAuthDecoded = cookieAuthRaw ? decodeURIComponent(cookieAuthRaw) : null;
-
-  const cookieAuth = cookieAuthDecoded?.toLowerCase().startsWith("bearer")
-    ? cookieAuthDecoded
-    : null;
-
   const headerAuth =
     request.headers.get("authorization") ||
     request.headers.get("x-forwarded-authorization");
 
-  const authHeader = cookieAuth || headerAuth || FRAPPE_TOKEN || "";
+  const cookieStore = await cookies();
+  const cookieAuthRaw = cookieStore.get("APP_AUTH")?.value;
+  const cookieAuthDecoded = cookieAuthRaw ? decodeURIComponent(cookieAuthRaw) : null;
+  const cookieAuth =
+    cookieAuthDecoded && cookieAuthDecoded.toLowerCase().startsWith("bearer")
+      ? cookieAuthDecoded
+      : null;
+
+  const authHeader = headerAuth || cookieAuth || FRAPPE_TOKEN;
+
+  console.log("[DEBUG-TOKEN]", {
+    hasHeaderAuth: Boolean(headerAuth),
+    hasCookieAuth: Boolean(cookieAuth),
+    hasEnvToken: Boolean(FRAPPE_TOKEN),
+  });
 
   if (!authHeader) {
     return NextResponse.json({ message: "Missing auth" }, { status: 401 });
   }
 
-  console.log('[DEBUG-TOKEN]', {
-    cookieAuthRaw,
-    cookieAuth,
-    headerAuth: Boolean(headerAuth),
-  });
-  
   try {
     const res = await fetch(upstream.toString(), {
       headers: {

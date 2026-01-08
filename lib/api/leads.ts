@@ -25,18 +25,8 @@ export async function fetchLeads({
   if (creationFrom) params.set("creation_from", creationFrom);
   if (creationTo) params.set("creation_to", creationTo);
 
-  let authHeader: string | undefined;
-  if (typeof document !== "undefined") {
-    const match = document.cookie
-      ?.split(";")
-      .map((c) => c.trim())
-      .find((c) => c.startsWith("APP_AUTH="));
-    if (match) authHeader = decodeURIComponent(match.split("=")[1]);
-  }
-
   const res = await fetch(`/api/leads?${params.toString()}`, {
     cache: "no-store",
-    headers: authHeader ? { Authorization: authHeader } : undefined,
     credentials: "include",
   });
 
