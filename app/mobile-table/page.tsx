@@ -1,5 +1,8 @@
 "use client";
 
+// Force dynamic rendering to avoid 304 responses that can drop Set-Cookie from middleware
+export const dynamic = "force-dynamic";
+
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { Inter } from "next/font/google";
 import { MobileTable } from "@/components/mobile-table/MobileTable";

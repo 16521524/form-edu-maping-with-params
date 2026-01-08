@@ -35,7 +35,9 @@ export async function GET(request: Request) {
     ? cookieAuthDecoded
     : null;
 
-  const headerAuth = request.headers.get("authorization");
+  const headerAuth =
+    request.headers.get("authorization") ||
+    request.headers.get("x-forwarded-authorization");
 
   const authHeader = cookieAuth || headerAuth || FRAPPE_TOKEN || "";
 
