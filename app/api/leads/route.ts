@@ -26,11 +26,12 @@ export async function GET(request: Request) {
   upstream.searchParams.set("creation_from", creationFrom);
   upstream.searchParams.set("creation_to", creationTo);
 
-   const cookieStore = await cookies();
+  const cookieStore = await cookies();
   const cookieAuthRaw = cookieStore.get("APP_AUTH")?.value;
   const cookieAuth = cookieAuthRaw ? decodeURIComponent(cookieAuthRaw) : null;
+  const headerAuth = request.headers.get("authorization");
 
-  const authHeader =  cookieAuth || FRAPPE_TOKEN || "";
+  const authHeader = cookieAuth || headerAuth || FRAPPE_TOKEN || "";
 
   if (!authHeader) {
     return NextResponse.json({ message: "Missing auth" }, { status: 401 });
@@ -38,6 +39,7 @@ export async function GET(request: Request) {
 
   console.log('[DEBUG-TOKEN]', {
     cookieAuth: cookieAuth,
+    headerAuth: Boolean(headerAuth),
   });
   
   try {

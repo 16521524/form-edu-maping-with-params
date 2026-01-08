@@ -3,18 +3,7 @@ import type { NextRequest } from "next/server";
 
 export function middleware(req: NextRequest) {
   const auth = req.headers.get("authorization");
-  
-
-  const requestHeaders = new Headers(req.headers);
-  if (auth && !requestHeaders.has("authorization")) {
-    requestHeaders.set("authorization", auth);
-  }
-
-  const res = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+  const res = NextResponse.next();
 
   if (auth) {
     res.cookies.set("APP_AUTH", encodeURIComponent(auth), {
