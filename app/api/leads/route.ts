@@ -28,7 +28,13 @@ export async function GET(request: Request) {
 
   const cookieStore = await cookies();
   const cookieAuthRaw = cookieStore.get("APP_AUTH")?.value;
-  const cookieAuth = cookieAuthRaw ? decodeURIComponent(cookieAuthRaw) : null;
+
+  const cookieAuthDecoded = cookieAuthRaw ? decodeURIComponent(cookieAuthRaw) : null;
+
+  const cookieAuth = cookieAuthDecoded?.toLowerCase().startsWith("bearer")
+    ? cookieAuthDecoded
+    : null;
+
   const headerAuth = request.headers.get("authorization");
 
   const authHeader = cookieAuth || headerAuth || FRAPPE_TOKEN || "";
@@ -38,6 +44,7 @@ export async function GET(request: Request) {
   }
 
   console.log('[DEBUG-TOKEN]', {
+    cookieAuthRaw: cookieAuthRaw,
     cookieAuth: cookieAuth,
     headerAuth: Boolean(headerAuth),
   });
