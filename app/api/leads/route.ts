@@ -44,8 +44,8 @@ export async function GET(request: Request) {
   }
 
   console.log('[DEBUG-TOKEN]', {
-    cookieAuthRaw: cookieAuthRaw,
-    cookieAuth: cookieAuth,
+    cookieAuthRaw,
+    cookieAuth,
     headerAuth: Boolean(headerAuth),
   });
   
