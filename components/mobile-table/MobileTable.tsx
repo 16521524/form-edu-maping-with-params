@@ -267,7 +267,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
     >
       <div
         ref={scrollRef}
-        className="overflow-x-auto overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 bg-white max-h-[450px]"
+        className="overflow-x-auto overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 bg-white max-h-[45.5vh]"
         aria-busy={loading}
       >
         <div
