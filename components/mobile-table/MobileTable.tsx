@@ -16,6 +16,16 @@ type Props = {
   pageSize?: number;
 };
 
+type MetadataOption = {
+  value?: string;
+  display?: string;
+  text_color?: string;
+  background_color?: string;
+};
+
+type MetaColor = { bg: string; text: string; label: string };
+type MetaPalette = Record<string, MetaColor>;
+
 export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize }: Props) {
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
 
@@ -28,7 +38,43 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
 
   const [atStart, setAtStart] = useState(true);
 
+  const [statusPalette, setStatusPalette] = useState<MetaPalette>({});
+  const [stagePalette, setStagePalette] = useState<MetaPalette>({});
+
   const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadMetadata() {
+      try {
+        const res = await fetch(
+          "/api/lead-metadata?keys=lead_statuses,lead_stages",
+          { cache: "no-store" }
+        );
+        if (!res.ok) {
+          throw new Error(`Metadata request failed: ${res.status}`);
+        }
+        const body = await res.json();
+        if (cancelled) return;
+
+        setStatusPalette(
+          buildMetaPalette((body?.data as any)?.lead_statuses as MetadataOption[] | undefined)
+        );
+        setStagePalette(
+          buildMetaPalette((body?.data as any)?.lead_stages as MetadataOption[] | undefined)
+        );
+      } catch (err) {
+        console.error("Failed to load lead metadata", err);
+      }
+    }
+
+    loadMetadata();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleOpenLead = useCallback(
     (lead: Record<string, any>, event: "open_detail" | "open_popup") => {
@@ -67,7 +113,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
           const currentPage = Number.isFinite(page) ? page : 1;
           const stt = row.index + 1 + (currentPage - 1) * inferredPageSize;
           return (
-            <span className="flex items-center gap-2 font-semibold text-sm">
+            <span className="flex items-center gap-2 font-medium text-sm">
               #{stt}
               <button
                 className="cursor-pointer"
@@ -89,7 +135,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
           <button
             type="button"
             onClick={() => handleOpenLead(row.original, 'open_detail')}
-            className="cursor-pointer underline decoration-[1.5px] underline-offset-[3px] font-semibold text-[#1C3055]"
+            className="cursor-pointer underline decoration-[1.5px] underline-offset-[3px] font-medium text-[#1C3055]"
           >
             {row.original.name}
           </button>
@@ -100,7 +146,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
         header: "Role",
         size: 150,
         cell: ({ row }) => (
-          <span className="font-semibold">{row.original.role}</span>
+          <span className="font-medium">{row.original.role}</span>
         ),
       },
       {
@@ -108,21 +154,23 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
         header: "Stage",
         size: 170,
         cell: ({ row }) => (
-          <span className="font-semibold">{row.original.stage}</span>
+          <MetaPill value={row.original.stage} palette={stagePalette} />
         ),
       },
       {
         accessorKey: "status",
         header: "Status",
         size: 160,
-        cell: ({ row }) => <StatusPill value={row.original.status} />,
+        cell: ({ row }) => (
+          <MetaPill value={row.original.status} palette={statusPalette} />
+        ),
       },
       {
         accessorKey: "source",
         header: "Source",
         size: 130,
         cell: ({ row }) => (
-          <span className="font-semibold">{row.original.source}</span>
+          <span className="font-medium">{row.original.source}</span>
         ),
       },
       {
@@ -130,7 +178,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
         header: "Current Segment",
         size: 260,
         cell: ({ row }) => (
-          <span className="font-semibold leading-snug">
+          <span className="font-medium leading-snug">
             {row.original.segment}
           </span>
         ),
@@ -140,7 +188,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
       //   header: "Lead Score",
       //   size: 120,
       //   cell: ({ row }) => (
-      //     <span className="font-semibold">{row.original.leadScore}</span>
+      //     <span className="font-medium">{row.original.leadScore}</span>
       //   ),
       // },
       // {
@@ -148,7 +196,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
       //   header: "Stage Conversion Rate",
       //   size: 220,
       //   cell: ({ row }) => (
-      //     <span className="font-semibold">{row.original.conversionRate}</span>
+      //     <span className="font-medium">{row.original.conversionRate}</span>
       //   ),
       // },
       {
@@ -156,7 +204,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
         header: "Assigned Consultant",
         size: 200,
         cell: ({ row }) => (
-          <span className="font-semibold leading-snug">
+          <span className="font-medium leading-snug">
             {row.original.consultant}
           </span>
         ),
@@ -166,7 +214,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
         header: "Major",
         size: 210,
         cell: ({ row }) => (
-          <span className="font-semibold leading-snug">
+          <span className="font-medium leading-snug">
             {row.original.major}
           </span>
         ),
@@ -176,13 +224,13 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
       //   header: "Topic",
       //   size: 200,
       //   cell: ({ row }) => (
-      //     <span className="font-semibold leading-snug">
+      //     <span className="font-medium leading-snug">
       //       {row.original.topic}
       //     </span>
       //   ),
       // },
     ],
-    [handleOpenLead, page, pageSize]
+    [handleOpenLead, page, pageSize, stagePalette, statusPalette]
   );
 
   const table = useReactTable({
@@ -361,7 +409,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
 
           {showEmpty && (
             <div
-              className="flex items-center justify-center px-6 py-10 text-sm font-semibold text-slate-500"
+              className="flex items-center justify-center px-6 py-10 text-sm font-medium text-slate-500"
               style={{ minWidth: totalWidth + rowPadding }}
               role="status"
             >
@@ -488,28 +536,43 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
   );
 }
 
-const statusColors: Record<string, { bg: string; text: string }> = {
-  Disqualified: { bg: "bg-[#ffe2e2]", text: "text-[#e64c4c]" },
-  "Profile Created": { bg: "bg-[#e6f2ff]", text: "text-[#2f7adf]" },
-  "AI Validated": { bg: "bg-[#eaf6ff]", text: "text-[#1d6fbf]" },
-  Nurturing: { bg: "bg-[#fff2dd]", text: "text-[#d0892b]" },
-  "Enrolled & Paid": { bg: "bg-[#e4f6ed]", text: "text-[#2f8f58]" },
-};
+function buildMetaPalette(options?: MetadataOption[] | null): MetaPalette {
+  const palette: MetaPalette = {};
 
-function StatusPill({ value }: { value: string }) {
-  const palette = statusColors[value] || {
-    bg: "bg-slate-200",
-    text: "text-slate-700",
-  };
+  if (!Array.isArray(options)) return palette;
+
+  for (const item of options) {
+    if (!item) continue;
+    const rawValue = item.value ?? item.display;
+    const rawLabel = item.display ?? item.value ?? "";
+    if (!rawValue) continue;
+    const key = String(rawValue);
+    const label = String(rawLabel || rawValue);
+
+    palette[key] = {
+      bg: item.background_color || "#e2e8f0",
+      text: item.text_color || "#0f172a",
+      label,
+    };
+  }
+
+  return palette;
+}
+
+function MetaPill({ value, palette }: { value: string; palette: MetaPalette }) {
+  const key = (value || "").trim();
+  const entry = key ? palette[key] : undefined;
+
+  const label = entry?.label || key || "—";
+  const bg = entry?.bg || "#e2e8f0";
+  const text = entry?.text || "#0f172a";
+
   return (
     <span
-      className={cn(
-        "inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold",
-        palette.bg,
-        palette.text
-      )}
+      className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
+      style={{ backgroundColor: bg, color: text }}
     >
-      {value}
+      {label}
     </span>
   );
 }
