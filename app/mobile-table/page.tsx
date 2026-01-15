@@ -132,19 +132,19 @@ function MobileTablePageContent() {
 function mapLeadRecordToLead(item: LeadRecord): Lead {
   return {
     id: item.name ?? "",
-    name: item.lead_name || "—",
-    role: item.custom_role || "—",
-    stage: item.custom_stage || "—",
-    status: item.status || "—",
-    source: item.source || "—",
-    segment: item.segment || "—",
+    name: item.lead_name ?? "",
+    role: item.custom_role ?? "",
+    stage: item.custom_stage ?? "",
+    status: item.status ?? "",
+    source: item.source ?? "",
+    segment: item.segment ?? "",
     leadScore:
       typeof item.stage_position === "number"
         ? item.stage_position.toString()
-        : "—",
-    conversionRate: item.stage_conversion_rate || "—",
-    consultant: item.lead_owner || "—",
-    major: item.custom_major || "—",
-    topic: item.topic || "—",
+        : "",
+    conversionRate: item.stage_conversion_rate ?? "",
+    consultant: item.lead_owner ?? "",
+    major: item.custom_major ?? "",
+    topic: item.topic ?? "",
   };
 }

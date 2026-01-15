@@ -569,8 +569,8 @@ function MetaPill({ value, palette }: { value: string; palette: MetaPalette }) {
 
   return (
     <span
-      className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
-      style={{ backgroundColor: bg, color: text }}
+      className="inline-flex items-center justify-center rounded-full px-3 py-1 text-sm font-medium text-center whitespace-nowrap"
+      style={{ backgroundColor: bg, color: text, minWidth: 120 }}
     >
       {label}
     </span>
