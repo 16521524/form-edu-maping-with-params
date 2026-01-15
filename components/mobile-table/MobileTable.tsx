@@ -135,22 +135,22 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
           </span>
         ),
       },
-      {
-        accessorKey: "leadScore",
-        header: "Lead Score",
-        size: 120,
-        cell: ({ row }) => (
-          <span className="font-semibold">{row.original.leadScore}</span>
-        ),
-      },
-      {
-        accessorKey: "conversionRate",
-        header: "Stage Conversion Rate",
-        size: 220,
-        cell: ({ row }) => (
-          <span className="font-semibold">{row.original.conversionRate}</span>
-        ),
-      },
+      // {
+      //   accessorKey: "leadScore",
+      //   header: "Lead Score",
+      //   size: 120,
+      //   cell: ({ row }) => (
+      //     <span className="font-semibold">{row.original.leadScore}</span>
+      //   ),
+      // },
+      // {
+      //   accessorKey: "conversionRate",
+      //   header: "Stage Conversion Rate",
+      //   size: 220,
+      //   cell: ({ row }) => (
+      //     <span className="font-semibold">{row.original.conversionRate}</span>
+      //   ),
+      // },
       {
         accessorKey: "consultant",
         header: "Assigned Consultant",
