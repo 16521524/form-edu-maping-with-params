@@ -202,7 +202,8 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
       {
         accessorKey: "consultant",
         header: "Assigned Consultant",
-        size: 200,
+        size: 320,
+        minSize: 200,
         cell: ({ row }) => (
           <span className="font-medium leading-snug">
             {row.original.consultant}
@@ -257,7 +258,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
   }, [visibleColumns, pinnedIds]);
   
   const textColor = "#1C3055";
-  const activeBg = "#ffffff";
+  const activeBg = "#edeeef";
   const activeShadow =
     "inset 6px 0 12px -8px rgba(0,0,0,0.16), inset -6px 0 12px -8px rgba(0,0,0,0.16)";
   const pinnedLeft = table.getState().columnPinning.left ?? [];
@@ -265,25 +266,28 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
   const headerBg = "#1c2f57";
   const gapPx = 0;
   const template = orderedColumns.map((c) => `${c.getSize()}px`).join(" ");
+  const horizontalPadding = 32;
+  const paddingLeft = horizontalPadding / 2;
+  const firstPinnedId = (table.getState().columnPinning.left ?? [])[0];
+  const dividerColor = "#eef1f5";
   const totalWidth =
     orderedColumns.reduce((sum, c) => sum + c.getSize(), 0) +
     gapPx * Math.max(orderedColumns.length - 1, 0);
-  const rowPadding = 32;
+  const rowPadding = horizontalPadding;
   const showSkeleton = loading && leads.length === 0;
   const showEmpty = !loading && leads.length === 0;
   const columnOffsets = useMemo(() => {
     const map = new Map<string, number>();
-    let acc = 0;
+    let acc = paddingLeft;
     orderedColumns.forEach((col, idx) => {
       if (idx > 0) acc += gapPx;
       map.set(col.id, acc);
       acc += col.getSize();
     });
     return map;
-  }, [orderedColumns]);
+  }, [orderedColumns, paddingLeft]);
 
-  const activeKey =
-    hoveredKey ?? table.getState().columnPinning.left?.[0] ?? null;
+  const activeKey = hoveredKey ?? null;
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -341,23 +345,31 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                   const hovering = hoveredKey === col.id;
                   const left =
                     pinned === "left" ? columnOffsets.get(col.id) : undefined;
-                  const active = pinned || hovering || activeKey === col.id;
-                  const width = col.getSize();
+                  const isFirstPinned = pinned && col.id === firstPinnedId;
+                  const adjustedLeft =
+                    typeof left === "number"
+                      ? left - (isFirstPinned ? paddingLeft : 0)
+                      : left;
+                  const active = activeKey === col.id;
+                  const width =
+                    col.getSize() + (isFirstPinned ? paddingLeft : 0);
                   const isLastPinned = pinned && lastPinned === col.id;
+                  const headerLabel = String(col.columnDef.header ?? "");
+                  const showHeaderTooltip = headerLabel.length > 18;
                   return (
                     <div
                       key={col.id}
                       onMouseEnter={() => setHoveredKey(col.id)}
                       onMouseLeave={() => setHoveredKey(null)}
                       className={cn(
-                        "relative flex items-center gap-3 transition-colors px-4 overflow-hidden",
+                        "relative flex items-center gap-3 transition-colors px-4 overflow-hidden min-w-0 pr-9",
                         "text-white",
                         pinned && "sticky left-0 inset-y-0 z-60"
                       )}
                       style={
                         pinned
                           ? {
-                              left,
+                              left: adjustedLeft,
                               width,
                               minWidth: width,
                               backgroundColor: headerBg,
@@ -373,8 +385,11 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                             }
                       }
                     >
-                      <span className="whitespace-nowrap">
-                        {col.columnDef.header as string}
+                      <span
+                        className="whitespace-nowrap truncate"
+                        title={showHeaderTooltip ? headerLabel : undefined}
+                      >
+                        {headerLabel}
                       </span>
                       <button
                         onClick={(e) => {
@@ -433,27 +448,40 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                     const pinned = col.getIsPinned();
                     const left =
                       pinned === "left" ? columnOffsets.get(col.id) : undefined;
-                    const width = col.getSize();
+                    const isFirstPinned = pinned && col.id === firstPinnedId;
+                    const adjustedLeft =
+                      typeof left === "number"
+                        ? left - (isFirstPinned ? paddingLeft : 0)
+                        : left;
+                    const width =
+                      col.getSize() + (isFirstPinned ? paddingLeft : 0);
                     const isLastPinned = pinned && lastPinned === col.id;
+                    const dividerShadow = `inset 0 -1px ${dividerColor}`;
+                    const boxShadow = [
+                      isLastPinned && !atEnd ? activeShadow : null,
+                      dividerShadow,
+                    ]
+                      .filter(Boolean)
+                      .join(", ");
                     const cellBase = cn(
                       "relative z-10 flex h-full w-full items-center px-3",
                       pinned && "sticky left-0 inset-y-0 z-30"
                     );
                     const cellStyle = pinned
                       ? {
-                          left,
+                          left: adjustedLeft,
                           width,
                           minWidth: width,
                           backgroundColor:
                             idx % 2 === 1 ? "#f7f9fc" : "#ffffff",
-                          boxShadow:
-                            isLastPinned && !atEnd ? activeShadow : undefined,
+                          boxShadow,
                         }
                       : {
                           width,
                           minWidth: width,
                           backgroundColor:
                             idx % 2 === 1 ? "#f7f9fc" : "#ffffff",
+                          boxShadow: dividerShadow,
                         };
                     return (
                       <div
@@ -472,7 +500,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                 return (
                   <div
                     key={row.id}
-                    className="relative z-10 grid gap-0 px-4 py-0 text-sm border-b border-[#eef1f5] items-stretch"
+                    className="relative z-10 grid gap-0 py-0 text-sm border-b border-[#eef1f5] items-stretch"
                     style={{
                       color: textColor,
                       gridTemplateColumns: template,
@@ -491,26 +519,39 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                         pinned === "left"
                           ? columnOffsets.get(column.id)
                           : undefined;
-                      const active = pinned || activeKey === column.id;
-                      const width = column.getSize();
+                      const isFirstPinned = pinned && column.id === firstPinnedId;
+                      const adjustedLeft =
+                        typeof left === "number"
+                          ? left - (isFirstPinned ? paddingLeft : 0)
+                          : left;
+                      const active = activeKey === column.id;
+                      const width =
+                        column.getSize() + (isFirstPinned ? paddingLeft : 0);
                       const isLastPinned = pinned && lastPinned === column.id;
+                      const dividerShadow = `inset 0 -1px ${dividerColor}`;
+                      const boxShadow = [
+                        isLastPinned && !atEnd ? activeShadow : null,
+                        dividerShadow,
+                      ]
+                        .filter(Boolean)
+                        .join(", ");
                       const cellBase = cn(
                         "relative z-10 flex h-full w-full items-center px-3",
                         pinned && "sticky left-0 inset-y-0 z-30"
                       );
                       const cellStyle = pinned
                         ? {
-                            left,
+                            left: adjustedLeft,
                             width,
                             minWidth: width,
                             backgroundColor: active ? activeBg : rowBg,
-                            boxShadow:
-                              isLastPinned && !atEnd ? activeShadow : undefined,
+                            boxShadow,
                           }
                         : {
                             width,
                             minWidth: width,
                             backgroundColor: active ? activeBg : rowBg,
+                            boxShadow: dividerShadow,
                           };
                       return (
                         <div
