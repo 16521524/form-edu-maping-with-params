@@ -265,27 +265,34 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
   const lastPinned = pinnedLeft[pinnedLeft.length - 1];
   const headerBg = "#1c2f57";
   const gapPx = 0;
-  const template = orderedColumns.map((c) => `${c.getSize()}px`).join(" ");
   const horizontalPadding = 32;
   const paddingLeft = horizontalPadding / 2;
   const firstPinnedId = (table.getState().columnPinning.left ?? [])[0];
   const dividerColor = "#eef1f5";
+  const getColumnWidth = useCallback(
+    (col: { id: string; getSize: () => number }) =>
+      col.getSize() + (col.id === firstPinnedId ? paddingLeft : 0),
+    [firstPinnedId, paddingLeft]
+  );
+  const template = orderedColumns
+    .map((c) => `${getColumnWidth(c)}px`)
+    .join(" ");
   const totalWidth =
-    orderedColumns.reduce((sum, c) => sum + c.getSize(), 0) +
+    orderedColumns.reduce((sum, c) => sum + getColumnWidth(c), 0) +
     gapPx * Math.max(orderedColumns.length - 1, 0);
   const rowPadding = horizontalPadding;
   const showSkeleton = loading && leads.length === 0;
   const showEmpty = !loading && leads.length === 0;
   const columnOffsets = useMemo(() => {
     const map = new Map<string, number>();
-    let acc = paddingLeft;
+    let acc = 0;
     orderedColumns.forEach((col, idx) => {
       if (idx > 0) acc += gapPx;
       map.set(col.id, acc);
-      acc += col.getSize();
+      acc += getColumnWidth(col);
     });
     return map;
-  }, [orderedColumns, paddingLeft]);
+  }, [orderedColumns, getColumnWidth, gapPx]);
 
   const activeKey = hoveredKey ?? null;
 
@@ -345,14 +352,8 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                   const hovering = hoveredKey === col.id;
                   const left =
                     pinned === "left" ? columnOffsets.get(col.id) : undefined;
-                  const isFirstPinned = pinned && col.id === firstPinnedId;
-                  const adjustedLeft =
-                    typeof left === "number"
-                      ? left - (isFirstPinned ? paddingLeft : 0)
-                      : left;
                   const active = activeKey === col.id;
-                  const width =
-                    col.getSize() + (isFirstPinned ? paddingLeft : 0);
+                  const width = getColumnWidth(col);
                   const isLastPinned = pinned && lastPinned === col.id;
                   const headerLabel = String(col.columnDef.header ?? "");
                   const showHeaderTooltip = headerLabel.length > 18;
@@ -369,7 +370,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                       style={
                         pinned
                           ? {
-                              left: adjustedLeft,
+                              left,
                               width,
                               minWidth: width,
                               backgroundColor: headerBg,
@@ -436,7 +437,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
             ? Array.from({ length: 1 }).map((_, idx) => (
                 <div
                   key={`skeleton-${idx}`}
-                  className="relative z-10 grid gap-0 px-4 py-0 text-sm border-b border-[#eef1f5] items-stretch animate-pulse"
+                  className="relative z-10 grid gap-0 py-0 text-sm border-b border-[#eef1f5] items-stretch animate-pulse"
                   style={{
                     gridTemplateColumns: template,
                     backgroundColor: idx % 2 === 1 ? "#f7f9fc" : "#ffffff",
@@ -448,13 +449,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                     const pinned = col.getIsPinned();
                     const left =
                       pinned === "left" ? columnOffsets.get(col.id) : undefined;
-                    const isFirstPinned = pinned && col.id === firstPinnedId;
-                    const adjustedLeft =
-                      typeof left === "number"
-                        ? left - (isFirstPinned ? paddingLeft : 0)
-                        : left;
-                    const width =
-                      col.getSize() + (isFirstPinned ? paddingLeft : 0);
+                    const width = getColumnWidth(col);
                     const isLastPinned = pinned && lastPinned === col.id;
                     const dividerShadow = `inset 0 -1px ${dividerColor}`;
                     const boxShadow = [
@@ -469,7 +464,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                     );
                     const cellStyle = pinned
                       ? {
-                          left: adjustedLeft,
+                          left,
                           width,
                           minWidth: width,
                           backgroundColor:
@@ -519,14 +514,8 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                         pinned === "left"
                           ? columnOffsets.get(column.id)
                           : undefined;
-                      const isFirstPinned = pinned && column.id === firstPinnedId;
-                      const adjustedLeft =
-                        typeof left === "number"
-                          ? left - (isFirstPinned ? paddingLeft : 0)
-                          : left;
                       const active = activeKey === column.id;
-                      const width =
-                        column.getSize() + (isFirstPinned ? paddingLeft : 0);
+                      const width = getColumnWidth(column);
                       const isLastPinned = pinned && lastPinned === column.id;
                       const dividerShadow = `inset 0 -1px ${dividerColor}`;
                       const boxShadow = [
@@ -541,7 +530,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                       );
                       const cellStyle = pinned
                         ? {
-                            left: adjustedLeft,
+                            left,
                             width,
                             minWidth: width,
                             backgroundColor: active ? activeBg : rowBg,
