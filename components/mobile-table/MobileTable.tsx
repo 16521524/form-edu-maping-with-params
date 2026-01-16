@@ -193,7 +193,13 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
         size: 260,
         cell: ({ row }) => {
           const segment = (row.original.segment || "").trim() || "Unknown";
-          return <MetaPill value={segment} palette={segmentPalette} />;
+          return (
+            <MetaPill
+              value={segment}
+              palette={segmentPalette}
+              width={180}
+            />
+          );
         },
       },
       // {
@@ -602,7 +608,15 @@ function buildMetaPalette(options?: MetadataOption[] | null): MetaPalette {
   return palette;
 }
 
-function MetaPill({ value, palette }: { value: string; palette: MetaPalette }) {
+function MetaPill({
+  value,
+  palette,
+  width,
+}: {
+  value: string;
+  palette: MetaPalette;
+  width?: number | string;
+}) {
   const key = (value || "").trim();
   const entry = key ? palette[key] : undefined;
 
@@ -611,6 +625,7 @@ function MetaPill({ value, palette }: { value: string; palette: MetaPalette }) {
   const label = entry?.label || key || fallback.label;
   const bg = entry?.bg || fallback.bg;
   const text = entry?.text || fallback.text;
+  const pillWidth = width ?? undefined;
 
   return (
     <span
@@ -618,7 +633,9 @@ function MetaPill({ value, palette }: { value: string; palette: MetaPalette }) {
       style={{
         backgroundColor: bg,
         color: text,
-        minWidth: 120,
+        minWidth: pillWidth ?? 120,
+        width: pillWidth,
+        maxWidth: pillWidth,
         border: "1px solid rgba(28,47,87,0.10)",
         boxShadow: "0 8px 18px rgba(28,47,87,0.08)",
       }}
