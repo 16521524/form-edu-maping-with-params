@@ -25,6 +25,16 @@ type MetadataOption = {
 
 type MetaColor = { bg: string; text: string; label: string };
 type MetaPalette = Record<string, MetaColor>;
+const FALLBACK_PILL: MetaColor = {
+  bg: "#eaf1ff",
+  text: "#1c2f57",
+  label: "",
+};
+const UNKNOWN_PILL: MetaColor = {
+  bg: "#dfe5f2",
+  text: "#1c2f57",
+  label: "Unknown",
+};
 
 export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize }: Props) {
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
@@ -40,6 +50,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
 
   const [statusPalette, setStatusPalette] = useState<MetaPalette>({});
   const [stagePalette, setStagePalette] = useState<MetaPalette>({});
+  const [segmentPalette, setSegmentPalette] = useState<MetaPalette>({});
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -49,7 +60,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
     async function loadMetadata() {
       try {
         const res = await fetch(
-          "/api/lead-metadata?keys=lead_statuses,lead_stages",
+          "/api/lead-metadata?keys=lead_statuses,lead_stages,segments",
           { cache: "no-store" }
         );
         if (!res.ok) {
@@ -63,6 +74,9 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
         );
         setStagePalette(
           buildMetaPalette((body?.data as any)?.lead_stages as MetadataOption[] | undefined)
+        );
+        setSegmentPalette(
+          buildMetaPalette((body?.data as any)?.segments as MetadataOption[] | undefined)
         );
       } catch (err) {
         console.error("Failed to load lead metadata", err);
@@ -177,11 +191,10 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
         accessorKey: "segment",
         header: "Current Segment",
         size: 260,
-        cell: ({ row }) => (
-          <span className="font-medium leading-snug">
-            {row.original.segment}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const segment = (row.original.segment || "").trim() || "Unknown";
+          return <MetaPill value={segment} palette={segmentPalette} />;
+        },
       },
       // {
       //   accessorKey: "leadScore",
@@ -231,7 +244,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
       //   ),
       // },
     ],
-    [handleOpenLead, page, pageSize, stagePalette, statusPalette]
+    [handleOpenLead, page, pageSize, segmentPalette, stagePalette, statusPalette]
   );
 
   const table = useReactTable({
@@ -593,14 +606,22 @@ function MetaPill({ value, palette }: { value: string; palette: MetaPalette }) {
   const key = (value || "").trim();
   const entry = key ? palette[key] : undefined;
 
-  const label = entry?.label || key || "—";
-  const bg = entry?.bg || "#e2e8f0";
-  const text = entry?.text || "#0f172a";
+  const fallback = key === "Unknown" || !key ? UNKNOWN_PILL : FALLBACK_PILL;
+
+  const label = entry?.label || key || fallback.label;
+  const bg = entry?.bg || fallback.bg;
+  const text = entry?.text || fallback.text;
 
   return (
     <span
       className="inline-flex items-center justify-center rounded-full px-3 py-1 text-sm font-medium text-center whitespace-nowrap"
-      style={{ backgroundColor: bg, color: text, minWidth: 120 }}
+      style={{
+        backgroundColor: bg,
+        color: text,
+        minWidth: 120,
+        border: "1px solid rgba(28,47,87,0.10)",
+        boxShadow: "0 8px 18px rgba(28,47,87,0.08)",
+      }}
     >
       {label}
     </span>
