@@ -2,14 +2,22 @@
 
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type InputHTMLAttributes,
+  type KeyboardEvent,
   type ReactNode,
 } from "react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useForm, useWatch, type UseFormRegisterReturn } from "react-hook-form";
+import {
+  useController,
+  useForm,
+  useWatch,
+  type Control,
+  type UseFormRegisterReturn,
+} from "react-hook-form";
 import { Inter } from "next/font/google";
 import { CalendarDays, ChevronDown, Loader2 } from "lucide-react";
 
@@ -104,6 +112,13 @@ const yearOptions = (() => {
   const limit = current + 1;
   return Array.from({ length: 8 }, (_, idx) => String(limit - idx));
 })();
+
+const normalizeText = (val: string) =>
+  (val || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
 
 const isoToDdMmYyyy = (val?: string) => {
   if (!val) return "";
@@ -818,19 +833,21 @@ export default function AdmissionApplicationForm() {
 
             <SectionCard title="Địa chỉ thường trú">
               <div className="grid gap-4 md:grid-cols-2">
-                <SelectField
+                <SearchSelectField
                   label="Tỉnh/ Thành phố"
+                  name="permanentProvince"
+                  control={control}
                   required
                   placeholder="Chọn Tỉnh/ Thành phố"
                   options={provinceOptions}
-                  registration={register("permanentProvince")}
                 />
-                <SelectField
+                <SearchSelectField
                   label="Xã/ Phường"
+                  name="permanentWard"
+                  control={control}
                   required
                   placeholder="Chọn Xã/ Phường"
                   options={wardOptions}
-                  registration={register("permanentWard")}
                 />
                 <LabeledInput
                   label="Đường/ Phố"
@@ -854,12 +871,13 @@ export default function AdmissionApplicationForm() {
 
             <SectionCard title="Thông tin lớp 12">
               <div className="grid gap-4 md:grid-cols-2">
-                <SelectField
+                <SearchSelectField
                   label="Tỉnh/ Thành phố lớp 12"
+                  name="grade12Province"
+                  control={control}
                   required
                   placeholder="Chọn Tỉnh/ Thành phố"
                   options={provinceOptions}
-                  registration={register("grade12Province")}
                 />
                 <SelectField
                   label="Trường lớp 12"
@@ -900,20 +918,22 @@ export default function AdmissionApplicationForm() {
                   <span>Áp dụng theo hộ khẩu thường trú</span>
                 </label>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <SelectField
+                  <SearchSelectField
                     label="Tỉnh/ Thành phố"
+                    name="receivingProvince"
+                    control={control}
                     required
                     placeholder="Chọn Tỉnh/ Thành phố"
                     options={provinceOptions}
-                    registration={register("receivingProvince")}
                     disabled={watch("applySameAddress")}
                   />
-                  <SelectField
+                  <SearchSelectField
                     label="Xã/ Phường"
+                    name="receivingWard"
+                    control={control}
                     required
                     placeholder="Chọn Xã/ Phường"
                     options={wardOptions}
-                    registration={register("receivingWard")}
                     disabled={watch("applySameAddress")}
                   />
                   <LabeledInput
@@ -995,6 +1015,168 @@ function LabeledInput({
         placeholder={placeholder}
         className={cn("italic", inputProps?.className)}
       />
+    </div>
+  );
+}
+
+function SearchSelectField({
+  label,
+  name,
+  control,
+  options,
+  required,
+  placeholder,
+  disabled,
+}: {
+  label: string;
+  name: keyof FormData;
+  control: Control<FormData>;
+  options: OptionItem[];
+  required?: boolean;
+  placeholder?: string;
+  disabled?: boolean;
+}) {
+  const {
+    field: { value, onChange, onBlur, name: fieldName, ref },
+  } = useController({ name, control });
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const selectedOption = useMemo(
+    () => options.find((opt) => opt.value === value) || null,
+    [options, value]
+  );
+
+  useEffect(() => {
+    setQuery(selectedOption?.display || "");
+  }, [selectedOption?.display]);
+
+  const normalizedQuery = normalizeText(query);
+  const filteredOptions = useMemo(() => {
+    if (!normalizedQuery) return options.slice(0, 30);
+    return options
+      .filter((opt) =>
+        normalizeText(`${opt.display} ${opt.value}`).includes(normalizedQuery)
+      )
+      .slice(0, 30);
+  }, [options, normalizedQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+        onBlur();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onBlur]);
+
+  const handleSelect = (option: OptionItem | null) => {
+    onChange(option?.value || "");
+    setQuery(option?.display || "");
+    setOpen(false);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (filteredOptions[0]) handleSelect(filteredOptions[0]);
+    }
+    if (e.key === "Escape") setOpen(false);
+  };
+
+  const handleBlur = () => {
+    setTimeout(() => {
+      setOpen(false);
+      onBlur();
+      setQuery(options.find((opt) => opt.value === value)?.display || "");
+    }, 80);
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-semibold text-slate-900">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <div className="relative" ref={containerRef}>
+        <Input
+          ref={ref}
+          name={fieldName}
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          placeholder={placeholder || "Chọn"}
+          disabled={disabled}
+          autoComplete="off"
+          className={cn(
+            selectClass,
+            "appearance-none pr-10 text-left",
+            disabled && "bg-slate-100"
+          )}
+        />
+        {value && !disabled && (
+          <button
+            type="button"
+            className="absolute right-9 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              handleSelect(null);
+            }}
+            aria-label={`Xóa ${label}`}
+          >
+            ×
+          </button>
+        )}
+        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#1f3f77]" />
+        {open && !disabled && (
+          <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
+            {filteredOptions.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-slate-500">
+                Không tìm thấy kết quả
+              </div>
+            ) : (
+              filteredOptions.map((option) => (
+                <button
+                  type="button"
+                  key={option.value}
+                  className={cn(
+                    "flex w-full flex-col items-start px-3 py-2 text-left text-sm hover:bg-slate-100",
+                    option.value === value && "bg-[#eaf0ff]"
+                  )}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleSelect(option);
+                  }}
+                >
+                  <span className="font-medium text-slate-800">
+                    {option.display}
+                  </span>
+                  {option.value !== option.display && (
+                    <span className="text-[11px] text-slate-500">
+                      {option.value}
+                    </span>
+                  )}
+                </button>
+              ))
+            )}
+            {options.length > filteredOptions.length && (
+              <div className="border-t px-3 py-2 text-[11px] text-slate-400">
+                Hiển thị {filteredOptions.length}/{options.length} kết quả
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
