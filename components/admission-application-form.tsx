@@ -879,12 +879,13 @@ export default function AdmissionApplicationForm() {
                   placeholder="Chọn Tỉnh/ Thành phố"
                   options={provinceOptions}
                 />
-                <SelectField
+                <SearchSelectField
                   label="Trường lớp 12"
+                  name="grade12School"
+                  control={control}
                   required
                   placeholder="Chọn trường học"
                   options={schoolOptions}
-                  registration={register("grade12School")}
                 />
                 <SelectField
                   label="Năm tốt nghiệp"
@@ -1054,12 +1055,10 @@ function SearchSelectField({
 
   const normalizedQuery = normalizeText(query);
   const filteredOptions = useMemo(() => {
-    if (!normalizedQuery) return options.slice(0, 30);
-    return options
-      .filter((opt) =>
-        normalizeText(`${opt.display} ${opt.value}`).includes(normalizedQuery)
-      )
-      .slice(0, 30);
+    if (!normalizedQuery) return options;
+    return options.filter((opt) =>
+      normalizeText(`${opt.display} ${opt.value}`).includes(normalizedQuery)
+    );
   }, [options, normalizedQuery]);
 
   useEffect(() => {
@@ -1139,35 +1138,37 @@ function SearchSelectField({
         )}
         <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#1f3f77]" />
         {open && !disabled && (
-          <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
+          <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg max-h-64">
             {filteredOptions.length === 0 ? (
               <div className="px-3 py-2 text-sm text-slate-500">
                 Không tìm thấy kết quả
               </div>
             ) : (
-              filteredOptions.map((option) => (
-                <button
-                  type="button"
-                  key={option.value}
-                  className={cn(
-                    "flex w-full flex-col items-start px-3 py-2 text-left text-sm hover:bg-slate-100",
-                    option.value === value && "bg-[#eaf0ff]"
-                  )}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    handleSelect(option);
-                  }}
-                >
-                  <span className="font-medium text-slate-800">
-                    {option.display}
-                  </span>
-                  {option.value !== option.display && (
-                    <span className="text-[11px] text-slate-500">
-                      {option.value}
+              <div className="max-h-64 overflow-y-auto">
+                {filteredOptions.map((option) => (
+                  <button
+                    type="button"
+                    key={option.value}
+                    className={cn(
+                      "flex w-full flex-col items-start px-3 py-2 text-left text-sm hover:bg-slate-100",
+                      option.value === value && "bg-[#eaf0ff]"
+                    )}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleSelect(option);
+                    }}
+                  >
+                    <span className="font-medium text-slate-800">
+                      {option.display}
                     </span>
-                  )}
-                </button>
-              ))
+                    {option.value !== option.display && (
+                      <span className="text-[11px] text-slate-500">
+                        {option.value}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
             )}
             {options.length > filteredOptions.length && (
               <div className="border-t px-3 py-2 text-[11px] text-slate-400">
