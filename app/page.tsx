@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { GraduationCap, Calendar, Compass } from "lucide-react"
+import { GraduationCap, Calendar, Compass, ClipboardList } from "lucide-react"
 import enrollmentDefaults from "@/lib/form-defaults-enrollment.json"
 import eventDefaults from "@/lib/form-defaults-event.json"
 import careerDefaults from "@/lib/form-defaults-career.json"
@@ -32,6 +32,31 @@ const careerSampleData = {
 }
 const careerParams = new URLSearchParams(careerSampleData as Record<string, string>).toString()
 
+const admissionSampleData = {
+  fullName: "Hồ Văn Phúc",
+  gender: "Nam",
+  birthDate: "21/08/2006",
+  nationalId: "079203001234",
+  studentPhone: "0987654321",
+  parentPhone: "0909123456",
+  email: "phuc.hovan@example.com",
+  permanentProvince: "Thành phố Hồ Chí Minh",
+  permanentWard: "32248",
+  permanentStreet: "Nguyễn Văn Cừ",
+  permanentHouse: "123",
+  grade12Province: "Thành phố Hồ Chí Minh",
+  grade12School: "10297",
+  grade12Class: "12A1",
+  graduationYear: "2024",
+  receivingProvince: "Thành phố Hồ Chí Minh",
+  receivingWard: "32248",
+  receivingStreet: "Lê Văn Sỹ",
+  receivingHouse: "45A",
+  confirmAccuracy: "true",
+  section_id: "SECTION-001",
+}
+const admissionParams = new URLSearchParams(admissionSampleData as Record<string, string>).toString()
+
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
@@ -55,6 +80,26 @@ export default function HomePage() {
                 <Button className="w-full bg-blue-600 hover:bg-blue-700">Mở Form (với dữ liệu mẫu)</Button>
               </Link>
               <Link href="/dang-ky-nhap-hoc" className="block mt-2">
+                <Button variant="outline" className="w-full bg-transparent">
+                  Mở Form (trống)
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ClipboardList className="h-6 w-6 text-slate-700" />
+                Form Đăng ký hồ sơ xét tuyển
+              </CardTitle>
+              <CardDescription>Flow mới theo layout mobile gửi hồ sơ xét tuyển</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href={`/dang-ky-ho-so-xet-tuyen?${admissionParams}`}>
+                <Button className="w-full bg-slate-700 hover:bg-slate-800">Mở Form (với dữ liệu mẫu)</Button>
+              </Link>
+              <Link href="/dang-ky-ho-so-xet-tuyen" className="block mt-2">
                 <Button variant="outline" className="w-full bg-transparent">
                   Mở Form (trống)
                 </Button>
@@ -124,6 +169,11 @@ export default function HomePage() {
               <p className="font-semibold mt-4 mb-2 font-sans">Form Đăng ký tư vấn hướng nghiệp:</p>
               <code className="text-xs break-all">
                 ?fullName=...&birthDate=...&gender=...&address=...&phone=...&nationalId=...&email=...&utmCampaign=...&utmCampaignQr=...&city=...&school=...&gradeLevel=...&academicPerformance=...&gpa=...&aspirations=...&notifyVia=...&confirmAccuracy=true
+              </code>
+
+              <p className="font-semibold mt-4 mb-2 font-sans">Form Đăng ký hồ sơ xét tuyển:</p>
+              <code className="text-xs break-all">
+                ?fullName=...&gender=...&birthDate=...&nationalId=...&studentPhone=...&parentPhone=...&email=...&permanentProvince=...&permanentWard=...&permanentStreet=...&permanentHouse=...&grade12Province=...&grade12School=...&grade12Class=...&graduationYear=...&receivingProvince=...&receivingWard=...&receivingStreet=...&receivingHouse=...&applySameAddress=true&confirmAccuracy=true&conversationId=...&section_id=...
               </code>
             </div>
           </CardContent>
