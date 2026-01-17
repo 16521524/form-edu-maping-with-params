@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { getMetadataCareer, postAdmissionApplication } from "@/servers";
+import CareerSuccessModal from "./career-success-modal";
 
 type FormData = {
   fullName: string;
@@ -203,7 +204,7 @@ export default function AdmissionApplicationForm() {
   const hydratedSnapshot = useRef<FormData | null>(null);
   const [isHydrating, setIsHydrating] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const birthInputRef = useRef<HTMLInputElement | null>(null);
   const [metaReady, setMetaReady] = useState(false);
   const [metaOptions, setMetaOptions] = useState<{
@@ -590,6 +591,7 @@ export default function AdmissionApplicationForm() {
   const onSubmit = (data: FormData) =>
     new Promise<void>(async (resolve, reject) => {
       try {
+        setShowSuccess(false);
         setSubmitError(null);
         const payload = {
           conversation_id: data.sectionId || undefined,
@@ -618,7 +620,7 @@ export default function AdmissionApplicationForm() {
           ),
         };
         await postAdmissionApplication(payload);
-        setSubmitSuccess(true);
+        setShowSuccess(true);
         resolve();
       } catch (err) {
         console.error("Admission application submit failed", err);
@@ -964,14 +966,10 @@ export default function AdmissionApplicationForm() {
                 {submitError}
               </p>
             )}
-            {submitSuccess && (
-              <p className="text-sm text-center text-[#1a3561]">
-                Gửi thành công! Chúng tôi sẽ liên hệ sớm nhất.
-              </p>
-            )}
           </form>
         </div>
       </div>
+      {showSuccess && <CareerSuccessModal />}
     </main>
   );
 }
