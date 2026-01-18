@@ -27,6 +27,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
+  ICareerMetadataSchool,
   getMetadataCareer,
   getMetadataSchools,
   getMetadataWards,
@@ -65,6 +66,7 @@ type OptionItem = {
   display: string;
   text_color?: string;
   background_color?: string;
+  subtitle?: string;
 };
 
 const inter = Inter({
@@ -165,6 +167,7 @@ function mapDataOptions(items: any[] | undefined): OptionItem[] {
         display: String(display ?? value ?? ""),
         text_color: item.text_color,
         background_color: item.background_color,
+        subtitle: item.subtitle ?? '',
       };
     })
     .filter(Boolean) as OptionItem[];
@@ -178,11 +181,13 @@ const toOptionItem = (item: any): OptionItem | null => {
   const value = item.value ?? item.display;
   const display = item.display ?? item.value;
   if (!value && !display) return null;
+  const subtitle = item.subtitle ?? '';
   return {
     value: String(value),
     display: String(display),
     text_color: item.text_color,
     background_color: item.background_color,
+    subtitle: subtitle ? String(subtitle) : undefined,
   };
 };
 
@@ -387,7 +392,15 @@ export default function AdmissionApplicationForm() {
     getMetadataSchools({ province: formData.grade12Province })
       .then((res) => {
         if (!active) return;
-        const opts = normalizeOptions(res?.data, fallbackSchools);
+        const convertData = (data: ICareerMetadataSchool[]) => {
+          return data.map((item) => ({
+            value: item?.value,
+            display: item.display,
+            subtitle: item.address,
+          }));
+        };
+
+        const opts = normalizeOptions(convertData(res?.data ?? []), fallbackSchools);
         setSchoolOptionsGrade12(opts);
         if (
           formData.grade12School &&
@@ -1251,9 +1264,9 @@ function SearchSelectField({
                     <span className="font-medium text-slate-800">
                       {option.display}
                     </span>
-                    {option.value !== option.display && (
+                    {option.subtitle && (
                       <span className="text-[11px] text-slate-500">
-                        {option.value}
+                        {option.subtitle}
                       </span>
                     )}
                   </button>

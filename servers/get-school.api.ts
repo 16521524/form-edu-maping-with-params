@@ -4,8 +4,17 @@ export type CareerMetadataSchoolResponse = {
     display?: string;
     text_color?: string;
     background_color?: string;
+    address?: string;
   }[];
 };
+
+export interface ICareerMetadataSchool {
+  value?: string;
+  display?: string;
+  text_color?: string;
+  background_color?: string;
+  address?: string;
+}
 
 export async function getMetadataSchools({
   search_text = "",
