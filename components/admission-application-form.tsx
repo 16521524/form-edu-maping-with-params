@@ -26,7 +26,12 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { getMetadataCareer, postAdmissionApplication } from "@/servers";
+import {
+  getMetadataCareer,
+  getMetadataSchools,
+  getMetadataWards,
+  postAdmissionApplication,
+} from "@/servers";
 import CareerSuccessModal from "./career-success-modal";
 
 type FormData = {
@@ -225,14 +230,19 @@ export default function AdmissionApplicationForm() {
   const [metaOptions, setMetaOptions] = useState<{
     genders: OptionItem[];
     provinces: OptionItem[];
-    wards: OptionItem[];
-    schools: OptionItem[];
   }>({
     genders: [],
     provinces: [],
-    wards: [],
-    schools: [],
   });
+  const [wardOptionsPermanent, setWardOptionsPermanent] = useState<OptionItem[]>(
+    []
+  );
+  const [wardOptionsReceiving, setWardOptionsReceiving] = useState<OptionItem[]>(
+    []
+  );
+  const [schoolOptionsGrade12, setSchoolOptionsGrade12] = useState<OptionItem[]>(
+    []
+  );
   const {
     register,
     handleSubmit,
@@ -252,9 +262,10 @@ export default function AdmissionApplicationForm() {
     metaOptions.provinces.length > 0
       ? metaOptions.provinces
       : fallbackProvinces;
-  const wardOptions = metaOptions.wards;
-  const schoolOptions =
-    metaOptions.schools.length > 0 ? metaOptions.schools : fallbackSchools;
+  const permanentWardOptions = wardOptionsPermanent;
+  const receivingWardOptions = wardOptionsReceiving;
+  const grade12SchoolOptions =
+    schoolOptionsGrade12.length > 0 ? schoolOptionsGrade12 : fallbackSchools;
 
   const requiredFields: (keyof FormData)[] = [
     "fullName",
@@ -294,15 +305,11 @@ export default function AdmissionApplicationForm() {
         const data = json?.data ?? {};
         const genders = normalizeOptions(data.genders, fallbackGenders);
         const provinces = normalizeOptions(data.provinces, fallbackProvinces);
-        const wards = normalizeOptions(data.wards, []);
-        const schools = normalizeOptions(data.schools, fallbackSchools);
-        setMetaOptions({ genders, provinces, wards, schools });
+        setMetaOptions({ genders, provinces });
       } catch (err) {
         setMetaOptions({
           genders: fallbackGenders,
           provinces: fallbackProvinces,
-          wards: [],
-          schools: fallbackSchools,
         });
       } finally {
         if (active) setMetaReady(true);
@@ -313,6 +320,87 @@ export default function AdmissionApplicationForm() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!formData.permanentProvince) {
+      setWardOptionsPermanent([]);
+      if (formData.permanentWard) {
+        setValue("permanentWard", "", { shouldDirty: true });
+      }
+      return;
+    }
+    let active = true;
+    getMetadataWards({ province: formData.permanentProvince })
+      .then((res) => {
+        if (!active) return;
+        const opts = normalizeOptions(res?.data, []);
+        setWardOptionsPermanent(opts);
+        if (
+          formData.permanentWard &&
+          !opts.some((opt) => opt.value === formData.permanentWard)
+        ) {
+          setValue("permanentWard", "", { shouldDirty: true });
+        }
+      })
+      .catch(() => setWardOptionsPermanent([]));
+    return () => {
+      active = false;
+    };
+  }, [formData.permanentProvince, formData.permanentWard, setValue]);
+
+  useEffect(() => {
+    if (!formData.receivingProvince) {
+      setWardOptionsReceiving([]);
+      if (formData.receivingWard) {
+        setValue("receivingWard", "", { shouldDirty: true });
+      }
+      return;
+    }
+    let active = true;
+    getMetadataWards({ province: formData.receivingProvince })
+      .then((res) => {
+        if (!active) return;
+        const opts = normalizeOptions(res?.data, []);
+        setWardOptionsReceiving(opts);
+        if (
+          formData.receivingWard &&
+          !opts.some((opt) => opt.value === formData.receivingWard)
+        ) {
+          setValue("receivingWard", "", { shouldDirty: true });
+        }
+      })
+      .catch(() => setWardOptionsReceiving([]));
+    return () => {
+      active = false;
+    };
+  }, [formData.receivingProvince, formData.receivingWard, setValue]);
+
+  useEffect(() => {
+    if (!formData.grade12Province) {
+      setSchoolOptionsGrade12([]);
+      if (formData.grade12School) {
+        setValue("grade12School", "", { shouldDirty: true });
+      }
+      return;
+    }
+    let active = true;
+    getMetadataSchools({ province: formData.grade12Province })
+      .then((res) => {
+        if (!active) return;
+        const opts = normalizeOptions(res?.data, fallbackSchools);
+        setSchoolOptionsGrade12(opts);
+        if (
+          formData.grade12School &&
+          !opts.some((opt) => opt.value === formData.grade12School)
+        ) {
+          setValue("grade12School", "", { shouldDirty: true });
+        }
+      })
+      .catch(() => setSchoolOptionsGrade12(fallbackSchools));
+    return () => {
+      active = false;
+    };
+  }, [formData.grade12Province, formData.grade12School, setValue]);
 
   useEffect(() => {
     if (!metaReady) return;
@@ -385,7 +473,7 @@ export default function AdmissionApplicationForm() {
     );
     const normalizedPermanentWard = coerceToValue(
       mappedData.permanentWard,
-      wardOptions
+      permanentWardOptions
     );
     const normalizedGradeProvince = coerceToValue(
       mappedData.grade12Province,
@@ -393,7 +481,7 @@ export default function AdmissionApplicationForm() {
     );
     const normalizedGradeSchool = coerceToValue(
       mappedData.grade12School,
-      schoolOptions
+      grade12SchoolOptions
     );
     const normalizedReceivingProvince = coerceToValue(
       mappedData.receivingProvince,
@@ -401,13 +489,14 @@ export default function AdmissionApplicationForm() {
     );
     const normalizedReceivingWard = coerceToValue(
       mappedData.receivingWard,
-      wardOptions
+      receivingWardOptions
     );
 
     const allowedGenders = genderOptions.map((o) => o.value);
     const allowedProvinces = provinceOptions.map((o) => o.value);
-    const allowedWards = wardOptions.map((o) => o.value);
-    const allowedSchools = schoolOptions.map((o) => o.value);
+    const allowedPermanentWards = permanentWardOptions.map((o) => o.value);
+    const allowedReceivingWards = receivingWardOptions.map((o) => o.value);
+    const allowedSchools = grade12SchoolOptions.map((o) => o.value);
 
     const ensureOption = (
       value: string | undefined,
@@ -448,7 +537,7 @@ export default function AdmissionApplicationForm() {
       ),
       permanentWard: ensureOption(
         normalizedPermanentWard,
-        allowedWards,
+        allowedPermanentWards,
         initialFormData.permanentWard
       ),
       permanentStreet: prefer(
@@ -484,7 +573,7 @@ export default function AdmissionApplicationForm() {
       ),
       receivingWard: ensureOption(
         normalizedReceivingWard,
-        allowedWards,
+        allowedReceivingWards,
         initialFormData.receivingWard
       ),
       receivingStreet: prefer(
@@ -517,8 +606,9 @@ export default function AdmissionApplicationForm() {
     metaReady,
     genderOptions,
     provinceOptions,
-    wardOptions,
-    schoolOptions,
+    permanentWardOptions,
+    receivingWardOptions,
+    grade12SchoolOptions,
   ]);
 
   useEffect(() => {
@@ -847,7 +937,7 @@ export default function AdmissionApplicationForm() {
                   control={control}
                   required
                   placeholder="Chọn Xã/ Phường"
-                  options={wardOptions}
+                  options={permanentWardOptions}
                 />
                 <LabeledInput
                   label="Đường/ Phố"
@@ -885,7 +975,7 @@ export default function AdmissionApplicationForm() {
                   control={control}
                   required
                   placeholder="Chọn trường học"
-                  options={schoolOptions}
+                  options={grade12SchoolOptions}
                 />
                 <SelectField
                   label="Năm tốt nghiệp"
@@ -930,13 +1020,13 @@ export default function AdmissionApplicationForm() {
                   />
                   <SearchSelectField
                     label="Xã/ Phường"
-                    name="receivingWard"
-                    control={control}
-                    required
-                    placeholder="Chọn Xã/ Phường"
-                    options={wardOptions}
-                    disabled={watch("applySameAddress")}
-                  />
+                  name="receivingWard"
+                  control={control}
+                  required
+                  placeholder="Chọn Xã/ Phường"
+                  options={receivingWardOptions}
+                  disabled={watch("applySameAddress")}
+                />
                   <LabeledInput
                     label="Đường/ Phố"
                     required
