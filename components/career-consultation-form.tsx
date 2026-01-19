@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useForm, useWatch } from "react-hook-form";
+import { useController, useForm, useWatch, type Control } from "react-hook-form";
 import Image from "next/image";
 import { Inter } from "next/font/google";
 import {
@@ -61,6 +67,7 @@ type OptionItem = {
   display: string;
   text_color?: string;
   background_color?: string;
+  sub_title?: string;
 };
 
 const mapDataOptions = (items: any[] | undefined): OptionItem[] => {
@@ -76,6 +83,7 @@ const mapDataOptions = (items: any[] | undefined): OptionItem[] => {
         display: String(display ?? value ?? ""),
         text_color: item.text_color,
         background_color: item.background_color,
+        sub_title: item.sub_title,
       };
     })
     .filter(Boolean) as OptionItem[];
@@ -173,6 +181,13 @@ const formatBirthInput = (raw: string) => {
   return result;
 };
 
+const normalizeText = (val: string) =>
+  (val || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
 const toOptionItem = (item: any): OptionItem | null => {
   if (!item) return null;
   if (typeof item === "string") {
@@ -186,6 +201,7 @@ const toOptionItem = (item: any): OptionItem | null => {
     display: String(display),
     text_color: item.text_color,
     background_color: item.background_color,
+    sub_title: item.sub_title,
   };
 };
 
@@ -222,8 +238,12 @@ export default function CareerConsultationForm() {
   const hydratedSnapshot = useRef<FormData | null>(null);
   const campaignScanTracked = useRef(false);
   const initialCampaignName = useRef<string | null>(null);
+  const initialSchoolQuery = useRef<string | null>(null);
   if (initialCampaignName.current === null) {
     initialCampaignName.current = searchParams.get("utmCampaignQr");
+  }
+  if (initialSchoolQuery.current === null) {
+    initialSchoolQuery.current = searchParams.get("school");
   }
   const [isHydrating, setIsHydrating] = useState(true);
   const {
@@ -282,6 +302,8 @@ export default function CareerConsultationForm() {
     metaOptions.preferences.length > 0
       ? metaOptions.preferences
       : fallbackPreferenceOptions;
+  const provinceOptions = metaOptions.provinces;
+  const schoolOptions = metaOptions.schools;
   const requiredFields: (keyof FormData)[] = [
     "fullName",
     "phone",
@@ -323,12 +345,6 @@ export default function CareerConsultationForm() {
   const submitDisabled =
     isSubmitting || !watch("confirmAccuracy") || !requiredFieldsFilled;
   const phoneNumber = (watch("phone") || "").trim();
-  const cityDisplay =
-    metaOptions.provinces.find((p) => p.value === formData.city)?.display ||
-    formData.city;
-  const schoolDisplay =
-    metaOptions.schools.find((s) => s.value === formData.school)?.display ||
-    formData.school;
   const campaignDisplay = useMemo(() => {
     const utmCampaign =
       formData.utmCampaign || searchParams.get("utmCampaign") || "";
@@ -355,7 +371,9 @@ export default function CareerConsultationForm() {
       try {
         const [json, schoolsResp] = await Promise.all([
           getMetadataCareer(),
-          getMetadataSchools(searchParams.get("school") || undefined),
+          getMetadataSchools({
+            province: searchParams.get("city") || undefined,
+          }),
         ]);
         const campaignsResp = await getCampaigns();
         if (!active) return;
@@ -418,6 +436,46 @@ export default function CareerConsultationForm() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!metaReady) return;
+    if (!formData.city) {
+      setMetaOptions((prev) => ({ ...prev, schools: [] }));
+      if (formData.school) {
+        setValue("school", "", { shouldDirty: true });
+      }
+      return;
+    }
+    let active = true;
+    getMetadataSchools({ province: formData.city })
+      .then((res) => {
+        if (!active) return;
+        const opts = normalizeOptions(res?.data, []);
+        const targetSchool =
+          formData.school ||
+          (!hasHydrated.current ? initialSchoolQuery.current || "" : "");
+        const normalizedSchool = coerceToValue(targetSchool, opts);
+        setMetaOptions((prev) => ({ ...prev, schools: opts }));
+        if (normalizedSchool && normalizedSchool !== formData.school) {
+          setValue("school", normalizedSchool, { shouldDirty: true });
+        }
+        if (initialSchoolQuery.current && normalizedSchool) {
+          initialSchoolQuery.current = null;
+        }
+        if (process.env.NODE_ENV === "development") {
+          console.debug("[career-form] schools fetched", {
+            city: formData.city,
+            count: opts.length,
+            normalizedSchool,
+            current: formData.school,
+          });
+        }
+      })
+      .catch(() => setMetaOptions((prev) => ({ ...prev, schools: [] })));
+    return () => {
+      active = false;
+    };
+  }, [metaReady, formData.city, formData.school, setValue]);
 
   useEffect(() => {
     const campaignName = initialCampaignName.current;
@@ -619,6 +677,14 @@ export default function CareerConsultationForm() {
     };
 
     reset(hydratedData);
+    if (process.env.NODE_ENV === "development") {
+      console.debug("[career-form] hydrated", {
+        city: hydratedData.city,
+        school: hydratedData.school,
+        schoolsCount: metaOptions.schools.length,
+        initialSchoolQuery: initialSchoolQuery.current,
+      });
+    }
     hydratedSnapshot.current = hydratedData;
     setSocials(hydratedData.socials || []);
     skipNextSync.current = true;
@@ -718,6 +784,16 @@ export default function CareerConsultationForm() {
       : current.filter((c) => c !== channel);
     setValue("notifyVia", next);
   };
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+    console.debug("[career-form] options change", {
+      provinces: metaOptions.provinces.length,
+      schools: metaOptions.schools.length,
+      city: formData.city,
+      school: formData.school,
+    });
+  }, [metaOptions.provinces.length, metaOptions.schools.length, formData.city, formData.school]);
 
   const handleSelectSocialPlatform = (idx: number, platform: string) => {
     setSocials((prev) => {
@@ -1173,34 +1249,23 @@ export default function CareerConsultationForm() {
 
           <section className={panelClass}>
             <div className="space-y-3 p-4">
-              <LabeledInput
+              <SearchSelectField
                 label="Tỉnh/Thành phố"
-                inputProps={{
-                  value: cityDisplay,
-                  className: cn(
-                    inputClass,
-                    "bg-[#d7dbe2] text-slate-700 border-transparent"
-                  ),
-                  readOnly: true,
-                  tabIndex: -1,
-                }}
+                name="city"
+                control={control}
+                placeholder="Chọn Tỉnh/Thành phố"
+                options={provinceOptions}
+                disabled
               />
-              <input type="hidden" {...register("city")} />
 
-              <LabeledInput
+              <SearchSelectField
                 label="Trường học"
-                inputProps={{
-                  value:
-                    metaOptions.schools.find((s) => s.value === formData.school)
-                      ?.display || formData.school,
-                  className: cn(
-                    inputClass,
-                    "bg-[#d7dbe2] text-slate-700 border-transparent"
-                  ),
-                  readOnly: true,
-                }}
+                name="school"
+                control={control}
+                placeholder="Chọn trường học"
+                options={schoolOptions}
+                readOnlyInput
               />
-              <input type="hidden" {...register("school")} />
 
               <div className="grid grid-cols-1 gap-3">
                 <div className="space-y-2">
@@ -1458,6 +1523,177 @@ type LabeledInputProps = {
   placeholder?: string;
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 };
+
+function SearchSelectField({
+  label,
+  name,
+  control,
+  options,
+  required,
+  placeholder,
+  disabled,
+  readOnlyInput,
+}: {
+  label: string;
+  name: keyof FormData;
+  control: Control<FormData>;
+  options: OptionItem[];
+  required?: boolean;
+  placeholder?: string;
+  disabled?: boolean;
+  readOnlyInput?: boolean;
+}) {
+  const {
+    field: { value, onChange, onBlur, name: fieldName, ref },
+  } = useController({ name, control });
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const selectedOption = useMemo(
+    () => options.find((opt) => opt.value === value) || null,
+    [options, value]
+  );
+
+  useEffect(() => {
+    setQuery(selectedOption?.display || "");
+  }, [selectedOption?.display]);
+
+  const normalizedQuery = normalizeText(query);
+  const filteredOptions = useMemo(() => {
+    if (!normalizedQuery) return options;
+    return options.filter((opt) =>
+      normalizeText(`${opt.display} ${opt.value}`).includes(normalizedQuery)
+    );
+  }, [options, normalizedQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+        onBlur();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onBlur]);
+
+  const handleSelect = (option: OptionItem | null) => {
+    onChange(option?.value || "");
+    setQuery(option?.display || "");
+    setOpen(false);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (filteredOptions[0]) handleSelect(filteredOptions[0]);
+    }
+    if (e.key === "Escape") setOpen(false);
+  };
+
+  const handleBlur = () => {
+    setTimeout(() => {
+      setOpen(false);
+      onBlur();
+      setQuery(options.find((opt) => opt.value === value)?.display || "");
+    }, 80);
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-semibold text-slate-900">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <div className="relative" ref={containerRef}>
+        <Input
+          ref={ref}
+          name={fieldName}
+          value={query}
+          readOnly={readOnlyInput}
+          onChange={
+            readOnlyInput
+              ? undefined
+              : (e) => {
+                  setQuery(e.target.value);
+                  setOpen(true);
+                }
+          }
+          onFocus={() => setOpen(true)}
+          onClick={() => setOpen(true)}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          placeholder={placeholder || "Chọn"}
+          disabled={disabled}
+          autoComplete="off"
+          className={cn(
+            selectClass,
+            "appearance-none pr-10 text-left",
+            disabled && "bg-slate-100"
+          )}
+        />
+        {value && !disabled && (
+          <button
+            type="button"
+            className="absolute right-9 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              handleSelect(null);
+              setOpen(true);
+            }}
+            aria-label={`Xóa ${label}`}
+          >
+            ×
+          </button>
+        )}
+        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#1f3f77]" />
+        {open && !disabled && (
+          <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg max-h-64">
+            {filteredOptions.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-slate-500">
+                Không tìm thấy kết quả
+              </div>
+            ) : (
+              <div className="max-h-64 overflow-y-auto">
+                {filteredOptions.map((option) => (
+                  <button
+                    type="button"
+                    key={option.value}
+                    className={cn(
+                      "flex w-full flex-col items-start px-3 py-2 text-left text-sm hover:bg-slate-100",
+                      option.value === value && "bg-[#eaf0ff]"
+                    )}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleSelect(option);
+                    }}
+                  >
+                    <span className="font-medium text-slate-800">
+                      {option.display}
+                    </span>
+                    {option.sub_title && (
+                      <span className="text-[11px] text-slate-500">
+                        {option.sub_title}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+            {options.length > filteredOptions.length && (
+              <div className="border-t px-3 py-2 text-[11px] text-slate-400">
+                Hiển thị {filteredOptions.length}/{options.length} kết quả
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function LabeledInput({
   label,
