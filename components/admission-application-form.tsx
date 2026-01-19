@@ -227,6 +227,7 @@ export default function AdmissionApplicationForm() {
   const hasHydrated = useRef(false);
   const skipNextSync = useRef(false);
   const hydratedSnapshot = useRef<FormData | null>(null);
+  const initialGrade12SchoolQuery = useRef<string | null>(null);
   const [isHydrating, setIsHydrating] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -260,6 +261,14 @@ export default function AdmissionApplicationForm() {
     defaultValues: initialFormData,
   });
   const formData = useWatch({ control });
+  const { field: applySameAddressField } = useController({
+    name: "applySameAddress",
+    control,
+  });
+  const { field: confirmAccuracyField } = useController({
+    name: "confirmAccuracy",
+    control,
+  });
 
   const genderOptions =
     metaOptions.genders.length > 0 ? metaOptions.genders : fallbackGenders;
@@ -293,13 +302,14 @@ export default function AdmissionApplicationForm() {
   ];
 
   const requiredFieldsFilled = requiredFields.every((field) => {
-    const value = watch(field);
+    const value = formData[field];
     if (typeof value === "string") return value.trim() !== "";
+    if (Array.isArray(value)) return value.length > 0;
     return Boolean(value);
   });
 
   const submitDisabled =
-    isSubmitting || !watch("confirmAccuracy") || !requiredFieldsFilled;
+    isSubmitting || !confirmAccuracyField.value || !requiredFieldsFilled;
 
   useEffect(() => {
     let active = true;
@@ -339,12 +349,10 @@ export default function AdmissionApplicationForm() {
       .then((res) => {
         if (!active) return;
         const opts = normalizeOptions(res?.data, []);
+        const normalizedWard = coerceToValue(formData.permanentWard, opts);
         setWardOptionsPermanent(opts);
-        if (
-          formData.permanentWard &&
-          !opts.some((opt) => opt.value === formData.permanentWard)
-        ) {
-          setValue("permanentWard", "", { shouldDirty: true });
+        if (normalizedWard && normalizedWard !== formData.permanentWard) {
+          setValue("permanentWard", normalizedWard, { shouldDirty: true });
         }
       })
       .catch(() => setWardOptionsPermanent([]));
@@ -366,12 +374,10 @@ export default function AdmissionApplicationForm() {
       .then((res) => {
         if (!active) return;
         const opts = normalizeOptions(res?.data, []);
+        const normalizedWard = coerceToValue(formData.receivingWard, opts);
         setWardOptionsReceiving(opts);
-        if (
-          formData.receivingWard &&
-          !opts.some((opt) => opt.value === formData.receivingWard)
-        ) {
-          setValue("receivingWard", "", { shouldDirty: true });
+        if (normalizedWard && normalizedWard !== formData.receivingWard) {
+          setValue("receivingWard", normalizedWard, { shouldDirty: true });
         }
       })
       .catch(() => setWardOptionsReceiving([]));
@@ -402,11 +408,25 @@ export default function AdmissionApplicationForm() {
 
         const opts = normalizeOptions(convertData(res?.data ?? []), fallbackSchools);
         setSchoolOptionsGrade12(opts);
-        if (
-          formData.grade12School &&
-          !opts.some((opt) => opt.value === formData.grade12School)
-        ) {
-          setValue("grade12School", "", { shouldDirty: true });
+        const targetSchool =
+          formData.grade12School ||
+          initialGrade12SchoolQuery.current ||
+          "";
+        const normalizedSchool = coerceToValue(targetSchool, opts);
+        if (normalizedSchool && normalizedSchool !== formData.grade12School) {
+          setValue("grade12School", normalizedSchool, { shouldDirty: true });
+        }
+        if (initialGrade12SchoolQuery.current && normalizedSchool) {
+          initialGrade12SchoolQuery.current = null;
+        }
+        if (process.env.NODE_ENV === "development") {
+          console.debug("[admission-form] grade12 schools fetched", {
+            province: formData.grade12Province,
+            count: opts.length,
+            targetSchool,
+            normalizedSchool,
+            current: formData.grade12School,
+          });
         }
       })
       .catch(() => setSchoolOptionsGrade12(fallbackSchools));
@@ -478,6 +498,9 @@ export default function AdmissionApplicationForm() {
       applySameAddress: getBool(["applySameAddress"]),
       confirmAccuracy: getBool(["confirmAccuracy"], initialFormData.confirmAccuracy),
     };
+    if (initialGrade12SchoolQuery.current === null) {
+      initialGrade12SchoolQuery.current = mappedData.grade12School ?? null;
+    }
 
     const normalizedGender = coerceToValue(mappedData.gender, genderOptions);
     const normalizedPermanentProvince = coerceToValue(
@@ -610,6 +633,13 @@ export default function AdmissionApplicationForm() {
 
     reset(hydratedData);
     hydratedSnapshot.current = hydratedData;
+    if (process.env.NODE_ENV === "development") {
+      console.debug("[admission-form] hydrated", {
+        grade12Province: hydratedData.grade12Province,
+        grade12School: hydratedData.grade12School,
+        initialGrade12SchoolQuery: initialGrade12SchoolQuery.current,
+      });
+    }
     skipNextSync.current = true;
     setIsHydrating(false);
     hasHydrated.current = true;
@@ -681,22 +711,25 @@ export default function AdmissionApplicationForm() {
 
   useEffect(() => {
     if (!formData.applySameAddress) return;
+
+    const updates: Array<[keyof FormData, string]> = [];
     if (formData.receivingProvince !== formData.permanentProvince) {
-      setValue("receivingProvince", formData.permanentProvince, {
-        shouldDirty: true,
-      });
+      updates.push(["receivingProvince", formData.permanentProvince]);
     }
     if (formData.receivingWard !== formData.permanentWard) {
-      setValue("receivingWard", formData.permanentWard, { shouldDirty: true });
+      updates.push(["receivingWard", formData.permanentWard]);
     }
     if (formData.receivingStreet !== formData.permanentStreet) {
-      setValue("receivingStreet", formData.permanentStreet, {
-        shouldDirty: true,
-      });
+      updates.push(["receivingStreet", formData.permanentStreet]);
     }
     if (formData.receivingHouse !== formData.permanentHouse) {
-      setValue("receivingHouse", formData.permanentHouse, { shouldDirty: true });
+      updates.push(["receivingHouse", formData.permanentHouse]);
     }
+
+    if (updates.length === 0) return;
+    updates.forEach(([field, value]) =>
+      setValue(field, value, { shouldDirty: true, shouldTouch: true })
+    );
   }, [
     formData.applySameAddress,
     formData.permanentProvince,
@@ -1013,9 +1046,9 @@ export default function AdmissionApplicationForm() {
               <div className="space-y-3">
                 <label className="flex items-start gap-3 text-sm text-slate-800">
                   <Checkbox
-                    checked={watch("applySameAddress")}
+                    checked={applySameAddressField.value}
                     onCheckedChange={(checked) =>
-                      setValue("applySameAddress", Boolean(checked))
+                      applySameAddressField.onChange(Boolean(checked))
                     }
                     className="mt-0.5"
                   />
@@ -1029,17 +1062,17 @@ export default function AdmissionApplicationForm() {
                     required
                     placeholder="Chọn Tỉnh/ Thành phố"
                     options={provinceOptions}
-                    disabled={watch("applySameAddress")}
+                    disabled={applySameAddressField.value}
                   />
                   <SearchSelectField
                     label="Xã/ Phường"
-                  name="receivingWard"
-                  control={control}
-                  required
-                  placeholder="Chọn Xã/ Phường"
-                  options={receivingWardOptions}
-                  disabled={watch("applySameAddress")}
-                />
+                    name="receivingWard"
+                    control={control}
+                    required
+                    placeholder="Chọn Xã/ Phường"
+                    options={receivingWardOptions}
+                    disabled={applySameAddressField.value}
+                  />
                   <LabeledInput
                     label="Đường/ Phố"
                     required
@@ -1047,7 +1080,7 @@ export default function AdmissionApplicationForm() {
                     inputProps={{
                       ...register("receivingStreet"),
                       className: inputClass,
-                      disabled: watch("applySameAddress"),
+                      disabled: applySameAddressField.value,
                     }}
                   />
                   <LabeledInput
@@ -1056,7 +1089,7 @@ export default function AdmissionApplicationForm() {
                     inputProps={{
                       ...register("receivingHouse"),
                       className: inputClass,
-                      disabled: watch("applySameAddress"),
+                      disabled: applySameAddressField.value,
                     }}
                   />
                 </div>
@@ -1068,9 +1101,9 @@ export default function AdmissionApplicationForm() {
 
             <label className="flex items-start gap-3 text-sm text-slate-800 px-1">
               <Checkbox
-                checked={watch("confirmAccuracy")}
+                checked={confirmAccuracyField.value}
                 onCheckedChange={(checked) =>
-                  setValue("confirmAccuracy", Boolean(checked))
+                  confirmAccuracyField.onChange(Boolean(checked))
                 }
                 className="mt-0.5"
               />
