@@ -194,10 +194,9 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
         cell: ({ row }) => {
           const segment = (row.original.segment || "").trim() || "Unknown";
           return (
-            <MetaPill
+            <MetaText
               value={segment}
               palette={segmentPalette}
-              width={180}
             />
           );
         },
@@ -639,6 +638,30 @@ function MetaPill({
         border: "1px solid rgba(28,47,87,0.10)",
         boxShadow: "0 8px 18px rgba(28,47,87,0.08)",
       }}
+    >
+      {label}
+    </span>
+  );
+}
+
+function MetaText({
+  value,
+  palette,
+}: {
+  value: string;
+  palette: MetaPalette;
+}) {
+  const key = (value || "").trim();
+
+  const entry = key ? palette[key] : undefined;
+
+  const fallback = key === "Unknown" || !key ? UNKNOWN_PILL : FALLBACK_PILL;
+
+  const label = entry?.label || key || fallback.label;
+ 
+  return (
+    <span
+      className="font-medium"
     >
       {label}
     </span>
