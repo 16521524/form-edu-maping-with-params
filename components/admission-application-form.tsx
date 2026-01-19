@@ -269,6 +269,7 @@ export default function AdmissionApplicationForm() {
   const skipNextSync = useRef(false);
   const hydratedSnapshot = useRef<FormData | null>(null);
   const initialGrade12SchoolQuery = useRef<string | null>(null);
+  const prevGrade12Province = useRef<string>("");
   const prevPermanentProvince = useRef<string>("");
   const prevReceivingProvince = useRef<string>("");
   const [isHydrating, setIsHydrating] = useState(true);
@@ -537,6 +538,17 @@ export default function AdmissionApplicationForm() {
   ]);
 
   useEffect(() => {
+    const prevProvince = prevGrade12Province.current;
+    if (prevProvince && prevProvince !== formData.grade12Province) {
+      skipNextSync.current = true;
+      setSchoolOptionsGrade12([]);
+      if (formData.grade12School) {
+        setValue("grade12School", "", { shouldDirty: true });
+      }
+      initialGrade12SchoolQuery.current = null;
+    }
+    prevGrade12Province.current = formData.grade12Province || "";
+
     if (!formData.grade12Province) {
       setSchoolOptionsGrade12([]);
       if (formData.grade12School) {
@@ -1398,7 +1410,7 @@ function SearchSelectField({
             (disabled || loading) && "bg-slate-100"
           )}
         />
-        {value && !disabled && !loading && (
+        {/* {value && !disabled && !loading && (
           <button
             type="button"
             className="absolute right-9 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
@@ -1410,7 +1422,7 @@ function SearchSelectField({
           >
             ×
           </button>
-        )}
+        )} */}
         {loading ? (
           <Loader2 className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#1f3f77] animate-spin" />
         ) : (
