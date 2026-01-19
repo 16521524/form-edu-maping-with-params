@@ -1265,6 +1265,7 @@ export default function CareerConsultationForm() {
                 placeholder="Chọn trường học"
                 options={schoolOptions}
                 readOnlyInput
+                disabled
               />
 
               <div className="grid grid-cols-1 gap-3">
