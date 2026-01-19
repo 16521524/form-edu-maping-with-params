@@ -219,6 +219,47 @@ const buildStreetAddress = (house?: string, street?: string) => {
   return parts.join(" ").trim();
 };
 
+const buildQueryString = (data: FormData) => {
+  const params = new URLSearchParams();
+  const addParam = (key: string, value?: string | boolean) => {
+    if (value === undefined || value === null) return;
+    if (typeof value === "boolean") {
+      params.set(key, value ? "true" : "false");
+      return;
+    }
+    if (value === "") {
+      params.set(key, "__empty");
+      return;
+    }
+    params.set(key, value);
+  };
+
+  addParam("fullName", data.fullName);
+  addParam("gender", data.gender);
+  addParam("birthDate", data.birthDate);
+  addParam("nationalId", data.nationalId);
+  addParam("studentPhone", data.studentPhone);
+  addParam("parentPhone", data.parentPhone);
+  addParam("email", data.email);
+  addParam("permanentProvince", data.permanentProvince);
+  addParam("permanentWard", data.permanentWard);
+  addParam("permanentStreet", data.permanentStreet);
+  addParam("permanentHouse", data.permanentHouse);
+  addParam("grade12Province", data.grade12Province);
+  addParam("grade12School", data.grade12School);
+  addParam("grade12Class", data.grade12Class);
+  addParam("graduationYear", data.graduationYear);
+  addParam("receivingProvince", data.receivingProvince);
+  addParam("receivingWard", data.receivingWard);
+  addParam("receivingStreet", data.receivingStreet);
+  addParam("receivingHouse", data.receivingHouse);
+  addParam("applySameAddress", data.applySameAddress);
+  addParam("confirmAccuracy", data.confirmAccuracy);
+  addParam("conversationId", data.conversationId);
+  addParam("section_id", data.sectionId);
+  return params.toString();
+};
+
 export default function AdmissionApplicationForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -352,6 +393,7 @@ export default function AdmissionApplicationForm() {
         const normalizedWard = coerceToValue(formData.permanentWard, opts);
         setWardOptionsPermanent(opts);
         if (normalizedWard && normalizedWard !== formData.permanentWard) {
+          skipNextSync.current = true;
           setValue("permanentWard", normalizedWard, { shouldDirty: true });
         }
       })
@@ -365,6 +407,7 @@ export default function AdmissionApplicationForm() {
     if (!formData.receivingProvince) {
       setWardOptionsReceiving([]);
       if (formData.receivingWard) {
+        skipNextSync.current = true;
         setValue("receivingWard", "", { shouldDirty: true });
       }
       return;
@@ -377,6 +420,7 @@ export default function AdmissionApplicationForm() {
         const normalizedWard = coerceToValue(formData.receivingWard, opts);
         setWardOptionsReceiving(opts);
         if (normalizedWard && normalizedWard !== formData.receivingWard) {
+          skipNextSync.current = true;
           setValue("receivingWard", normalizedWard, { shouldDirty: true });
         }
       })
@@ -390,6 +434,7 @@ export default function AdmissionApplicationForm() {
     if (!formData.grade12Province) {
       setSchoolOptionsGrade12([]);
       if (formData.grade12School) {
+        skipNextSync.current = true;
         setValue("grade12School", "", { shouldDirty: true });
       }
       return;
@@ -414,6 +459,7 @@ export default function AdmissionApplicationForm() {
           "";
         const normalizedSchool = coerceToValue(targetSchool, opts);
         if (normalizedSchool && normalizedSchool !== formData.grade12School) {
+          skipNextSync.current = true;
           setValue("grade12School", normalizedSchool, { shouldDirty: true });
         }
         if (initialGrade12SchoolQuery.current && normalizedSchool) {
@@ -433,7 +479,7 @@ export default function AdmissionApplicationForm() {
     return () => {
       active = false;
     };
-  }, [formData.grade12Province, formData.grade12School, setValue]);
+  }, [formData.grade12Province, setValue]);
 
   useEffect(() => {
     if (!metaReady) return;
@@ -633,6 +679,7 @@ export default function AdmissionApplicationForm() {
 
     reset(hydratedData);
     hydratedSnapshot.current = hydratedData;
+    lastQuery.current = buildQueryString(hydratedData);
     if (process.env.NODE_ENV === "development") {
       console.debug("[admission-form] hydrated", {
         grade12Province: hydratedData.grade12Province,
@@ -655,54 +702,15 @@ export default function AdmissionApplicationForm() {
   ]);
 
   useEffect(() => {
-    if (!hasHydrated.current) return;
+    if (!hasHydrated.current || isHydrating) return;
+    const snap = hydratedSnapshot.current;
+    if (snap && JSON.stringify(formData) === JSON.stringify(snap)) return;
     if (skipNextSync.current) {
-      const snap = hydratedSnapshot.current;
-      if (snap && JSON.stringify(formData) === JSON.stringify(snap)) {
-        skipNextSync.current = false;
-      }
+      skipNextSync.current = false;
       return;
     }
 
-    const params = new URLSearchParams();
-    const addParam = (key: string, value?: string | boolean) => {
-      if (value === undefined || value === null) return;
-      if (typeof value === "boolean") {
-        params.set(key, value ? "true" : "false");
-        return;
-      }
-      if (value === "") {
-        params.set(key, "__empty");
-        return;
-      }
-      params.set(key, value);
-    };
-
-    addParam("fullName", formData.fullName);
-    addParam("gender", formData.gender);
-    addParam("birthDate", formData.birthDate);
-    addParam("nationalId", formData.nationalId);
-    addParam("studentPhone", formData.studentPhone);
-    addParam("parentPhone", formData.parentPhone);
-    addParam("email", formData.email);
-    addParam("permanentProvince", formData.permanentProvince);
-    addParam("permanentWard", formData.permanentWard);
-    addParam("permanentStreet", formData.permanentStreet);
-    addParam("permanentHouse", formData.permanentHouse);
-    addParam("grade12Province", formData.grade12Province);
-    addParam("grade12School", formData.grade12School);
-    addParam("grade12Class", formData.grade12Class);
-    addParam("graduationYear", formData.graduationYear);
-    addParam("receivingProvince", formData.receivingProvince);
-    addParam("receivingWard", formData.receivingWard);
-    addParam("receivingStreet", formData.receivingStreet);
-    addParam("receivingHouse", formData.receivingHouse);
-    addParam("applySameAddress", formData.applySameAddress);
-    addParam("confirmAccuracy", formData.confirmAccuracy);
-    addParam("conversationId", formData.conversationId);
-    addParam("section_id", formData.sectionId);
-
-    const query = params.toString();
+    const query = buildQueryString(formData as FormData);
     if (query === lastQuery.current) return;
     lastQuery.current = query;
     const target = query ? `${pathname}?${query}` : pathname;
@@ -713,20 +721,24 @@ export default function AdmissionApplicationForm() {
     if (!formData.applySameAddress) return;
 
     const updates: Array<[keyof FormData, string]> = [];
-    if (formData.receivingProvince !== formData.permanentProvince) {
-      updates.push(["receivingProvince", formData.permanentProvince]);
-    }
-    if (formData.receivingWard !== formData.permanentWard) {
-      updates.push(["receivingWard", formData.permanentWard]);
-    }
-    if (formData.receivingStreet !== formData.permanentStreet) {
-      updates.push(["receivingStreet", formData.permanentStreet]);
-    }
-    if (formData.receivingHouse !== formData.permanentHouse) {
-      updates.push(["receivingHouse", formData.permanentHouse]);
-    }
+    const copyIfChanged = (
+      key: keyof FormData,
+      source: string | undefined,
+    ) => {
+      const next = source ?? '';
+      const current = (formData as any)[key] ?? '';
+      if (current !== next) {
+        updates.push([key, next]);
+      }
+    };
+
+    copyIfChanged("receivingProvince", formData.permanentProvince);
+    copyIfChanged("receivingWard", formData.permanentWard);
+    copyIfChanged("receivingStreet", formData.permanentStreet);
+    copyIfChanged("receivingHouse", formData.permanentHouse);
 
     if (updates.length === 0) return;
+    skipNextSync.current = true;
     updates.forEach(([field, value]) =>
       setValue(field, value, { shouldDirty: true, shouldTouch: true })
     );
