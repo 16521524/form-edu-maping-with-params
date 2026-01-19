@@ -280,6 +280,7 @@ export default function CareerConsultationForm() {
     roles: [],
   });
   const [metaReady, setMetaReady] = useState(false);
+  const [loadingSchoolOptions, setLoadingSchoolOptions] = useState(false);
   const [showAspirationDropdown, setShowAspirationDropdown] = useState(false);
   const birthInputRef = useRef<HTMLInputElement | null>(null);
   const [socials, setSocials] = useState<
@@ -368,6 +369,7 @@ export default function CareerConsultationForm() {
   useEffect(() => {
     let active = true;
     const loadMeta = async () => {
+      setLoadingSchoolOptions(true);
       try {
         const [json, schoolsResp] = await Promise.all([
           getMetadataCareer(),
@@ -428,25 +430,33 @@ export default function CareerConsultationForm() {
           roles: fallbackRoleOptions,
         });
       } finally {
-        if (active) setMetaReady(true);
+        if (active) {
+          setMetaReady(true);
+          setLoadingSchoolOptions(false);
+        }
       }
     };
     loadMeta();
     return () => {
       active = false;
+      setLoadingSchoolOptions(false);
     };
   }, []);
 
   useEffect(() => {
     if (!metaReady) return;
     if (!formData.city) {
-      setMetaOptions((prev) => ({ ...prev, schools: [] }));
+      setMetaOptions((prev) =>
+        prev.schools.length ? { ...prev, schools: [] } : prev
+      );
       if (formData.school) {
         setValue("school", "", { shouldDirty: true });
       }
+      setLoadingSchoolOptions(false);
       return;
     }
     let active = true;
+    setLoadingSchoolOptions(true);
     getMetadataSchools({ province: formData.city })
       .then((res) => {
         if (!active) return;
@@ -455,7 +465,9 @@ export default function CareerConsultationForm() {
           formData.school ||
           (!hasHydrated.current ? initialSchoolQuery.current || "" : "");
         const normalizedSchool = coerceToValue(targetSchool, opts);
-        setMetaOptions((prev) => ({ ...prev, schools: opts }));
+        setMetaOptions((prev) =>
+          prev.schools !== opts ? { ...prev, schools: opts } : prev
+        );
         if (normalizedSchool && normalizedSchool !== formData.school) {
           setValue("school", normalizedSchool, { shouldDirty: true });
         }
@@ -471,9 +483,13 @@ export default function CareerConsultationForm() {
           });
         }
       })
-      .catch(() => setMetaOptions((prev) => ({ ...prev, schools: [] })));
+      .catch(() => setMetaOptions((prev) => ({ ...prev, schools: [] })))
+      .finally(() => {
+        if (active) setLoadingSchoolOptions(false);
+      });
     return () => {
       active = false;
+      setLoadingSchoolOptions(false);
     };
   }, [metaReady, formData.city, formData.school, setValue]);
 
@@ -495,9 +511,15 @@ export default function CareerConsultationForm() {
         campaignScanTracked.current = true;
         await updateCampaignTotalScans(campaignName);
         localStorage.setItem(storageKey, "1");
-      } catch (err) {
-        campaignScanTracked.current = false;
-        console.error("Failed to update campaign scan", err);
+      } catch (err: any) {
+        // Ignore missing campaign (404) so user isn't spammed with console errors.
+        const message = String(err?.message || err || "");
+        const isNotFound = message.includes("404");
+        if (!isNotFound) {
+          console.warn("Failed to update campaign scan", err);
+        }
+        localStorage.setItem(storageKey, "skipped");
+        campaignScanTracked.current = true;
       }
     };
 
@@ -779,10 +801,13 @@ export default function CareerConsultationForm() {
 
   const handleNotifyChange = (channel: string, checked: boolean) => {
     const current = formData.notifyVia || [];
+    const hasChannel = current.includes(channel);
+    // Avoid redundant setValue to prevent unnecessary re-renders.
+    if (checked === hasChannel) return;
     const next = checked
       ? Array.from(new Set([...current, channel]))
       : current.filter((c) => c !== channel);
-    setValue("notifyVia", next);
+    setValue("notifyVia", next, { shouldDirty: true, shouldTouch: true });
   };
 
   useEffect(() => {
@@ -1265,7 +1290,9 @@ export default function CareerConsultationForm() {
                 placeholder="Chọn trường học"
                 options={schoolOptions}
                 readOnlyInput
+                loading={loadingSchoolOptions}
                 disabled
+
               />
 
               <div className="grid grid-cols-1 gap-3">
@@ -1467,10 +1494,11 @@ export default function CareerConsultationForm() {
                         <Checkbox
                           checked={checked}
                           disabled={!enabled}
-                          onCheckedChange={(c) =>
-                            enabled &&
-                            handleNotifyChange(channel, Boolean(c))
-                          }
+                          onCheckedChange={(c) => {
+                            if (!enabled) return;
+                            if (typeof c !== "boolean") return;
+                            handleNotifyChange(channel, c);
+                          }}
                         />
                         <span className="inline-flex items-center gap-2">
                           <SocialIcon value={channel} />
@@ -1534,6 +1562,7 @@ function SearchSelectField({
   placeholder,
   disabled,
   readOnlyInput,
+  loading,
 }: {
   label: string;
   name: keyof FormData;
@@ -1543,6 +1572,7 @@ function SearchSelectField({
   placeholder?: string;
   disabled?: boolean;
   readOnlyInput?: boolean;
+  loading?: boolean;
 }) {
   const {
     field: { value, onChange, onBlur, name: fieldName, ref },
@@ -1623,20 +1653,24 @@ function SearchSelectField({
                   setOpen(true);
                 }
           }
-          onFocus={() => setOpen(true)}
-          onClick={() => setOpen(true)}
+          onFocus={() => {
+            if (!loading) setOpen(true);
+          }}
+          onClick={() => {
+            if (!loading) setOpen(true);
+          }}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
           placeholder={placeholder || "Chọn"}
-          disabled={disabled}
+          disabled={disabled || loading}
           autoComplete="off"
           className={cn(
             selectClass,
             "appearance-none pr-10 text-left",
-            disabled && "bg-slate-100"
+            (disabled || loading) && "bg-slate-100"
           )}
         />
-        {value && !disabled && (
+        {value && !disabled && !loading && (
           <button
             type="button"
             className="absolute right-9 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
@@ -1650,8 +1684,12 @@ function SearchSelectField({
             ×
           </button>
         )}
-        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#1f3f77]" />
-        {open && !disabled && (
+        {loading ? (
+          <Loader2 className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#1f3f77] animate-spin" />
+        ) : (
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#1f3f77]" />
+        )}
+        {open && !disabled && !loading && (
           <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg max-h-64">
             {filteredOptions.length === 0 ? (
               <div className="px-3 py-2 text-sm text-slate-500">
