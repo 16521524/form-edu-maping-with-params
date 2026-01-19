@@ -269,6 +269,7 @@ export default function AdmissionApplicationForm() {
   const skipNextSync = useRef(false);
   const hydratedSnapshot = useRef<FormData | null>(null);
   const initialGrade12SchoolQuery = useRef<string | null>(null);
+  const prevPermanentProvince = useRef<string>("");
   const prevReceivingProvince = useRef<string>("");
   const [isHydrating, setIsHydrating] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -352,6 +353,16 @@ export default function AdmissionApplicationForm() {
 
   const submitDisabled =
     isSubmitting || !confirmAccuracyField.value || !requiredFieldsFilled;
+
+  useEffect(() => {
+    const prevProvince = prevPermanentProvince.current;
+    if (prevProvince && prevProvince !== formData.permanentProvince) {
+      // Province changed or cleared: drop stale ward selection immediately.
+      skipNextSync.current = true;
+      setValue("permanentWard", "", { shouldDirty: true });
+    }
+    prevPermanentProvince.current = formData.permanentProvince || "";
+  }, [formData.permanentProvince, setValue]);
 
   useEffect(() => {
     let active = true;
