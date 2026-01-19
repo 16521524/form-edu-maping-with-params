@@ -269,6 +269,7 @@ export default function AdmissionApplicationForm() {
   const skipNextSync = useRef(false);
   const hydratedSnapshot = useRef<FormData | null>(null);
   const initialGrade12SchoolQuery = useRef<string | null>(null);
+  const prevReceivingProvince = useRef<string>("");
   const [isHydrating, setIsHydrating] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -390,8 +391,12 @@ export default function AdmissionApplicationForm() {
       .then((res) => {
         if (!active) return;
         const opts = normalizeOptions(res?.data, []);
-        const normalizedWard = coerceToValue(formData.permanentWard, opts);
-        setWardOptionsPermanent(opts);
+        const withSelected =
+          formData.permanentWard && !opts.some((opt) => opt.value === formData.permanentWard)
+            ? [...opts, { value: formData.permanentWard, display: formData.permanentWard }]
+            : opts;
+        const normalizedWard = coerceToValue(formData.permanentWard, withSelected);
+        setWardOptionsPermanent(withSelected);
         if (normalizedWard && normalizedWard !== formData.permanentWard) {
           skipNextSync.current = true;
           setValue("permanentWard", normalizedWard, { shouldDirty: true });
@@ -404,6 +409,18 @@ export default function AdmissionApplicationForm() {
   }, [formData.permanentProvince, formData.permanentWard, setValue]);
 
   useEffect(() => {
+    const prevProvince = prevReceivingProvince.current;
+    if (
+      prevProvince &&
+      prevProvince !== formData.receivingProvince &&
+      !formData.applySameAddress
+    ) {
+      // Province changed: clear stale ward to avoid showing a ward from another province.
+      skipNextSync.current = true;
+      setValue("receivingWard", "", { shouldDirty: true });
+    }
+    prevReceivingProvince.current = formData.receivingProvince || "";
+
     if (!formData.receivingProvince) {
       setWardOptionsReceiving([]);
       if (formData.receivingWard) {
@@ -417,8 +434,12 @@ export default function AdmissionApplicationForm() {
       .then((res) => {
         if (!active) return;
         const opts = normalizeOptions(res?.data, []);
-        const normalizedWard = coerceToValue(formData.receivingWard, opts);
-        setWardOptionsReceiving(opts);
+        const withSelected =
+          formData.receivingWard && !opts.some((opt) => opt.value === formData.receivingWard)
+            ? [...opts, { value: formData.receivingWard, display: formData.receivingWard }]
+            : opts;
+        const normalizedWard = coerceToValue(formData.receivingWard, withSelected);
+        setWardOptionsReceiving(withSelected);
         if (normalizedWard && normalizedWard !== formData.receivingWard) {
           skipNextSync.current = true;
           setValue("receivingWard", normalizedWard, { shouldDirty: true });
@@ -742,6 +763,8 @@ export default function AdmissionApplicationForm() {
     updates.forEach(([field, value]) =>
       setValue(field, value, { shouldDirty: true, shouldTouch: true })
     );
+    // Keep ward options in sync to preserve labels when mirroring addresses.
+    setWardOptionsReceiving(wardOptionsPermanent);
   }, [
     formData.applySameAddress,
     formData.permanentProvince,
@@ -749,6 +772,26 @@ export default function AdmissionApplicationForm() {
     formData.permanentStreet,
     formData.permanentHouse,
     setValue,
+    wardOptionsPermanent,
+  ]);
+
+  useEffect(() => {
+    if (!formData.applySameAddress) return;
+    // Always mirror ward options when applying same address so labels stay in sync.
+    setWardOptionsReceiving(wardOptionsPermanent);
+    if (formData.permanentWard && formData.permanentWard !== formData.receivingWard) {
+      skipNextSync.current = true;
+      setValue("receivingWard", formData.permanentWard, {
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+    }
+  }, [
+    formData.applySameAddress,
+    formData.permanentWard,
+    formData.receivingWard,
+    setValue,
+    wardOptionsPermanent,
   ]);
 
   const onSubmit = (data: FormData) =>
@@ -1059,9 +1102,35 @@ export default function AdmissionApplicationForm() {
                 <label className="flex items-start gap-3 text-sm text-slate-800">
                   <Checkbox
                     checked={applySameAddressField.value}
-                    onCheckedChange={(checked) =>
-                      applySameAddressField.onChange(Boolean(checked))
-                    }
+                    onCheckedChange={(checked) => {
+                      const next = Boolean(checked);
+                      applySameAddressField.onChange(next);
+                      if (next) {
+                        // Mirror permanent address immediately when toggled on.
+                        skipNextSync.current = true;
+                        setValue(
+                          "receivingProvince",
+                          formData.permanentProvince ?? "",
+                          { shouldDirty: true, shouldTouch: true }
+                        );
+                        setValue(
+                          "receivingWard",
+                          formData.permanentWard ?? "",
+                          { shouldDirty: true, shouldTouch: true }
+                        );
+                        setValue(
+                          "receivingStreet",
+                          formData.permanentStreet ?? "",
+                          { shouldDirty: true, shouldTouch: true }
+                        );
+                        setValue(
+                          "receivingHouse",
+                          formData.permanentHouse ?? "",
+                          { shouldDirty: true, shouldTouch: true }
+                        );
+                        setWardOptionsReceiving(wardOptionsPermanent);
+                      }
+                    }}
                     className="mt-0.5"
                   />
                   <span>Áp dụng theo hộ khẩu thường trú</span>
@@ -1198,8 +1267,14 @@ function SearchSelectField({
   );
 
   useEffect(() => {
-    setQuery(selectedOption?.display || "");
-  }, [selectedOption?.display]);
+    if (selectedOption) {
+      setQuery(selectedOption.display);
+    } else if (!value) {
+      setQuery("");
+    } else {
+      setQuery(String(value));
+    }
+  }, [selectedOption?.display, value]);
 
   const normalizedQuery = normalizeText(query);
   const filteredOptions = useMemo(() => {
