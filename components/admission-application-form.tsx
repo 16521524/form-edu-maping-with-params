@@ -66,7 +66,7 @@ type OptionItem = {
   display: string;
   text_color?: string;
   background_color?: string;
-  subtitle?: string;
+  sub_title?: string;
 };
 
 const inter = Inter({
@@ -167,7 +167,7 @@ function mapDataOptions(items: any[] | undefined): OptionItem[] {
         display: String(display ?? value ?? ""),
         text_color: item.text_color,
         background_color: item.background_color,
-        subtitle: item.subtitle ?? '',
+        sub_title: item.sub_title ?? '',
       };
     })
     .filter(Boolean) as OptionItem[];
@@ -181,13 +181,13 @@ const toOptionItem = (item: any): OptionItem | null => {
   const value = item.value ?? item.display;
   const display = item.display ?? item.value;
   if (!value && !display) return null;
-  const subtitle = item.subtitle ?? '';
+  const sub_title = item.sub_title ?? '';
   return {
     value: String(value),
     display: String(display),
     text_color: item.text_color,
     background_color: item.background_color,
-    subtitle: subtitle ? String(subtitle) : undefined,
+    sub_title: sub_title ? String(sub_title) : undefined,
   };
 };
 
@@ -396,7 +396,7 @@ export default function AdmissionApplicationForm() {
           return data.map((item) => ({
             value: item?.value,
             display: item.display,
-            subtitle: item.address,
+            sub_title: item?.sub_title,
           }));
         };
 
@@ -1264,9 +1264,9 @@ function SearchSelectField({
                     <span className="font-medium text-slate-800">
                       {option.display}
                     </span>
-                    {option.subtitle && (
+                    {option.sub_title && (
                       <span className="text-[11px] text-slate-500">
-                        {option.subtitle}
+                        {option.sub_title}
                       </span>
                     )}
                   </button>

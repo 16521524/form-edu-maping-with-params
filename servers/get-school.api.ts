@@ -1,11 +1,5 @@
 export type CareerMetadataSchoolResponse = {
-  data?: {
-    value?: string;
-    display?: string;
-    text_color?: string;
-    background_color?: string;
-    address?: string;
-  }[];
+  data?: ICareerMetadataSchool[];
 };
 
 export interface ICareerMetadataSchool {
@@ -13,7 +7,7 @@ export interface ICareerMetadataSchool {
   display?: string;
   text_color?: string;
   background_color?: string;
-  address?: string;
+  sub_title?: string;
 }
 
 export async function getMetadataSchools({
