@@ -727,8 +727,13 @@ export default function AdmissionApplicationForm() {
     const snap = hydratedSnapshot.current;
     if (snap && JSON.stringify(formData) === JSON.stringify(snap)) return;
     if (skipNextSync.current) {
+      const snap = hydratedSnapshot.current;
+      // Allow one skip when matching snapshot; otherwise resume syncing on next render.
+      if (snap && JSON.stringify(formData) === JSON.stringify(snap)) {
+        skipNextSync.current = false;
+        return;
+      }
       skipNextSync.current = false;
-      return;
     }
 
     const query = buildQueryString(formData as FormData);
