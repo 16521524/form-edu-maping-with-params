@@ -74,13 +74,6 @@ const inter = Inter({
   weight: ["400", "500", "600", "700"],
 });
 
-const debugLog = (...args: any[]) => {
-  // Verbose logging to inspect address sync issues.
-  if (typeof console !== "undefined") {
-    console.debug("[admission-form]", ...args);
-  }
-};
-
 const metaData = (formMeta as any).data ?? {};
 const fallbackProvinces: OptionItem[] = mapDataOptions(metaData.provinces);
 const fallbackGenders: OptionItem[] = mapDataOptions(metaData.genders);
@@ -279,9 +272,9 @@ export default function AdmissionApplicationForm() {
   const prevPermanentProvince = useRef<string>("");
   const prevReceivingProvince = useRef<string>("");
   const [isHydrating, setIsHydrating] = useState(true);
-  const [syncingReceiving, setSyncingReceiving] = useState(false);
   const [loadingPermanentWard, setLoadingPermanentWard] = useState(false);
   const [loadingReceivingWard, setLoadingReceivingWard] = useState(false);
+  const [loadingGrade12School, setLoadingGrade12School] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const birthInputRef = useRef<HTMLInputElement | null>(null);
@@ -437,9 +430,7 @@ export default function AdmissionApplicationForm() {
 
   useEffect(() => {
     if (formData.applySameAddress) {
-      setSyncingReceiving(true);
       setLoadingReceivingWard(false);
-      
       if (formData.receivingProvince !== formData.permanentProvince) {
         skipNextSync.current = true;
         setValue("receivingProvince", formData.permanentProvince ?? "", {
@@ -454,15 +445,22 @@ export default function AdmissionApplicationForm() {
           shouldTouch: true,
         });
       }
-      
+      if (formData.receivingStreet !== formData.permanentStreet) {
+        skipNextSync.current = true;
+        setValue("receivingStreet", formData.permanentStreet ?? "", {
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+      }
+      if (formData.receivingHouse !== formData.permanentHouse) {
+        skipNextSync.current = true;
+        setValue("receivingHouse", formData.permanentHouse ?? "", {
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+      }
       setWardOptionsReceiving(wardOptionsPermanent);
-      setSyncingReceiving(false);
       setLoadingReceivingWard(false);
-      debugLog("applySameAddress mirror done", {
-        receivingProvince: formData.permanentProvince,
-        receivingWard: formData.permanentWard,
-        wardOptionsReceiving: wardOptionsPermanent.length,
-      });
       return;
     }
 
@@ -484,19 +482,11 @@ export default function AdmissionApplicationForm() {
         skipNextSync.current = true;
         setValue("receivingWard", "", { shouldDirty: true });
       }
-      setSyncingReceiving(false);
       setLoadingReceivingWard(false);
-      debugLog("receiving province empty, clearing ward");
       return;
     }
     let active = true;
-    setSyncingReceiving(true);
     setLoadingReceivingWard(true);
-    debugLog("receiving fetch start", {
-      province: formData.receivingProvince,
-      receivingWard: formData.receivingWard,
-      applySameAddress: formData.applySameAddress,
-    });
     getMetadataWards({ province: formData.receivingProvince })
       .then((res) => {
         if (!active) return;
@@ -522,35 +512,27 @@ export default function AdmissionApplicationForm() {
           skipNextSync.current = true;
           setValue("receivingWard", normalizedWard, { shouldDirty: true });
         }
-        setSyncingReceiving(false);
         setLoadingReceivingWard(false);
-        debugLog("receiving fetch done", {
-          province: formData.receivingProvince,
-          options: nextOptions.length,
-          receivingWardBefore: formData.receivingWard,
-          normalizedWard,
-          applySameAddress: formData.applySameAddress,
-          setTo: formData.applySameAddress ? formData.permanentWard : normalizedWard,
-        });
       })
       .catch(() => {
         setWardOptionsReceiving([]);
-        setSyncingReceiving(false);
         setLoadingReceivingWard(false);
-        debugLog("receiving fetch failed", {
-          province: formData.receivingProvince,
-        });
       });
     return () => {
       active = false;
-      setSyncingReceiving(false);
       setLoadingReceivingWard(false);
     };
   }, [
     formData.applySameAddress,
+    formData.permanentProvince,
+    formData.permanentWard,
+    formData.permanentStreet,
+    formData.permanentHouse,
     formData.receivingProvince,
     formData.receivingWard,
-    formData.permanentWard,
+    formData.receivingStreet,
+    formData.receivingHouse,
+    wardOptionsPermanent,
     setValue,
   ]);
 
@@ -561,9 +543,11 @@ export default function AdmissionApplicationForm() {
         skipNextSync.current = true;
         setValue("grade12School", "", { shouldDirty: true });
       }
+      setLoadingGrade12School(false);
       return;
     }
     let active = true;
+    setLoadingGrade12School(true);
     getMetadataSchools({ province: formData.grade12Province })
       .then((res) => {
         if (!active) return;
@@ -599,9 +583,13 @@ export default function AdmissionApplicationForm() {
           });
         }
       })
-      .catch(() => setSchoolOptionsGrade12(fallbackSchools));
+      .catch(() => setSchoolOptionsGrade12(fallbackSchools))
+      .finally(() => {
+        if (active) setLoadingGrade12School(false);
+      });
     return () => {
       active = false;
+      setLoadingGrade12School(false);
     };
   }, [formData.grade12Province, setValue]);
 
@@ -852,59 +840,6 @@ export default function AdmissionApplicationForm() {
     const target = query ? `${pathname}?${query}` : pathname;
     router.replace(target, { scroll: false });
   }, [formData, router, pathname]);
-
-  useEffect(() => {
-    if (!formData.applySameAddress) return;
-
-    const pairs: Array<[keyof FormData, string]> = [
-      ["receivingProvince", formData.permanentProvince ?? ""],
-      ["receivingWard", formData.permanentWard ?? ""],
-      ["receivingStreet", formData.permanentStreet ?? ""],
-      ["receivingHouse", formData.permanentHouse ?? ""],
-    ];
-    const updates = pairs.filter(([field, next]) => {
-      const current = (formData as any)[field] ?? "";
-      return current !== next;
-    });
-
-    if (updates.length === 0) return;
-    skipNextSync.current = true;
-    updates.forEach(([field, value]) =>
-      setValue(field, value, { shouldDirty: true, shouldTouch: true })
-    );
-    // Keep ward options in sync to preserve labels when mirroring addresses.
-    setWardOptionsReceiving(wardOptionsPermanent);
-  }, [
-    formData.applySameAddress,
-    formData.permanentProvince,
-    formData.permanentWard,
-    formData.permanentStreet,
-    formData.permanentHouse,
-    setValue,
-    wardOptionsPermanent,
-  ]);
-
-  useEffect(() => {
-    if (!formData.applySameAddress) return;
-    // Keep receiving ward options aligned with permanent ones so labels match.
-    setWardOptionsReceiving(wardOptionsPermanent);
-    if (
-      formData.permanentWard &&
-      formData.permanentWard !== formData.receivingWard
-    ) {
-      skipNextSync.current = true;
-      setValue("receivingWard", formData.permanentWard, {
-        shouldDirty: true,
-        shouldTouch: true,
-      });
-    }
-  }, [
-    formData.applySameAddress,
-    formData.permanentWard,
-    formData.receivingWard,
-    setValue,
-    wardOptionsPermanent,
-  ]);
 
   const onSubmit = (data: FormData) =>
     new Promise<void>(async (resolve, reject) => {
@@ -1190,6 +1125,7 @@ export default function AdmissionApplicationForm() {
                   required
                   placeholder="Chọn trường học"
                   options={grade12SchoolOptions}
+                  loading={loadingGrade12School}
                 />
                 <SelectField
                   label="Năm tốt nghiệp"
@@ -1248,12 +1184,6 @@ export default function AdmissionApplicationForm() {
                   />
                   <span>Áp dụng theo hộ khẩu thường trú</span>
                 </label>
-                {applySameAddressField.value && syncingReceiving && (
-                  <div className="flex items-center gap-2 text-xs text-slate-500 px-1">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Đang đồng bộ địa chỉ nhận…</span>
-                  </div>
-                )}
                 <div className="grid gap-4 md:grid-cols-2">
                   <SearchSelectField
                     label="Tỉnh/ Thành phố"
