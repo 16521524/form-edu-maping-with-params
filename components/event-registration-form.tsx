@@ -15,8 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowLeft, Calendar, User, CalendarDays, Target, CheckCircle, Loader2 } from "lucide-react"
-import Link from "next/link"
+import { Calendar, User, CalendarDays, Target, CheckCircle, Loader2 } from "lucide-react"
 
 interface FormData {
   // 1. Personal info
@@ -378,11 +377,6 @@ export default function EventRegistrationForm() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-green-50 to-white py-8 px-4">
       <div className="max-w-3xl mx-auto">
-        <Link href="/" className="inline-flex items-center gap-2 text-green-600 hover:text-green-800 mb-6">
-          <ArrowLeft className="h-4 w-4" />
-          Quay lại trang chủ
-        </Link>
-
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
             <Calendar className="h-8 w-8 text-green-600" />
