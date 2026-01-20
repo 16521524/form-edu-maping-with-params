@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-const FRAPPE_BASE_URL =
-  process.env.FRAPPE_BASE_URL ??
-  "https://erpnext.aurora-tech.com/api/method/lead.get_leads";
+const FRAPPE_BASE_URL = process.env.NEXT_PUBLIC_FRAPPE_BASE_URL ?? '';
+
+const LEAD_API_ENPOINT = `${FRAPPE_BASE_URL}/api/method/lead.get_leads`
 
 const FRAPPE_TOKEN = process.env.NEXT_PUBLIC_FRAPPE_TOKEN || "";
 
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   const creationFrom = searchParams.get("creation_from") ?? "";
   const creationTo = searchParams.get("creation_to") ?? "";
 
-  const upstream = new URL(FRAPPE_BASE_URL);
+  const upstream = new URL(LEAD_API_ENPOINT);
   if (filters) upstream.searchParams.set("filters", filters);
   upstream.searchParams.set("order_by", orderBy);
   upstream.searchParams.set("page_size", pageSize);
