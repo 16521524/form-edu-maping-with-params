@@ -8,7 +8,12 @@ import {
   type KeyboardEvent,
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useController, useForm, useWatch, type Control } from "react-hook-form";
+import {
+  useController,
+  useForm,
+  useWatch,
+  type Control,
+} from "react-hook-form";
 import Image from "next/image";
 import { Inter } from "next/font/google";
 import {
@@ -111,20 +116,19 @@ const initialFormData: FormData = {
   gpa: "",
   aspirations: [],
   notifyVia: [formMeta.common.notificationChannels?.[0] || "email"].filter(
-    Boolean
+    Boolean,
   ),
   socials: [],
   confirmAccuracy: false,
 };
 
-const fallbackGenderOptions: OptionItem[] =
-  mapDataOptions(metaData.genders);
+const fallbackGenderOptions: OptionItem[] = mapDataOptions(metaData.genders);
 
-const fallbackGradeOptions: OptionItem[] =
-  mapDataOptions(metaData.grades);
+const fallbackGradeOptions: OptionItem[] = mapDataOptions(metaData.grades);
 
-const fallbackPerformanceOptions: OptionItem[] =
-  mapDataOptions(metaData.performances);
+const fallbackPerformanceOptions: OptionItem[] = mapDataOptions(
+  metaData.performances,
+);
 
 const fallbackRoleOptions: OptionItem[] =
   mapDataOptions(metaData.roles).length > 0
@@ -135,8 +139,9 @@ const fallbackRoleOptions: OptionItem[] =
         { value: "Guardian", display: "Guardian" },
       ];
 
-const fallbackPreferenceOptions: OptionItem[] =
-  mapDataOptions(metaData.preferences);
+const fallbackPreferenceOptions: OptionItem[] = mapDataOptions(
+  metaData.preferences,
+);
 
 const panelClass =
   "rounded-lg border border-[#e2e7ef] bg-white shadow-[0_8px_22px_rgba(31,63,119,0.06)]";
@@ -207,7 +212,7 @@ const toOptionItem = (item: any): OptionItem | null => {
 
 const normalizeOptions = (
   source: any,
-  fallback: OptionItem[] = []
+  fallback: OptionItem[] = [],
 ): OptionItem[] => {
   if (Array.isArray(source)) {
     const normalized = source.map(toOptionItem).filter(Boolean) as OptionItem[];
@@ -218,7 +223,7 @@ const normalizeOptions = (
 
 const coerceToValue = (
   raw: string | undefined,
-  options: OptionItem[]
+  options: OptionItem[],
 ): string | undefined => {
   if (!raw) return raw;
   const byValue = options.find((opt) => opt.value === raw);
@@ -290,7 +295,9 @@ export default function CareerConsultationForm() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const genderOptions =
-    metaOptions.genders.length > 0 ? metaOptions.genders : fallbackGenderOptions;
+    metaOptions.genders.length > 0
+      ? metaOptions.genders
+      : fallbackGenderOptions;
   const gradeOptions =
     metaOptions.grades.length > 0 ? metaOptions.grades : fallbackGradeOptions;
   const performanceOptions =
@@ -326,10 +333,10 @@ export default function CareerConsultationForm() {
         (s) =>
           s.platform &&
           typeof s.link_profile === "string" &&
-          s.link_profile.trim() !== ""
+          s.link_profile.trim() !== "",
       )
       .map((s) => s.platform)
-      .filter(Boolean)
+      .filter(Boolean),
   );
   const channelPlatformMap: Record<string, string | null> = {
     email: null,
@@ -352,14 +359,14 @@ export default function CareerConsultationForm() {
     if (!utmCampaign) return "";
     const normalizedCampaign = coerceToValue(
       utmCampaign,
-      metaOptions.campaigns
+      metaOptions.campaigns,
     );
     const matched =
       metaOptions.campaigns.find(
         (c) =>
           c.value === normalizedCampaign ||
           c.display === normalizedCampaign ||
-          c.value === utmCampaign
+          c.value === utmCampaign,
       ) || null;
     return matched?.display || normalizedCampaign || utmCampaign;
   }, [formData.utmCampaign, metaOptions.campaigns, searchParams]);
@@ -383,13 +390,13 @@ export default function CareerConsultationForm() {
         const genders = normalizeOptions(data.genders, fallbackGenderOptions);
         const preferences = normalizeOptions(
           data.preferences,
-          fallbackPreferenceOptions
+          fallbackPreferenceOptions,
         );
         const provinces = normalizeOptions(data.provinces, []);
         const grades = normalizeOptions(data.grades, fallbackGradeOptions);
         const performances = normalizeOptions(
           data.performances,
-          fallbackPerformanceOptions
+          fallbackPerformanceOptions,
         );
         const campaignsFromApi =
           campaignsResp?.data?.map((item: any) => ({
@@ -398,14 +405,14 @@ export default function CareerConsultationForm() {
           })) || [];
         const campaigns = normalizeOptions(
           campaignsFromApi,
-          metaCampaigns || []
+          metaCampaigns || [],
         );
         const roles = normalizeOptions(data.roles, fallbackRoleOptions);
         const schools = normalizeOptions(
-          (schoolsResp.data && schoolsResp.data.length
+          schoolsResp.data && schoolsResp.data.length
             ? schoolsResp.data
-            : data.schools),
-          []
+            : data.schools,
+          [],
         ).filter((s) => s.value || s.display);
         setMetaOptions({
           genders,
@@ -418,6 +425,7 @@ export default function CareerConsultationForm() {
           roles,
         });
       } catch (err) {
+        console.log(err);
         console.warn("Could not load metadata, fallback to formMeta", err);
         setMetaOptions({
           genders: fallbackGenderOptions,
@@ -447,7 +455,7 @@ export default function CareerConsultationForm() {
     if (!metaReady) return;
     if (!formData.city) {
       setMetaOptions((prev) =>
-        prev.schools.length ? { ...prev, schools: [] } : prev
+        prev.schools.length ? { ...prev, schools: [] } : prev,
       );
       if (formData.school) {
         setValue("school", "", { shouldDirty: true });
@@ -466,7 +474,7 @@ export default function CareerConsultationForm() {
           (!hasHydrated.current ? initialSchoolQuery.current || "" : "");
         const normalizedSchool = coerceToValue(targetSchool, opts);
         setMetaOptions((prev) =>
-          prev.schools !== opts ? { ...prev, schools: opts } : prev
+          prev.schools !== opts ? { ...prev, schools: opts } : prev,
         );
         if (normalizedSchool && normalizedSchool !== formData.school) {
           setValue("school", normalizedSchool, { shouldDirty: true });
@@ -572,11 +580,11 @@ export default function CareerConsultationForm() {
     };
 
     const prefer = (value: string | undefined, fallback: string | undefined) =>
-      value === undefined ? fallback ?? "" : value;
+      value === undefined ? (fallback ?? "") : value;
     const ensureOption = (
       value: string | undefined,
       allowed: string[],
-      fallback: string | undefined
+      fallback: string | undefined,
     ) => {
       if (value === "") return "";
       if (allowed.length === 0) return value ?? fallback ?? "";
@@ -606,7 +614,7 @@ export default function CareerConsultationForm() {
       notifyVia: getList("notifyVia"),
       confirmAccuracy: getBool(
         ["confirmAccuracy"],
-        initialFormData.confirmAccuracy
+        initialFormData.confirmAccuracy,
       ),
     };
 
@@ -614,13 +622,19 @@ export default function CareerConsultationForm() {
     const normalizedGrade = coerceToValue(mappedData.gradeLevel, gradeOptions);
     const normalizedPerformance = coerceToValue(
       mappedData.academicPerformance,
-      performanceOptions
+      performanceOptions,
     );
-    const normalizedCity = coerceToValue(mappedData.city, metaOptions.provinces);
-    const normalizedSchool = coerceToValue(mappedData.school, metaOptions.schools);
+    const normalizedCity = coerceToValue(
+      mappedData.city,
+      metaOptions.provinces,
+    );
+    const normalizedSchool = coerceToValue(
+      mappedData.school,
+      metaOptions.schools,
+    );
     const normalizedRole = coerceToValue(mappedData.role, roleOptions);
     const normalizedAspirations = (mappedData.aspirations || []).map((item) =>
-      coerceToValue(item, preferenceOptions)
+      coerceToValue(item, preferenceOptions),
     );
 
     const allowedGenders = genderOptions.map((o) => o.value);
@@ -646,18 +660,18 @@ export default function CareerConsultationForm() {
       return initialFormData.notifyVia;
     };
     const resolvedNotify = normalizeNotifyArray(mappedData.notifyVia).filter(
-      (item) => allowedNotification.includes(item)
+      (item) => allowedNotification.includes(item),
     );
 
     const hydratedData = {
       fullName: prefer(mappedData.fullName, initialFormData.fullName),
       birthDate: isoToDdMmYyyy(
-        prefer(mappedData.birthDate, initialFormData.birthDate)
+        prefer(mappedData.birthDate, initialFormData.birthDate),
       ),
       gender: ensureOption(
         normalizedGender,
         allowedGenders,
-        initialFormData.gender
+        initialFormData.gender,
       ),
       address: prefer(mappedData.address, initialFormData.address),
       phone: prefer(mappedData.phone, initialFormData.phone),
@@ -666,28 +680,28 @@ export default function CareerConsultationForm() {
       utmCampaign: prefer(mappedData.utmCampaign, initialFormData.utmCampaign),
       utmCampaignQr: prefer(
         mappedData.utmCampaignQr,
-        initialFormData.utmCampaignQr
+        initialFormData.utmCampaignQr,
       ),
       utmSales: prefer(mappedData.utmSales, initialFormData.utmSales),
       city: ensureOption(
         normalizedCity,
         allowedProvinces,
-        initialFormData.city
+        initialFormData.city,
       ),
       school: ensureOption(
         normalizedSchool,
         allowedSchools,
-        initialFormData.school
+        initialFormData.school,
       ),
       gradeLevel: ensureOption(
         normalizedGrade,
         allowedGrades,
-        initialFormData.gradeLevel
+        initialFormData.gradeLevel,
       ),
       academicPerformance: ensureOption(
         normalizedPerformance,
         allowedAcademic,
-        initialFormData.academicPerformance
+        initialFormData.academicPerformance,
       ),
       role: resolvedRole,
       gpa: prefer(mappedData.gpa, initialFormData.gpa),
@@ -768,7 +782,7 @@ export default function CareerConsultationForm() {
       "socials",
       socials
         .filter((s) => s.platform || s.link_profile)
-        .map((s) => `${s.platform}:${s.link_profile}`)
+        .map((s) => `${s.platform}:${s.link_profile}`),
     );
     addParam("notifyVia", formData.notifyVia);
     addParam("confirmAccuracy", formData.confirmAccuracy);
@@ -795,7 +809,7 @@ export default function CareerConsultationForm() {
   const handleRemoveAspiration = (value: string) => {
     setValue(
       "aspirations",
-      aspirations.filter((item) => item !== value)
+      aspirations.filter((item) => item !== value),
     );
   };
 
@@ -818,7 +832,12 @@ export default function CareerConsultationForm() {
       city: formData.city,
       school: formData.school,
     });
-  }, [metaOptions.provinces.length, metaOptions.schools.length, formData.city, formData.school]);
+  }, [
+    metaOptions.provinces.length,
+    metaOptions.schools.length,
+    formData.city,
+    formData.school,
+  ]);
 
   const handleSelectSocialPlatform = (idx: number, platform: string) => {
     setSocials((prev) => {
@@ -847,9 +866,7 @@ export default function CareerConsultationForm() {
         setSubmitError(null);
         const fallbackRole = roleOptions[0]?.value || "Student";
         const primaryRole =
-          data.role && data.role.trim()
-            ? data.role
-            : fallbackRole || "Student";
+          data.role && data.role.trim() ? data.role : fallbackRole || "Student";
         const payload = {
           full_name: data.fullName,
           mobile_no: data.phone,
@@ -875,7 +892,7 @@ export default function CareerConsultationForm() {
               (s) =>
                 s.platform &&
                 typeof s.link_profile === "string" &&
-                s.link_profile.trim() !== ""
+                s.link_profile.trim() !== "",
             )
             .map((s) => ({
               platform: s.platform,
@@ -886,6 +903,7 @@ export default function CareerConsultationForm() {
         setShowSuccess(true);
         resolve();
       } catch (err) {
+        console.log(err);
         console.error("Career consultation submit failed", err);
         const messageFromApi =
           (err as any)?.detail?.[0]?.message ||
@@ -901,7 +919,7 @@ export default function CareerConsultationForm() {
       <main
         className={cn(
           "min-h-screen bg-[#eef3f8] flex items-center justify-center",
-          inter.className
+          inter.className,
         )}
       >
         <div className="flex items-center gap-2 text-[#1f3f77]">
@@ -916,7 +934,7 @@ export default function CareerConsultationForm() {
     <main
       className={cn(
         "career-form min-h-screen bg-[#eef3f8] flex justify-center px-2",
-        inter.className
+        inter.className,
       )}
     >
       <style jsx global>{`
@@ -1007,9 +1025,7 @@ export default function CareerConsultationForm() {
                         key={option.value}
                         className={cn(
                           "flex items-center gap-2 py-2 text-sm font-medium transition-colors cursor-pointer",
-                          checked
-                            ? ""
-                            : "hover:border-[#1f3f77]"
+                          checked ? "" : "hover:border-[#1f3f77]",
                         )}
                       >
                         <input
@@ -1029,7 +1045,7 @@ export default function CareerConsultationForm() {
                               "flex h-4 w-4 items-center justify-center rounded-full border",
                               checked
                                 ? "border-[#1f3f77] bg-[#1f3f77]"
-                                : "border-[#c7cfdb]"
+                                : "border-[#c7cfdb]",
                             )}
                           >
                             {checked && (
@@ -1067,7 +1083,7 @@ export default function CareerConsultationForm() {
                       placeholder="dd/mm/yyyy"
                       className={cn(
                         inputClass,
-                        "pr-11 appearance-none career-date-input"
+                        "pr-11 appearance-none career-date-input",
                       )}
                     />
                     <button
@@ -1094,7 +1110,7 @@ export default function CareerConsultationForm() {
                       {...register("gender")}
                       className={cn(
                         selectClass,
-                        "appearance-none leading-tight"
+                        "appearance-none leading-tight",
                       )}
                     >
                       <option value="">Chọn giới tính</option>
@@ -1157,14 +1173,14 @@ export default function CareerConsultationForm() {
                         type="button"
                         onClick={() =>
                           setOpenSocialIndex(
-                            openSocialIndex === idx ? null : idx
+                            openSocialIndex === idx ? null : idx,
                           )
                         }
                         className={cn(
                           selectClass,
                           "flex items-center gap-2 pr-10 text-left",
                           openSocialIndex === idx &&
-                            "border-[#1f3f77] ring-2 ring-[#1f3f77]/15"
+                            "border-[#1f3f77] ring-2 ring-[#1f3f77]/15",
                         )}
                       >
                         {social.platform ? (
@@ -1172,7 +1188,7 @@ export default function CareerConsultationForm() {
                             <SocialIcon value={social.platform} />
                             <span>
                               {SOCIAL_OPTIONS.find(
-                                (s) => s.value === social.platform
+                                (s) => s.value === social.platform,
                               )?.label || social.platform}
                             </span>
                           </>
@@ -1190,7 +1206,7 @@ export default function CareerConsultationForm() {
                               className={cn(
                                 "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-100",
                                 social.platform === option.value &&
-                                  "bg-[#eaf0ff]"
+                                  "bg-[#eaf0ff]",
                               )}
                               onMouseDown={(e) => {
                                 e.preventDefault();
@@ -1211,12 +1227,12 @@ export default function CareerConsultationForm() {
                           platform === "Facebook"
                             ? "Dán link profile Facebook"
                             : platform === "Zalo"
-                            ? "Nhập số điện thoại Zalo"
-                            : platform === "TikTok"
-                            ? "Nhập link hoặc ID TikTok"
-                            : platform === "WhatsApp"
-                            ? "Nhập số điện thoại WhatsApp"
-                            : "Dán link profile";
+                              ? "Nhập số điện thoại Zalo"
+                              : platform === "TikTok"
+                                ? "Nhập link hoặc ID TikTok"
+                                : platform === "WhatsApp"
+                                  ? "Nhập số điện thoại WhatsApp"
+                                  : "Dán link profile";
                         const isPhone =
                           platform === "Zalo" || platform === "WhatsApp";
                         const inputMode = isPhone ? "tel" : undefined;
@@ -1292,7 +1308,6 @@ export default function CareerConsultationForm() {
                 readOnlyInput
                 loading={loadingSchoolOptions}
                 disabled
-
               />
 
               <div className="grid grid-cols-1 gap-3">
@@ -1305,7 +1320,7 @@ export default function CareerConsultationForm() {
                       {...register("gradeLevel")}
                       className={cn(
                         selectClass,
-                        "appearance-none leading-tight"
+                        "appearance-none leading-tight",
                       )}
                     >
                       <option value="">Chọn lớp</option>
@@ -1330,7 +1345,7 @@ export default function CareerConsultationForm() {
                       {...register("academicPerformance")}
                       className={cn(
                         selectClass,
-                        "appearance-none leading-tight"
+                        "appearance-none leading-tight",
                       )}
                     >
                       <option value="">Chọn học lực</option>
@@ -1395,7 +1410,8 @@ export default function CareerConsultationForm() {
                     className={cn(
                       inputClass,
                       "pr-11",
-                      aspirations.length >= 3 && "bg-slate-100 cursor-not-allowed"
+                      aspirations.length >= 3 &&
+                        "bg-slate-100 cursor-not-allowed",
                     )}
                   />
                   <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
@@ -1405,7 +1421,7 @@ export default function CareerConsultationForm() {
                         .filter((option) =>
                           option.display
                             .toLowerCase()
-                            .includes(aspirationInput.toLowerCase())
+                            .includes(aspirationInput.toLowerCase()),
                         )
                         .slice(0, 10)
                         .map((option) => (
@@ -1416,7 +1432,7 @@ export default function CareerConsultationForm() {
                               "flex w-full items-center justify-between px-3 py-2 text-left text-sm",
                               aspirations.includes(option.value)
                                 ? "bg-[#eaf0ff]"
-                                : "hover:bg-slate-100"
+                                : "hover:bg-slate-100",
                             )}
                             onMouseDown={(e) => {
                               e.preventDefault();
@@ -1434,7 +1450,7 @@ export default function CareerConsultationForm() {
                           (opt) =>
                             opt.display.toLowerCase() ===
                               aspirationInput.toLowerCase() ||
-                            opt.value === aspirationInput
+                            opt.value === aspirationInput,
                         ) &&
                         !aspirations.includes(aspirationInput) && (
                           <button
@@ -1477,7 +1493,7 @@ export default function CareerConsultationForm() {
                 <div className="grid grid-cols-2 gap-2">
                   {formMeta.common.notificationChannels.map((channel) => {
                     const checked = (formData.notifyVia || []).includes(
-                      channel
+                      channel,
                     );
                     const enabled = canSelectChannel(channel);
                     return (
@@ -1485,10 +1501,12 @@ export default function CareerConsultationForm() {
                         key={channel}
                         className={cn(
                           "flex items-center gap-2 text-sm capitalize transition-colors",
-                          enabled ? "cursor-pointer" : "cursor-not-allowed opacity-60",
+                          enabled
+                            ? "cursor-pointer"
+                            : "cursor-not-allowed opacity-60",
                           checked
                             ? "border-[#1f3f77] bg-white text-[#1f3f77]"
-                            : "border-[#d7dde7] bg-white text-slate-700 hover:border-[#1f3f77]"
+                            : "border-[#d7dde7] bg-white text-slate-700 hover:border-[#1f3f77]",
                         )}
                       >
                         <Checkbox
@@ -1539,9 +1557,7 @@ export default function CareerConsultationForm() {
           )}
         </form>
       </div>
-      {showSuccess && (
-        <CareerSuccessModal />
-      )}
+      {showSuccess && <CareerSuccessModal />}
     </main>
   );
 }
@@ -1583,7 +1599,7 @@ function SearchSelectField({
 
   const selectedOption = useMemo(
     () => options.find((opt) => opt.value === value) || null,
-    [options, value]
+    [options, value],
   );
 
   useEffect(() => {
@@ -1594,7 +1610,7 @@ function SearchSelectField({
   const filteredOptions = useMemo(() => {
     if (!normalizedQuery) return options;
     return options.filter((opt) =>
-      normalizeText(`${opt.display} ${opt.value}`).includes(normalizedQuery)
+      normalizeText(`${opt.display} ${opt.value}`).includes(normalizedQuery),
     );
   }, [options, normalizedQuery]);
 
@@ -1667,7 +1683,7 @@ function SearchSelectField({
           className={cn(
             selectClass,
             "appearance-none pr-10 text-left",
-            (disabled || loading) && "bg-slate-100"
+            (disabled || loading) && "bg-slate-100",
           )}
         />
         {value && !disabled && !loading && (
@@ -1703,7 +1719,7 @@ function SearchSelectField({
                     key={option.value}
                     className={cn(
                       "flex w-full flex-col items-start px-3 py-2 text-left text-sm hover:bg-slate-100",
-                      option.value === value && "bg-[#eaf0ff]"
+                      option.value === value && "bg-[#eaf0ff]",
                     )}
                     onMouseDown={(e) => {
                       e.preventDefault();
@@ -1769,13 +1785,13 @@ function NotificationPill({ label, active, onClick }: NotificationPillProps) {
         "flex items-center gap-2 rounded-full border px-3 py-2 text-sm capitalize transition-colors",
         active
           ? "border-[#1f3f77] bg-white text-[#1f3f77]"
-          : "border-[#d7dde7] bg-white text-slate-700 hover:border-[#1f3f77]"
+          : "border-[#d7dde7] bg-white text-slate-700 hover:border-[#1f3f77]",
       )}
     >
       <span
         className={cn(
           "flex h-4 w-4 items-center justify-center rounded-full border",
-          active ? "border-[#f2c94c] bg-[#f2c94c]" : "border-slate-300"
+          active ? "border-[#f2c94c] bg-[#f2c94c]" : "border-slate-300",
         )}
       >
         {active && <Check className="h-3 w-3 text-white" strokeWidth={3} />}

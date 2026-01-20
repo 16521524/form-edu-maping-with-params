@@ -28,6 +28,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     const data = await upstream.json();
     return NextResponse.json(data, { status: upstream.status });
   } catch (err) {
+    console.log(err);
     return NextResponse.json(
       { error: "Failed to fetch campaigns" },
       { status: 500 }

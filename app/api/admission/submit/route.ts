@@ -29,6 +29,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     return NextResponse.json(data)
   } catch (err) {
+    console.log(err);
     return NextResponse.json(
       { error: "Failed to submit admission application" },
       { status: 500 }

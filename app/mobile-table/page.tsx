@@ -75,11 +75,12 @@ function MobileTablePageContent() {
         });
         if (cancelled) return;
         setLeads(
-          (res.data || []).map((item) => mapLeadRecordToLead(item)) as Lead[]
+          (res.data || []).map((item) => mapLeadRecordToLead(item)) as Lead[],
         );
         setPage(pageFromUrl);
         setPageCount(res.pagination.total_pages);
       } catch (err) {
+        console.log(err);
         console.error(err);
       } finally {
         if (!cancelled) setLoading(false);

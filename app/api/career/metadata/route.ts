@@ -18,6 +18,7 @@ export async function GET(): Promise<NextResponse> {
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch (err) {
+    console.log(err);
     return NextResponse.json(
       { error: "Failed to fetch metadata" },
       { status: 500 }

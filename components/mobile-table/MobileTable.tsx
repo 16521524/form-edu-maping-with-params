@@ -79,6 +79,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
           buildMetaPalette((body?.data as any)?.segments as MetadataOption[] | undefined)
         );
       } catch (err) {
+    console.log(err);
         console.error("Failed to load lead metadata", err);
       }
     }

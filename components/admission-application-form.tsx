@@ -167,7 +167,7 @@ function mapDataOptions(items: any[] | undefined): OptionItem[] {
         display: String(display ?? value ?? ""),
         text_color: item.text_color,
         background_color: item.background_color,
-        sub_title: item.sub_title ?? '',
+        sub_title: item.sub_title ?? "",
       };
     })
     .filter(Boolean) as OptionItem[];
@@ -181,7 +181,7 @@ const toOptionItem = (item: any): OptionItem | null => {
   const value = item.value ?? item.display;
   const display = item.display ?? item.value;
   if (!value && !display) return null;
-  const sub_title = item.sub_title ?? '';
+  const sub_title = item.sub_title ?? "";
   return {
     value: String(value),
     display: String(display),
@@ -193,7 +193,7 @@ const toOptionItem = (item: any): OptionItem | null => {
 
 const normalizeOptions = (
   source: any,
-  fallback: OptionItem[] = []
+  fallback: OptionItem[] = [],
 ): OptionItem[] => {
   if (Array.isArray(source)) {
     const normalized = source.map(toOptionItem).filter(Boolean) as OptionItem[];
@@ -204,7 +204,7 @@ const normalizeOptions = (
 
 const coerceToValue = (
   raw: string | undefined,
-  options: OptionItem[]
+  options: OptionItem[],
 ): string | undefined => {
   if (!raw) return raw;
   const byValue = options.find((opt) => opt.value === raw);
@@ -287,15 +287,15 @@ export default function AdmissionApplicationForm() {
     genders: [],
     provinces: [],
   });
-  const [wardOptionsPermanent, setWardOptionsPermanent] = useState<OptionItem[]>(
-    []
-  );
-  const [wardOptionsReceiving, setWardOptionsReceiving] = useState<OptionItem[]>(
-    []
-  );
-  const [schoolOptionsGrade12, setSchoolOptionsGrade12] = useState<OptionItem[]>(
-    []
-  );
+  const [wardOptionsPermanent, setWardOptionsPermanent] = useState<
+    OptionItem[]
+  >([]);
+  const [wardOptionsReceiving, setWardOptionsReceiving] = useState<
+    OptionItem[]
+  >([]);
+  const [schoolOptionsGrade12, setSchoolOptionsGrade12] = useState<
+    OptionItem[]
+  >([]);
   const {
     register,
     handleSubmit,
@@ -379,6 +379,7 @@ export default function AdmissionApplicationForm() {
         const provinces = normalizeOptions(data.provinces, fallbackProvinces);
         setMetaOptions({ genders, provinces });
       } catch (err) {
+        console.log(err);
         setMetaOptions({
           genders: fallbackGenders,
           provinces: fallbackProvinces,
@@ -409,10 +410,20 @@ export default function AdmissionApplicationForm() {
         if (!active) return;
         const opts = normalizeOptions(res?.data, []);
         const withSelected =
-          formData.permanentWard && !opts.some((opt) => opt.value === formData.permanentWard)
-            ? [...opts, { value: formData.permanentWard, display: formData.permanentWard }]
+          formData.permanentWard &&
+          !opts.some((opt) => opt.value === formData.permanentWard)
+            ? [
+                ...opts,
+                {
+                  value: formData.permanentWard,
+                  display: formData.permanentWard,
+                },
+              ]
             : opts;
-        const normalizedWard = coerceToValue(formData.permanentWard, withSelected);
+        const normalizedWard = coerceToValue(
+          formData.permanentWard,
+          withSelected,
+        );
         setWardOptionsPermanent(withSelected);
         if (normalizedWard && normalizedWard !== formData.permanentWard) {
           skipNextSync.current = true;
@@ -496,9 +507,18 @@ export default function AdmissionApplicationForm() {
           formData.applySameAddress || !formData.receivingWard
             ? opts
             : !opts.some((opt) => opt.value === formData.receivingWard)
-              ? [...opts, { value: formData.receivingWard, display: formData.receivingWard }]
+              ? [
+                  ...opts,
+                  {
+                    value: formData.receivingWard,
+                    display: formData.receivingWard,
+                  },
+                ]
               : opts;
-        const normalizedWard = coerceToValue(formData.receivingWard, nextOptions);
+        const normalizedWard = coerceToValue(
+          formData.receivingWard,
+          nextOptions,
+        );
         setWardOptionsReceiving(nextOptions);
         if (formData.applySameAddress) {
           const targetWard = formData.permanentWard ?? "";
@@ -509,7 +529,10 @@ export default function AdmissionApplicationForm() {
               shouldTouch: true,
             });
           }
-        } else if (normalizedWard && normalizedWard !== formData.receivingWard) {
+        } else if (
+          normalizedWard &&
+          normalizedWard !== formData.receivingWard
+        ) {
           skipNextSync.current = true;
           setValue("receivingWard", normalizedWard, { shouldDirty: true });
         }
@@ -571,12 +594,13 @@ export default function AdmissionApplicationForm() {
           }));
         };
 
-        const opts = normalizeOptions(convertData(res?.data ?? []), fallbackSchools);
+        const opts = normalizeOptions(
+          convertData(res?.data ?? []),
+          fallbackSchools,
+        );
         setSchoolOptionsGrade12(opts);
         const targetSchool =
-          formData.grade12School ||
-          initialGrade12SchoolQuery.current ||
-          "";
+          formData.grade12School || initialGrade12SchoolQuery.current || "";
         const normalizedSchool = coerceToValue(targetSchool, opts);
         if (normalizedSchool && normalizedSchool !== formData.grade12School) {
           skipNextSync.current = true;
@@ -666,7 +690,10 @@ export default function AdmissionApplicationForm() {
       conversationId: getVal("conversationId") || undefined,
       sectionId: getVal("section_id") || getVal("sectionId") || undefined,
       applySameAddress: getBool(["applySameAddress"]),
-      confirmAccuracy: getBool(["confirmAccuracy"], initialFormData.confirmAccuracy),
+      confirmAccuracy: getBool(
+        ["confirmAccuracy"],
+        initialFormData.confirmAccuracy,
+      ),
     };
     if (initialGrade12SchoolQuery.current === null) {
       initialGrade12SchoolQuery.current = mappedData.grade12School ?? null;
@@ -675,27 +702,27 @@ export default function AdmissionApplicationForm() {
     const normalizedGender = coerceToValue(mappedData.gender, genderOptions);
     const normalizedPermanentProvince = coerceToValue(
       mappedData.permanentProvince,
-      provinceOptions
+      provinceOptions,
     );
     const normalizedPermanentWard = coerceToValue(
       mappedData.permanentWard,
-      permanentWardOptions
+      permanentWardOptions,
     );
     const normalizedGradeProvince = coerceToValue(
       mappedData.grade12Province,
-      provinceOptions
+      provinceOptions,
     );
     const normalizedGradeSchool = coerceToValue(
       mappedData.grade12School,
-      grade12SchoolOptions
+      grade12SchoolOptions,
     );
     const normalizedReceivingProvince = coerceToValue(
       mappedData.receivingProvince,
-      provinceOptions
+      provinceOptions,
     );
     const normalizedReceivingWard = coerceToValue(
       mappedData.receivingWard,
-      receivingWardOptions
+      receivingWardOptions,
     );
 
     const allowedGenders = genderOptions.map((o) => o.value);
@@ -707,7 +734,7 @@ export default function AdmissionApplicationForm() {
     const ensureOption = (
       value: string | undefined,
       allowed: string[],
-      fallback: string | undefined
+      fallback: string | undefined,
     ) => {
       if (value === "") return "";
       if (allowed.length === 0) return value ?? fallback ?? "";
@@ -717,78 +744,78 @@ export default function AdmissionApplicationForm() {
     };
 
     const prefer = (value: string | undefined, fallback: string | undefined) =>
-      value === undefined ? fallback ?? "" : value;
+      value === undefined ? (fallback ?? "") : value;
 
     const hydratedData: FormData = {
       fullName: prefer(mappedData.fullName, initialFormData.fullName),
       gender: ensureOption(
         normalizedGender,
         allowedGenders,
-        initialFormData.gender
+        initialFormData.gender,
       ),
       birthDate: isoToDdMmYyyy(
-        prefer(mappedData.birthDate, initialFormData.birthDate)
+        prefer(mappedData.birthDate, initialFormData.birthDate),
       ),
       nationalId: prefer(mappedData.nationalId, initialFormData.nationalId),
       studentPhone: prefer(
         mappedData.studentPhone,
-        initialFormData.studentPhone
+        initialFormData.studentPhone,
       ),
       parentPhone: prefer(mappedData.parentPhone, initialFormData.parentPhone),
       email: prefer(mappedData.email, initialFormData.email),
       permanentProvince: ensureOption(
         normalizedPermanentProvince,
         allowedProvinces,
-        initialFormData.permanentProvince
+        initialFormData.permanentProvince,
       ),
       permanentWard: ensureOption(
         normalizedPermanentWard,
         allowedPermanentWards,
-        initialFormData.permanentWard
+        initialFormData.permanentWard,
       ),
       permanentStreet: prefer(
         mappedData.permanentStreet,
-        initialFormData.permanentStreet
+        initialFormData.permanentStreet,
       ),
       permanentHouse: prefer(
         mappedData.permanentHouse,
-        initialFormData.permanentHouse
+        initialFormData.permanentHouse,
       ),
       grade12Province: ensureOption(
         normalizedGradeProvince,
         allowedProvinces,
-        initialFormData.grade12Province
+        initialFormData.grade12Province,
       ),
       grade12School: ensureOption(
         normalizedGradeSchool,
         allowedSchools,
-        initialFormData.grade12School
+        initialFormData.grade12School,
       ),
       grade12Class: prefer(
         mappedData.grade12Class,
-        initialFormData.grade12Class
+        initialFormData.grade12Class,
       ),
       graduationYear: prefer(
         mappedData.graduationYear,
-        initialFormData.graduationYear
+        initialFormData.graduationYear,
       ),
       receivingProvince: ensureOption(
         normalizedReceivingProvince,
         allowedProvinces,
-        initialFormData.receivingProvince
+        initialFormData.receivingProvince,
       ),
       receivingWard: ensureOption(
         normalizedReceivingWard,
         allowedReceivingWards,
-        initialFormData.receivingWard
+        initialFormData.receivingWard,
       ),
       receivingStreet: prefer(
         mappedData.receivingStreet,
-        initialFormData.receivingStreet
+        initialFormData.receivingStreet,
       ),
       receivingHouse: prefer(
         mappedData.receivingHouse,
-        initialFormData.receivingHouse
+        initialFormData.receivingHouse,
       ),
       applySameAddress:
         mappedData.applySameAddress ?? initialFormData.applySameAddress,
@@ -796,7 +823,7 @@ export default function AdmissionApplicationForm() {
         mappedData.confirmAccuracy ?? initialFormData.confirmAccuracy,
       conversationId: prefer(
         mappedData.conversationId,
-        initialFormData.conversationId
+        initialFormData.conversationId,
       ),
       sectionId: prefer(mappedData.sectionId, initialFormData.sectionId),
     };
@@ -869,7 +896,7 @@ export default function AdmissionApplicationForm() {
           student_phone: data.studentPhone,
           permanent_street_address: buildStreetAddress(
             data.permanentHouse,
-            data.permanentStreet
+            data.permanentStreet,
           ),
           permanent_ward: data.permanentWard,
           permanent_province: data.permanentProvince,
@@ -881,13 +908,14 @@ export default function AdmissionApplicationForm() {
           receiving_ward: data.receivingWard,
           receiving_street_address: buildStreetAddress(
             data.receivingHouse,
-            data.receivingStreet
+            data.receivingStreet,
           ),
         };
         await postAdmissionApplication(payload);
         setShowSuccess(true);
         resolve();
       } catch (err) {
+        console.log(err);
         console.error("Admission application submit failed", err);
         const messageFromApi =
           (err as any)?.detail?.[0]?.message ||
@@ -903,7 +931,7 @@ export default function AdmissionApplicationForm() {
       <main
         className={cn(
           "min-h-screen bg-[#eef3f8] flex items-center justify-center",
-          inter.className
+          inter.className,
         )}
       >
         <div className="flex items-center gap-2 text-[#1f3f77]">
@@ -918,7 +946,7 @@ export default function AdmissionApplicationForm() {
     <main
       className={cn(
         "min-h-screen bg-[#eef3f8] flex justify-center px-2",
-        inter.className
+        inter.className,
       )}
     >
       <style jsx global>{`
@@ -960,7 +988,9 @@ export default function AdmissionApplicationForm() {
                     className="object-contain"
                   />
                 </div>
-                <span className="text-lg font-semibold">Thông tin thí sinh</span>
+                <span className="text-lg font-semibold">
+                  Thông tin thí sinh
+                </span>
               </div>
             </div>
           </div>
@@ -975,7 +1005,10 @@ export default function AdmissionApplicationForm() {
                   label="Họ và Tên"
                   required
                   placeholder="Nhập họ và tên"
-                  inputProps={{ ...register("fullName"), className: inputClass }}
+                  inputProps={{
+                    ...register("fullName"),
+                    className: inputClass,
+                  }}
                 />
 
                 <div className="space-y-2">
@@ -985,7 +1018,10 @@ export default function AdmissionApplicationForm() {
                   <div className="relative">
                     <select
                       {...register("gender")}
-                      className={cn(selectClass, "appearance-none leading-tight")}
+                      className={cn(
+                        selectClass,
+                        "appearance-none leading-tight",
+                      )}
                     >
                       <option value="">Chọn giới tính</option>
                       {genderOptions.map((option) => (
@@ -1000,7 +1036,8 @@ export default function AdmissionApplicationForm() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-900">
-                    Ngày/ Tháng/ Năm sinh <span className="text-red-500">*</span>
+                    Ngày/ Tháng/ Năm sinh{" "}
+                    <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <Input
@@ -1020,7 +1057,7 @@ export default function AdmissionApplicationForm() {
                       placeholder="dd/mm/yyyy"
                       className={cn(
                         inputClass,
-                        "pr-11 appearance-none date-input"
+                        "pr-11 appearance-none date-input",
                       )}
                     />
                     <button
@@ -1091,15 +1128,15 @@ export default function AdmissionApplicationForm() {
                   placeholder="Chọn Tỉnh/ Thành phố"
                   options={provinceOptions}
                 />
-                  <SearchSelectField
-                    label="Xã/ Phường"
-                    name="permanentWard"
-                    control={control}
-                    required
-                    placeholder="Chọn Xã/ Phường"
-                    options={permanentWardOptions}
-                    loading={loadingPermanentWard}
-                  />
+                <SearchSelectField
+                  label="Xã/ Phường"
+                  name="permanentWard"
+                  control={control}
+                  required
+                  placeholder="Chọn Xã/ Phường"
+                  options={permanentWardOptions}
+                  loading={loadingPermanentWard}
+                />
                 <LabeledInput
                   label="Đường/ Phố"
                   required
@@ -1172,22 +1209,22 @@ export default function AdmissionApplicationForm() {
                         setValue(
                           "receivingProvince",
                           formData.permanentProvince ?? "",
-                          { shouldDirty: true, shouldTouch: true }
+                          { shouldDirty: true, shouldTouch: true },
                         );
                         setValue(
                           "receivingWard",
                           formData.permanentWard ?? "",
-                          { shouldDirty: true, shouldTouch: true }
+                          { shouldDirty: true, shouldTouch: true },
                         );
                         setValue(
                           "receivingStreet",
                           formData.permanentStreet ?? "",
-                          { shouldDirty: true, shouldTouch: true }
+                          { shouldDirty: true, shouldTouch: true },
                         );
                         setValue(
                           "receivingHouse",
                           formData.permanentHouse ?? "",
-                          { shouldDirty: true, shouldTouch: true }
+                          { shouldDirty: true, shouldTouch: true },
                         );
                         setWardOptionsReceiving(wardOptionsPermanent);
                       }
@@ -1262,9 +1299,7 @@ export default function AdmissionApplicationForm() {
               {isSubmitting ? "Đang gửi..." : "Tiếp tục"}
             </Button>
             {submitError && (
-              <p className="text-sm text-red-600 text-center">
-                {submitError}
-              </p>
+              <p className="text-sm text-red-600 text-center">{submitError}</p>
             )}
           </form>
         </div>
@@ -1327,7 +1362,7 @@ function SearchSelectField({
 
   const selectedOption = useMemo(
     () => options.find((opt) => opt.value === value) || null,
-    [options, value]
+    [options, value],
   );
 
   useEffect(() => {
@@ -1344,7 +1379,7 @@ function SearchSelectField({
   const filteredOptions = useMemo(() => {
     if (!normalizedQuery) return options;
     return options.filter((opt) =>
-      normalizeText(`${opt.display} ${opt.value}`).includes(normalizedQuery)
+      normalizeText(`${opt.display} ${opt.value}`).includes(normalizedQuery),
     );
   }, [options, normalizedQuery]);
 
@@ -1407,7 +1442,7 @@ function SearchSelectField({
           className={cn(
             selectClass,
             "appearance-none pr-10 text-left",
-            (disabled || loading) && "bg-slate-100"
+            (disabled || loading) && "bg-slate-100",
           )}
         />
         {/* {value && !disabled && !loading && (
@@ -1442,7 +1477,7 @@ function SearchSelectField({
                     key={option.value}
                     className={cn(
                       "flex w-full flex-col items-start px-3 py-2 text-left text-sm hover:bg-slate-100",
-                      option.value === value && "bg-[#eaf0ff]"
+                      option.value === value && "bg-[#eaf0ff]",
                     )}
                     onMouseDown={(e) => {
                       e.preventDefault();
@@ -1500,7 +1535,7 @@ function SelectField({
           className={cn(
             selectClass,
             "appearance-none leading-tight",
-            disabled && "bg-slate-100"
+            disabled && "bg-slate-100",
           )}
         >
           <option value="">{placeholder || "Chọn"}</option>
