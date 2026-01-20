@@ -885,6 +885,9 @@ export default function AdmissionApplicationForm() {
       try {
         setShowSuccess(false);
         setSubmitError(null);
+        const rawDateOfBirth = ddMmYyyyToIso(data.birthDate);
+        const dateOfBirth =
+          rawDateOfBirth && rawDateOfBirth.trim() ? rawDateOfBirth : null;
         const payload = {
           conversation_id: data.sectionId || undefined,
           full_name: data.fullName,
@@ -892,7 +895,7 @@ export default function AdmissionApplicationForm() {
           parent_phone: data.parentPhone,
           gender: data.gender,
           email: data.email,
-          date_of_birth: ddMmYyyyToIso(data.birthDate),
+          date_of_birth: dateOfBirth,
           student_phone: data.studentPhone,
           permanent_street_address: buildStreetAddress(
             data.permanentHouse,

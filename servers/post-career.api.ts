@@ -5,7 +5,7 @@ export type CareerLeadPayload = {
   mobile_no: string
   email: string
   gender: string
-  date_of_birth: string
+  date_of_birth: string | null
   role: string
   national_id: string
   state: string

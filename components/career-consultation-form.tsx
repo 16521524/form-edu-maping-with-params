@@ -867,12 +867,17 @@ export default function CareerConsultationForm() {
         const fallbackRole = roleOptions[0]?.value || "Student";
         const primaryRole =
           data.role && data.role.trim() ? data.role : fallbackRole || "Student";
+        const rawDateOfBirth = ddMmYyyyToIso(data.birthDate);
+        const dateOfBirth =
+          rawDateOfBirth && rawDateOfBirth.trim()
+            ? rawDateOfBirth
+            : null;
         const payload = {
           full_name: data.fullName,
           mobile_no: data.phone,
           email: data.email,
           gender: data.gender,
-          date_of_birth: ddMmYyyyToIso(data.birthDate),
+          date_of_birth: dateOfBirth,
           role: primaryRole,
           national_id: data.nationalId,
           province: data.city,

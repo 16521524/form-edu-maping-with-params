@@ -5,7 +5,7 @@ export type AdmissionApplicationPayload = {
   parent_phone: string
   gender: string
   email: string
-  date_of_birth: string
+  date_of_birth: string | null
   student_phone: string
   permanent_street_address: string
   permanent_ward: string
