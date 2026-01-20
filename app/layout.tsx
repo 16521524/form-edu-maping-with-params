@@ -1,7 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Be_Vietnam_Pro } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
+// import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -35,7 +35,7 @@ export default function RootLayout({
     <html lang="vi">
       <body className={`${beVietnamPro.className} antialiased`}>
         {children}
-        <Analytics />
+        {/* <Analytics /> */}
       </body>
     </html>
   )
