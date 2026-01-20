@@ -36,7 +36,12 @@ const UNKNOWN_PILL: MetaColor = {
   label: "Unknown",
 };
 
-export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize }: Props) {
+export function MobileTable({
+  leads = defaultLeads,
+  loading,
+  page = 1,
+  pageSize,
+}: Props) {
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
 
   const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
@@ -61,7 +66,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
       try {
         const res = await fetch(
           "/api/lead-metadata?keys=lead_statuses,lead_stages,segments",
-          { cache: "no-store" }
+          { cache: "no-store" },
         );
         if (!res.ok) {
           throw new Error(`Metadata request failed: ${res.status}`);
@@ -70,16 +75,22 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
         if (cancelled) return;
 
         setStatusPalette(
-          buildMetaPalette((body?.data as any)?.lead_statuses as MetadataOption[] | undefined)
+          buildMetaPalette(
+            (body?.data as any)?.lead_statuses as MetadataOption[] | undefined,
+          ),
         );
         setStagePalette(
-          buildMetaPalette((body?.data as any)?.lead_stages as MetadataOption[] | undefined)
+          buildMetaPalette(
+            (body?.data as any)?.lead_stages as MetadataOption[] | undefined,
+          ),
         );
         setSegmentPalette(
-          buildMetaPalette((body?.data as any)?.segments as MetadataOption[] | undefined)
+          buildMetaPalette(
+            (body?.data as any)?.segments as MetadataOption[] | undefined,
+          ),
         );
       } catch (err) {
-    console.log(err);
+        console.log(err);
         console.error("Failed to load lead metadata", err);
       }
     }
@@ -104,14 +115,12 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
         typeof window !== "undefined" &&
         (window as any)?.ReactNativeWebView?.postMessage
       ) {
-        (window as any).ReactNativeWebView.postMessage(
-          JSON.stringify(payload)
-        );
+        (window as any).ReactNativeWebView.postMessage(JSON.stringify(payload));
       } else if (leadId) {
         console.log("open lead", payload);
       }
     },
-    []
+    [],
   );
 
   const columns = useMemo<ColumnDef<Lead, any>[]>(
@@ -123,8 +132,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
         minSize: 80,
         cell: ({ row, table }) => {
           const inferredPageSize =
-            pageSize ??
-            (table.getRowModel().rows.length || 1);
+            pageSize ?? (table.getRowModel().rows.length || 1);
           const currentPage = Number.isFinite(page) ? page : 1;
           const stt = row.index + 1 + (currentPage - 1) * inferredPageSize;
           return (
@@ -149,7 +157,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
         cell: ({ row }) => (
           <button
             type="button"
-            onClick={() => handleOpenLead(row.original, 'open_detail')}
+            onClick={() => handleOpenLead(row.original, "open_detail")}
             className="cursor-pointer underline decoration-[1.5px] underline-offset-[3px] font-medium text-[#1C3055]"
           >
             {row.original.name}
@@ -194,12 +202,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
         size: 260,
         cell: ({ row }) => {
           const segment = (row.original.segment || "").trim() || "Unknown";
-          return (
-            <MetaText
-              value={segment}
-              palette={segmentPalette}
-            />
-          );
+          return <MetaText value={segment} palette={segmentPalette} />;
         },
       },
       // {
@@ -234,9 +237,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
         header: "Major",
         size: 210,
         cell: ({ row }) => (
-          <span className="font-medium leading-snug">
-            {row.original.major}
-          </span>
+          <span className="font-medium leading-snug">{row.original.major}</span>
         ),
       },
       // {
@@ -250,7 +251,14 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
       //   ),
       // },
     ],
-    [handleOpenLead, page, pageSize, segmentPalette, stagePalette, statusPalette]
+    [
+      handleOpenLead,
+      page,
+      pageSize,
+      segmentPalette,
+      stagePalette,
+      statusPalette,
+    ],
   );
 
   const table = useReactTable({
@@ -275,7 +283,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
     const remaining = visibleColumns.filter((c) => !pinnedIds.includes(c.id));
     return [...pinnedList, ...remaining];
   }, [visibleColumns, pinnedIds]);
-  
+
   const textColor = "#1C3055";
   const activeBg = "#edeeef";
   const activeShadow =
@@ -291,7 +299,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
   const getColumnWidth = useCallback(
     (col: { id: string; getSize: () => number }) =>
       col.getSize() + (col.id === firstPinnedId ? paddingLeft : 0),
-    [firstPinnedId, paddingLeft]
+    [firstPinnedId, paddingLeft],
   );
   const template = orderedColumns
     .map((c) => `${getColumnWidth(c)}px`)
@@ -384,7 +392,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                       className={cn(
                         "relative flex items-center gap-3 transition-colors px-4 overflow-hidden min-w-0 pr-9",
                         "text-white",
-                        pinned && "sticky left-0 inset-y-0 z-60"
+                        pinned && "sticky left-0 inset-y-0 z-60",
                       )}
                       style={
                         pinned
@@ -431,7 +439,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                         <Pin
                           className={cn(
                             "h-4 w-4",
-                            col.getIsPinned() ? "text-[#f1c40f]" : "text-white"
+                            col.getIsPinned() ? "text-[#f1c40f]" : "text-white",
                           )}
                         />
                       </button>
@@ -479,7 +487,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                       .join(", ");
                     const cellBase = cn(
                       "relative z-10 flex h-full w-full items-center px-3",
-                      pinned && "sticky left-0 inset-y-0 z-30"
+                      pinned && "sticky left-0 inset-y-0 z-30",
                     );
                     const cellStyle = pinned
                       ? {
@@ -545,7 +553,7 @@ export function MobileTable({ leads = defaultLeads, loading, page = 1, pageSize 
                         .join(", ");
                       const cellBase = cn(
                         "relative z-10 flex h-full w-full items-center px-3",
-                        pinned && "sticky left-0 inset-y-0 z-30"
+                        pinned && "sticky left-0 inset-y-0 z-30",
                       );
                       const cellStyle = pinned
                         ? {
@@ -645,13 +653,7 @@ function MetaPill({
   );
 }
 
-function MetaText({
-  value,
-  palette,
-}: {
-  value: string;
-  palette: MetaPalette;
-}) {
+function MetaText({ value, palette }: { value: string; palette: MetaPalette }) {
   const key = (value || "").trim();
 
   const entry = key ? palette[key] : undefined;
@@ -659,12 +661,6 @@ function MetaText({
   const fallback = key === "Unknown" || !key ? UNKNOWN_PILL : FALLBACK_PILL;
 
   const label = entry?.label || key || fallback.label;
- 
-  return (
-    <span
-      className="font-medium"
-    >
-      {label}
-    </span>
-  );
+
+  return <span className="font-medium">{label}</span>;
 }
