@@ -1130,11 +1130,13 @@ export default function CareerConsultationForm() {
                 </div>
               </div>
 
-              <LabeledInput
-                label="Địa chỉ"
-                placeholder="Nhập địa chỉ"
-                inputProps={{ ...register("address"), className: inputClass }}
-              />
+              {false && (
+                <LabeledInput
+                  label="Địa chỉ"
+                  placeholder="Nhập địa chỉ"
+                  inputProps={{ ...register("address"), className: inputClass }}
+                />
+              )}
 
               <LabeledInput
                 label="Số điện thoại"
