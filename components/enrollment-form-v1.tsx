@@ -5,7 +5,6 @@ import type React from "react"
 import { usePathname, useSearchParams, useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import { useForm, Controller, useWatch } from "react-hook-form"
-import formMeta from "@/lib/form-meta.json"
 import enrollmentDefaultsData from "@/lib/form-defaults-enrollment.json"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -16,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, GraduationCap, User, BookOpen, Target, CheckCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { getMetadataCareer } from "@/servers"
 
 interface FormData {
   // 1. Personal info
@@ -63,8 +63,49 @@ const initialFormData: FormData = {
   confirmAccuracy: false,
 }
 
-const { common: commonMeta } = formMeta
 const aiDefaults = enrollmentDefaultsData
+
+type OptionItem = {
+  value: string
+  display: string
+}
+
+const fallbackGenders: OptionItem[] = [
+  { value: "Male", display: "Nam" },
+  { value: "Female", display: "Nữ" },
+  { value: "Other", display: "Khác" },
+]
+
+const fallbackGrades: OptionItem[] = [
+  { value: "10", display: "10" },
+  { value: "11", display: "11" },
+  { value: "12", display: "12" },
+  { value: "Đã TN", display: "Đã TN" },
+]
+
+const fallbackPerformances: OptionItem[] = [
+  { value: "Kém", display: "Kém" },
+  { value: "Yếu", display: "Yếu" },
+  { value: "Trung bình", display: "Trung bình" },
+  { value: "Khá", display: "Khá" },
+  { value: "Giỏi", display: "Giỏi" },
+  { value: "Xuất sắc", display: "Xuất sắc" },
+]
+
+const NOTIFICATION_CHANNELS = ["email", "zalo", "messenger", "whatsapp"]
+
+const mapDataOptions = (items: any[] | undefined): OptionItem[] => {
+  if (!Array.isArray(items)) return []
+  return items
+    .map((item) => {
+      if (!item) return null
+      const value = item.value ?? item.display
+      const display = item.display ?? item.value
+      if (!value && !display) return null
+      return { value: String(value ?? ""), display: String(display ?? value ?? "") }
+    })
+    .filter(Boolean) as OptionItem[]
+}
 
 export default function EnrollmentForm() {
   const searchParams = useSearchParams()
@@ -75,6 +116,11 @@ export default function EnrollmentForm() {
   const skipNextSync = useRef(false)
   const hydratedSnapshot = useRef<FormData | null>(null)
   const [isHydrating, setIsHydrating] = useState(true)
+  const [metaOptions, setMetaOptions] = useState<{
+    genders: OptionItem[]
+    grades: OptionItem[]
+    performances: OptionItem[]
+  }>({ genders: [], grades: [], performances: [] })
   const {
     control,
     register,
@@ -86,6 +132,34 @@ export default function EnrollmentForm() {
     defaultValues: initialFormData,
   })
   const formData = useWatch({ control })
+
+  useEffect(() => {
+    let active = true
+    const loadMeta = async () => {
+      try {
+        const json = await getMetadataCareer()
+        const data = (json as any)?.data ?? {}
+        if (!active) return
+        setMetaOptions({
+          genders: mapDataOptions(data.genders),
+          grades: mapDataOptions(data.grades),
+          performances: mapDataOptions(data.performances),
+        })
+      } catch (err) {
+        console.warn("Enrollment v1 metadata fallback due to error", err)
+        if (!active) return
+        setMetaOptions({
+          genders: fallbackGenders,
+          grades: fallbackGrades,
+          performances: fallbackPerformances,
+        })
+      }
+    }
+    loadMeta()
+    return () => {
+      active = false
+    }
+  }, [])
 
   useEffect(() => {
     const query = searchParams.toString()
@@ -170,6 +244,7 @@ export default function EnrollmentForm() {
     const normalize = (value: string | undefined, fallback: string | undefined) =>
       value === undefined ? fallback ?? "" : value
     const ensureOption = (value: string | undefined, allowed: string[], fallback: string | undefined) => {
+      if (!allowed.length) return value ?? fallback ?? ""
       if (value && allowed.includes(value)) return value
       if (fallback && allowed.includes(fallback)) return fallback
       return ""
@@ -177,9 +252,11 @@ export default function EnrollmentForm() {
     const ensuredNotify = mappedData.notifyVia ?? defaultsConfig.notifyVia ?? []
     const studentDefaults = enrollmentDefaultsData.studentProfile ?? {}
     const enrollmentDefaults = enrollmentDefaultsData.enrollmentPreference ?? {}
-    const allowedGenders = (commonMeta.genderOptions ?? []).map((o) => o.value)
-    const allowedGrades = commonMeta.gradeOptions.map((o) => o.value)
-    const allowedAcademic = commonMeta.academicPerformanceOptions.map((o) => o.value)
+    const allowedGenders = (metaOptions.genders.length ? metaOptions.genders : fallbackGenders).map((o) => o.value)
+    const allowedGrades = (metaOptions.grades.length ? metaOptions.grades : fallbackGrades).map((o) => o.value)
+    const allowedAcademic = (metaOptions.performances.length ? metaOptions.performances : fallbackPerformances).map(
+      (o) => o.value,
+    )
 
     reset({
       fullName: normalize(mappedData.fullName, studentDefaults.fullName),
@@ -385,9 +462,9 @@ export default function EnrollmentForm() {
                         <SelectValue placeholder="Chọn giới tính" />
                       </SelectTrigger>
                       <SelectContent>
-                        {commonMeta.genderOptions?.map((option) => (
+                        {(metaOptions.genders.length ? metaOptions.genders : fallbackGenders).map((option) => (
                           <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                            {option.display}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -444,9 +521,9 @@ export default function EnrollmentForm() {
                         <SelectValue placeholder="Chọn lớp" />
                       </SelectTrigger>
                       <SelectContent>
-                        {commonMeta.gradeOptions.map((option) => (
+                        {(metaOptions.grades.length ? metaOptions.grades : fallbackGrades).map((option) => (
                           <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                            {option.display}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -465,11 +542,13 @@ export default function EnrollmentForm() {
                         <SelectValue placeholder="Chọn học lực" />
                       </SelectTrigger>
                       <SelectContent>
-                        {commonMeta.academicPerformanceOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
+                        {(metaOptions.performances.length ? metaOptions.performances : fallbackPerformances).map(
+                          (option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.display}
+                            </SelectItem>
+                          ),
+                        )}
                       </SelectContent>
                     </Select>
                   )}
@@ -530,7 +609,7 @@ export default function EnrollmentForm() {
               <div>
                 <Label className="mb-3 block">Bạn muốn nhận thông báo qua:</Label>
                 <div className="flex flex-wrap gap-4">
-                  {commonMeta.notificationChannels.map((channel) => (
+                  {NOTIFICATION_CHANNELS.map((channel) => (
                     <div key={channel} className="flex items-center space-x-2">
                       <Checkbox
                         id={`notify-${channel}`}

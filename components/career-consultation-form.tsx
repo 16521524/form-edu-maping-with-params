@@ -25,7 +25,6 @@ import {
   Trash2,
 } from "lucide-react";
 
-import formMeta from "@/lib/form-meta.json";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -94,7 +93,9 @@ const mapDataOptions = (items: any[] | undefined): OptionItem[] => {
     .filter(Boolean) as OptionItem[];
 };
 
-const metaData = (formMeta as any).data ?? {};
+const NOTIFICATION_CHANNELS = ["email", "zalo", "messenger", "whatsapp"];
+
+const metaData: any = {};
 const metaCampaigns: OptionItem[] = mapDataOptions(metaData.campaigns);
 
 const initialFormData: FormData = {
@@ -115,33 +116,40 @@ const initialFormData: FormData = {
   academicPerformance: "",
   gpa: "",
   aspirations: [],
-  notifyVia: [formMeta.common.notificationChannels?.[0] || "email"].filter(
-    Boolean,
-  ),
+  notifyVia: [NOTIFICATION_CHANNELS[0] || "email"].filter(Boolean),
   socials: [],
   confirmAccuracy: false,
 };
 
-const fallbackGenderOptions: OptionItem[] = mapDataOptions(metaData.genders);
+const fallbackGenderOptions: OptionItem[] = [
+  { value: "Male", display: "Nam" },
+  { value: "Female", display: "Nữ" },
+  { value: "Other", display: "Khác" },
+];
 
-const fallbackGradeOptions: OptionItem[] = mapDataOptions(metaData.grades);
+const fallbackGradeOptions: OptionItem[] = [
+  { value: "10", display: "10" },
+  { value: "11", display: "11" },
+  { value: "12", display: "12" },
+  { value: "Đã TN", display: "Đã TN" },
+];
 
-const fallbackPerformanceOptions: OptionItem[] = mapDataOptions(
-  metaData.performances,
-);
+const fallbackPerformanceOptions: OptionItem[] = [
+  { value: "Kém", display: "Kém" },
+  { value: "Yếu", display: "Yếu" },
+  { value: "Trung bình", display: "Trung bình" },
+  { value: "Khá", display: "Khá" },
+  { value: "Giỏi", display: "Giỏi" },
+  { value: "Xuất sắc", display: "Xuất sắc" },
+];
 
-const fallbackRoleOptions: OptionItem[] =
-  mapDataOptions(metaData.roles).length > 0
-    ? mapDataOptions(metaData.roles)
-    : [
-        { value: "Student", display: "Student" },
-        { value: "Parent", display: "Parent" },
-        { value: "Guardian", display: "Guardian" },
-      ];
+const fallbackRoleOptions: OptionItem[] = [
+  { value: "Student", display: "Student" },
+  { value: "Parent", display: "Parent" },
+  { value: "Guardian", display: "Guardian" },
+];
 
-const fallbackPreferenceOptions: OptionItem[] = mapDataOptions(
-  metaData.preferences,
-);
+const fallbackPreferenceOptions: OptionItem[] = [];
 
 const panelClass =
   "rounded-lg border border-[#e2e7ef] bg-white shadow-[0_8px_22px_rgba(31,63,119,0.06)]";
@@ -426,7 +434,7 @@ export default function CareerConsultationForm() {
         });
       } catch (err) {
         console.log(err);
-        console.warn("Could not load metadata, fallback to formMeta", err);
+        console.warn("Could not load metadata, using fallbacks", err);
         setMetaOptions({
           genders: fallbackGenderOptions,
           preferences: fallbackPreferenceOptions,
@@ -643,7 +651,7 @@ export default function CareerConsultationForm() {
     const allowedProvinces = metaOptions.provinces.map((p) => p.value);
     const allowedSchools = (metaOptions.schools ?? []).map((s) => s.value);
     const allowedRoles = roleOptions.map((o) => o.value);
-    const allowedNotification = formMeta.common.notificationChannels ?? [];
+    const allowedNotification = NOTIFICATION_CHANNELS;
     const resolvedRole = (() => {
       const candidate = normalizedRole || initialFormData.role;
       if (!candidate) return "";
@@ -1498,7 +1506,7 @@ export default function CareerConsultationForm() {
                   Bạn muốn nhận thông báo qua
                 </p>
                 <div className="grid grid-cols-2 gap-2">
-                  {formMeta.common.notificationChannels.map((channel) => {
+                  {NOTIFICATION_CHANNELS.map((channel) => {
                     const checked = (formData.notifyVia || []).includes(
                       channel,
                     );

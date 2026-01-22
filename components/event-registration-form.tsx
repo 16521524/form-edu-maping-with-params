@@ -6,7 +6,6 @@ import { usePathname, useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import { useForm, Controller, useWatch } from "react-hook-form"
 import { useRouter } from "next/navigation"
-import formMeta from "@/lib/form-meta.json"
 import eventDefaultsData from "@/lib/form-defaults-event.json"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -16,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Calendar, User, CalendarDays, Target, CheckCircle, Loader2 } from "lucide-react"
+import { getMetadataCareer } from "@/servers"
 
 interface FormData {
   // 1. Personal info
@@ -74,9 +74,102 @@ const initialFormData: FormData = {
   confirmAccuracy: false,
 }
 
-const eventMeta = formMeta.event
-const commonMeta = formMeta.common
 const aiDefaults = eventDefaultsData
+
+type OptionItem = { value: string; display: string; sub_title?: string }
+
+const fallbackGenders: OptionItem[] = [
+  { value: "Male", display: "Nam" },
+  { value: "Female", display: "Nữ" },
+  { value: "Other", display: "Khác" },
+]
+
+const fallbackGrades: OptionItem[] = [
+  { value: "10", display: "10" },
+  { value: "11", display: "11" },
+  { value: "12", display: "12" },
+  { value: "Đã TN", display: "Đã TN" },
+]
+
+const PARENT_RELATION_OPTIONS = [
+  { value: "father", label: "Cha" },
+  { value: "mother", label: "Mẹ" },
+  { value: "occupation", label: "Người giám hộ" },
+]
+
+const EVENT_SLOT_OPTIONS = [
+  { value: "sang", label: "Buổi sáng (8:00 - 12:00)" },
+  { value: "chieu", label: "Buổi chiều (13:30 - 17:30)" },
+  { value: "ca-ngay", label: "Cả ngày" },
+]
+
+const EVENT_OBJECTIVE_OPTIONS = [
+  "Tìm hiểu về các ngành học",
+  "Tham quan trường đại học",
+  "Tìm hiểu học bổng và chính sách hỗ trợ",
+  "Khám phá môi trường học tập",
+  "Gặp gỡ giảng viên và sinh viên",
+]
+
+const HEARD_FROM_OPTIONS = [
+  { value: "facebook", label: "Facebook" },
+  { value: "tiktok", label: "TikTok" },
+  { value: "instagram", label: "Instagram" },
+  { value: "ban-be", label: "Bạn bè giới thiệu" },
+  { value: "truong-thpt", label: "Trường THPT" },
+  { value: "website", label: "Website trường" },
+  { value: "bao-chi", label: "Báo chí / Truyền thông" },
+  { value: "khac", label: "Khác" },
+]
+
+const EVENT_SESSIONS = [
+  {
+    id: "tvts-1503-sang",
+    clubName: "Câu lạc bộ Robotics",
+    eventName: "Ngày hội tư vấn tuyển sinh 2025",
+    date: "2025-03-15",
+    dateDisplay: "15/03/2025",
+    slotLabel: "Buổi sáng (8:00 - 12:00)",
+    slotValue: "sang",
+    location: "Cơ sở Tân Mỹ, TP.HCM",
+  },
+  {
+    id: "tvts-1503-chieu",
+    clubName: "Câu lạc bộ Robotics",
+    eventName: "Ngày hội tư vấn tuyển sinh 2025",
+    date: "2025-03-15",
+    dateDisplay: "15/03/2025",
+    slotLabel: "Buổi chiều (13:30 - 17:30)",
+    slotValue: "chieu",
+    location: "Cơ sở Tân Mỹ, TP.HCM",
+  },
+  {
+    id: "openday-2203",
+    clubName: "Câu lạc bộ Robotics",
+    eventName: "Open Day - Công nghệ Thông tin",
+    date: "2025-03-22",
+    dateDisplay: "22/03/2025",
+    slotLabel: "Cả ngày",
+    slotValue: "ca-ngay",
+    location: "Cơ sở Quận 9, TP.HCM",
+  },
+]
+
+const DEFAULT_CLUB_NAME = "Câu lạc bộ Robotics"
+const NOTIFICATION_CHANNELS = ["email", "zalo", "messenger", "whatsapp"]
+
+const mapDataOptions = (items: any[] | undefined): OptionItem[] => {
+  if (!Array.isArray(items)) return []
+  return items
+    .map((item) => {
+      if (!item) return null
+      const value = item.value ?? item.display
+      const display = item.display ?? item.value
+      if (!value && !display) return null
+      return { value: String(value ?? ""), display: String(display ?? value ?? ""), sub_title: item.sub_title }
+    })
+    .filter(Boolean) as OptionItem[]
+}
 
 export default function EventRegistrationForm() {
   const searchParams = useSearchParams()
@@ -87,6 +180,10 @@ export default function EventRegistrationForm() {
   const skipNextSync = useRef(false)
   const hydratedSnapshot = useRef<FormData | null>(null)
   const [isHydrating, setIsHydrating] = useState(true)
+  const [metaOptions, setMetaOptions] = useState<{
+    genders: OptionItem[]
+    grades: OptionItem[]
+  }>({ genders: [], grades: [] })
   const {
     control,
     register,
@@ -96,6 +193,29 @@ export default function EventRegistrationForm() {
     formState: { isSubmitting },
   } = useForm<FormData>({ defaultValues: initialFormData })
   const formData = useWatch({ control })
+
+  useEffect(() => {
+    let active = true
+    const loadMeta = async () => {
+      try {
+        const json = await getMetadataCareer()
+        const data = (json as any)?.data ?? {}
+        if (!active) return
+        setMetaOptions({
+          genders: mapDataOptions(data.genders),
+          grades: mapDataOptions(data.grades),
+        })
+      } catch (err) {
+        console.warn("Event metadata fallback due to error", err)
+        if (!active) return
+        setMetaOptions({ genders: fallbackGenders, grades: fallbackGrades })
+      }
+    }
+    loadMeta()
+    return () => {
+      active = false
+    }
+  }, [])
 
   // Map URL params to form data - only run once
   useEffect(() => {
@@ -158,17 +278,20 @@ export default function EventRegistrationForm() {
 
     const preselectFromEventName = (eventName?: string) => {
       if (!eventName) return [] as string[]
-      return eventMeta.eventSessions.filter((s) => (s.eventName || "").toLowerCase() === eventName.toLowerCase()).map((s) => s.id)
+      return EVENT_SESSIONS.filter((s) => (s.eventName || "").toLowerCase() === eventName.toLowerCase()).map(
+        (s) => s.id,
+      )
     }
 
     const eventNameParam = getVal("eventName")
     const prefer = (value: string | undefined, fallback: string | undefined) => (value === undefined ? fallback ?? "" : value)
     const ensureOption = (value: string | undefined, allowed: string[], fallback: string | undefined) => {
+      if (!allowed.length) return value ?? fallback ?? ""
       if (value && allowed.includes(value)) return value
       if (fallback && allowed.includes(fallback)) return fallback
       return ""
     }
-    const allowedGenders = (commonMeta.genderOptions ?? []).map((o) => o.value)
+    const allowedGenders = (metaOptions.genders.length ? metaOptions.genders : fallbackGenders).map((o) => o.value)
     const mappedData: FormData = {
       fullName: prefer(getVal("fullName"), studentDefaults.fullName),
       birthDate: prefer(getVal("birthDate"), studentDefaults.birthDate),
@@ -179,7 +302,7 @@ export default function EventRegistrationForm() {
       highSchool: prefer(getVal("highSchool"), studentDefaults.highSchool),
       gradeLevel: ensureOption(
         getVal("gradeLevel"),
-        commonMeta.gradeOptions.map((o) => o.value),
+        (metaOptions.grades.length ? metaOptions.grades : fallbackGrades).map((o) => o.value),
         studentDefaults.gradeLevel,
       ),
       socialLink: prefer(getVal("socialLink"), studentDefaults.socialLink),
@@ -188,10 +311,10 @@ export default function EventRegistrationForm() {
       parentEmail: prefer(getVal("parentEmail"), parentDefaults.parentEmail),
       parentRelation: ensureOption(
         getVal("parentRelation"),
-        eventMeta.parentRelationOptions.map((o) => o.value),
+        PARENT_RELATION_OPTIONS.map((o) => o.value),
         parentDefaults.parentRelation,
       ),
-      clubName: prefer(getVal("clubName"), eventDefaults.clubName ?? eventMeta.defaultClubName ?? parentDefaults.clubName),
+      clubName: prefer(getVal("clubName"), eventDefaults.clubName ?? DEFAULT_CLUB_NAME ?? parentDefaults.clubName),
       eventName: prefer(eventNameParam, eventDefaults.eventName),
       eventDate: prefer(getVal("eventDate"), eventDefaults.eventDate),
       eventSlot: prefer(getVal("eventSlot"), eventDefaults.eventSlot),
@@ -202,8 +325,8 @@ export default function EventRegistrationForm() {
         getList("eventObjectives") ??
         (defaultsConfig.eventObjectives && defaultsConfig.eventObjectives.length
           ? defaultsConfig.eventObjectives
-          : eventMeta.eventObjectiveOptions.length
-            ? [eventMeta.eventObjectiveOptions[0]]
+          : EVENT_OBJECTIVE_OPTIONS.length
+            ? [EVENT_OBJECTIVE_OPTIONS[0]]
             : []),
       heardFrom: prefer(getVal("heardFrom"), eventDefaults.heardFrom),
       notifyVia: getList("notifyVia") ?? defaultNotification,
@@ -213,7 +336,7 @@ export default function EventRegistrationForm() {
     const ensureEmailChecked = mappedData.notifyVia
 
     const selectedSessions = mappedData.selectedSessions
-    const selectedSessionDetails = eventMeta.eventSessions.filter((s) => selectedSessions.includes(s.id))
+    const selectedSessionDetails = EVENT_SESSIONS.filter((s) => selectedSessions.includes(s.id))
     const tenSuKienAuto = selectedSessionDetails.length
       ? Array.from(new Set(selectedSessionDetails.map((s) => s.eventName || ""))).join(" | ")
       : ""
@@ -221,9 +344,13 @@ export default function EventRegistrationForm() {
     const firstSession = selectedSessionDetails[0]
 
     const genderFallback = mappedData.gender || studentDefaults.gender || "nam"
-    const gradeFallback = mappedData.gradeLevel || studentDefaults.gradeLevel || commonMeta.gradeOptions[0]?.value || ""
+    const gradeFallback =
+      mappedData.gradeLevel ||
+      studentDefaults.gradeLevel ||
+      (metaOptions.grades.length ? metaOptions.grades : fallbackGrades)[0]?.value ||
+      ""
     const relationFallback =
-      mappedData.parentRelation || parentDefaults.parentRelation || eventMeta.parentRelationOptions[0]?.value || ""
+      mappedData.parentRelation || parentDefaults.parentRelation || PARENT_RELATION_OPTIONS[0]?.value || ""
 
     const hydrated: FormData = {
       ...mappedData,
@@ -323,12 +450,12 @@ export default function EventRegistrationForm() {
     setValue("notifyVia", next)
   }
 
-  const handleSessionToggle = (session: (typeof eventMeta.eventSessions)[number], checked: boolean) => {
+  const handleSessionToggle = (session: (typeof EVENT_SESSIONS)[number], checked: boolean) => {
     const selectedSessions = checked
       ? Array.from(new Set([...(formData.selectedSessions || []), session.id]))
       : (formData.selectedSessions || []).filter((id) => id !== session.id)
 
-    const selectedSessionDetails = eventMeta.eventSessions.filter((s) => selectedSessions.includes(s.id))
+    const selectedSessionDetails = EVENT_SESSIONS.filter((s) => selectedSessions.includes(s.id))
     const tenSuKienAuto = selectedSessionDetails.length
       ? Array.from(new Set(selectedSessionDetails.map((s) => s.eventName || ""))).join(" | ")
       : ""
@@ -336,7 +463,7 @@ export default function EventRegistrationForm() {
 
     setValue("selectedSessions", selectedSessions)
     setValue("eventName", tenSuKienAuto)
-    setValue("clubName", formData.clubName || firstSession?.clubName || eventMeta.defaultClubName || "")
+    setValue("clubName", formData.clubName || firstSession?.clubName || DEFAULT_CLUB_NAME || "")
     setValue("eventDate", firstSession?.date || "")
     setValue("eventSlot", firstSession?.slotValue || "")
   }
@@ -445,9 +572,9 @@ export default function EventRegistrationForm() {
                         <SelectValue placeholder="Chọn giới tính" />
                       </SelectTrigger>
                       <SelectContent>
-                        {commonMeta.genderOptions?.map((option) => (
+                        {(metaOptions.genders.length ? metaOptions.genders : fallbackGenders).map((option) => (
                           <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                            {option.display}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -498,9 +625,9 @@ export default function EventRegistrationForm() {
                         <SelectValue placeholder="Chọn lớp" />
                       </SelectTrigger>
                       <SelectContent>
-                        {commonMeta.gradeOptions.map((option) => (
+                        {(metaOptions.grades.length ? metaOptions.grades : fallbackGrades).map((option) => (
                           <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                            {option.display}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -570,7 +697,7 @@ export default function EventRegistrationForm() {
                         <SelectValue placeholder="Chọn mối quan hệ" />
                       </SelectTrigger>
                       <SelectContent>
-                        {eventMeta.parentRelationOptions.map((option) => (
+                        {PARENT_RELATION_OPTIONS.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
@@ -633,7 +760,7 @@ export default function EventRegistrationForm() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {eventMeta.eventSessions.map((session, idx) => {
+                      {EVENT_SESSIONS.map((session, idx) => {
                         const isSelected = formData.selectedSessions.includes(session.id)
                         return (
                           <TableRow key={session.id} className={isSelected ? "bg-green-50" : ""}>
@@ -672,7 +799,7 @@ export default function EventRegistrationForm() {
               <div>
                 <Label className="mb-3 block">Mục đích tham gia sự kiện (chọn nhiều):</Label>
                 <div className="grid gap-3">
-                  {(eventMeta.eventObjectiveOptions || []).map((objective) => (
+                  {(EVENT_OBJECTIVE_OPTIONS || []).map((objective) => (
                     <div key={objective} className="flex items-center space-x-2">
                       <Checkbox
                         id={`objective-${objective}`}
@@ -697,7 +824,7 @@ export default function EventRegistrationForm() {
                         <SelectValue placeholder="Chọn nguồn" />
                       </SelectTrigger>
                       <SelectContent>
-                        {eventMeta.heardFromOptions.map((option) => (
+                        {HEARD_FROM_OPTIONS.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
@@ -722,7 +849,7 @@ export default function EventRegistrationForm() {
               <div>
                 <Label className="mb-3 block">Bạn muốn nhận thông báo qua:</Label>
                 <div className="flex flex-wrap gap-4">
-                  {commonMeta.notificationChannels.map((channel) => (
+                  {NOTIFICATION_CHANNELS.map((channel) => (
                     <div key={channel} className="flex items-center space-x-2">
                       <Checkbox
                         id={`notify-${channel}`}

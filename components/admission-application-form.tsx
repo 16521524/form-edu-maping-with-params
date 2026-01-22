@@ -21,7 +21,6 @@ import {
 import { Inter } from "next/font/google";
 import { CalendarDays, ChevronDown, Loader2 } from "lucide-react";
 
-import formMeta from "@/lib/form-meta.json";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -74,10 +73,13 @@ const inter = Inter({
   weight: ["400", "500", "600", "700"],
 });
 
-const metaData = (formMeta as any).data ?? {};
-const fallbackProvinces: OptionItem[] = mapDataOptions(metaData.provinces);
-const fallbackGenders: OptionItem[] = mapDataOptions(metaData.genders);
-const fallbackSchools: OptionItem[] = mapDataOptions(metaData.schools);
+const fallbackProvinces: OptionItem[] = [];
+const fallbackGenders: OptionItem[] = [
+  { value: "Male", display: "Nam" },
+  { value: "Female", display: "Nữ" },
+  { value: "Other", display: "Khác" },
+];
+const fallbackSchools: OptionItem[] = [];
 
 const initialFormData: FormData = {
   fullName: "",
