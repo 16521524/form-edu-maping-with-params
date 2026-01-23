@@ -485,7 +485,7 @@ export default function EventRegistrationForm() {
     new Promise<void>((resolve) => {
       console.log("Form submitted:", data)
       setTimeout(() => {
-        alert("Đăng ký thành công! Kiểm tra console để xem dữ liệu.")
+        alert("Đăng ký thành công!")
         resolve()
       }, 600)
     })
