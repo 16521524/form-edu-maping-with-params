@@ -151,14 +151,14 @@ export function MobileTable({
       },
       {
         accessorKey: "name",
-        header: "Name",
+        header: "Họ và tên",
         size: 190,
         minSize: 160,
         cell: ({ row }) => (
           <button
             type="button"
             onClick={() => handleOpenLead(row.original, "open_detail")}
-            className="cursor-pointer underline decoration-[1.5px] underline-offset-[3px] font-medium text-[#1C3055]"
+            className="w-full text-left cursor-pointer underline decoration-[1.5px] underline-offset-[3px] font-medium text-[#1C3055]"
           >
             {row.original.name}
           </button>
@@ -166,7 +166,7 @@ export function MobileTable({
       },
       {
         accessorKey: "role",
-        header: "Role",
+        header: "Vai trò",
         size: 150,
         cell: ({ row }) => (
           <span className="font-medium">{row.original.role}</span>
@@ -174,7 +174,7 @@ export function MobileTable({
       },
       {
         accessorKey: "stage",
-        header: "Stage",
+        header: "Giai đoạn",
         size: 170,
         cell: ({ row }) => (
           <MetaPill value={row.original.stage} palette={stagePalette} />
@@ -182,7 +182,7 @@ export function MobileTable({
       },
       {
         accessorKey: "status",
-        header: "Status",
+        header: "Trạng thái",
         size: 160,
         cell: ({ row }) => (
           <MetaPill value={row.original.status} palette={statusPalette} />
@@ -190,7 +190,7 @@ export function MobileTable({
       },
       {
         accessorKey: "source",
-        header: "Source",
+        header: "Nguồn",
         size: 130,
         cell: ({ row }) => (
           <span className="font-medium">{row.original.source}</span>
@@ -198,7 +198,7 @@ export function MobileTable({
       },
       {
         accessorKey: "segment",
-        header: "Current Segment",
+        header: "Phân khúc",
         size: 260,
         cell: ({ row }) => {
           const segment = (row.original.segment || "").trim() || "Unknown";
@@ -223,7 +223,7 @@ export function MobileTable({
       // },
       {
         accessorKey: "consultant",
-        header: "Assigned Consultant",
+        header: "Tư vấn viên",
         size: 320,
         minSize: 200,
         cell: ({ row }) => (
@@ -234,7 +234,7 @@ export function MobileTable({
       },
       {
         accessorKey: "major",
-        header: "Major",
+        header: "Chuyên ngành",
         size: 210,
         cell: ({ row }) => (
           <span className="font-medium leading-snug">{row.original.major}</span>
