@@ -37,6 +37,7 @@ import {
   getCampaigns,
   postCareerLead,
   updateCampaignTotalScans,
+  searchSubjectCombination,
 } from "@/servers";
 import CareerSuccessModal from "./career-success-modal";
 
@@ -51,6 +52,7 @@ type FormData = {
   gender: string;
   address: string;
   phone: string;
+  parentPhone: string;
   nationalId: string;
   email: string;
   utmCampaign: string;
@@ -62,7 +64,7 @@ type FormData = {
   gradeLevel: string;
   academicPerformance: string;
   gpa: string;
-  aspirations: string[];
+  preferences: { preference_name: string; subject_combination: string }[];
   notifyVia: string[];
   socials: { platform: string; link_profile: string }[];
   confirmAccuracy: boolean;
@@ -106,6 +108,7 @@ const initialFormData: FormData = {
   gender: "",
   address: "",
   phone: "",
+  parentPhone: "",
   nationalId: "",
   email: "",
   utmCampaign: "",
@@ -117,7 +120,7 @@ const initialFormData: FormData = {
   gradeLevel: "",
   academicPerformance: "",
   gpa: "",
-  aspirations: [],
+  preferences: [],
   notifyVia: [NOTIFICATION_CHANNELS[0] || "email"].filter(Boolean),
   socials: [],
   confirmAccuracy: false,
@@ -246,7 +249,10 @@ export default function CareerConsultationForm() {
     defaultValues: initialFormData,
   });
   const formData = useWatch({ control });
-  const aspirations = watch("aspirations") || [];
+  const preferences = watch("preferences") || [];
+  const aspirationNames = (preferences || []).map(
+    (p) => p.preference_name,
+  );
   const [aspirationInput, setAspirationInput] = useState("");
   const [metaOptions, setMetaOptions] = useState<{
     genders: OptionItem[];
@@ -270,6 +276,9 @@ export default function CareerConsultationForm() {
   const [metaReady, setMetaReady] = useState(false);
   const [loadingSchoolOptions, setLoadingSchoolOptions] = useState(false);
   const [showAspirationDropdown, setShowAspirationDropdown] = useState(false);
+  const [comboOptions, setComboOptions] = useState<
+    Record<string, OptionItem[]>
+  >({});
   const [socials, setSocials] = useState<
     { platform: string; link_profile: string }[]
   >([]);
@@ -335,6 +344,7 @@ export default function CareerConsultationForm() {
   const submitDisabled =
     isSubmitting || !watch("confirmAccuracy") || !requiredFieldsFilled;
   const phoneNumber = (watch("phone") || "").trim();
+  const parentPhoneNumber = (watch("parentPhone") || "").trim();
   const campaignDisplay = useMemo(() => {
     const utmCampaign =
       formData.utmCampaign || searchParams.get("utmCampaign") || "";
@@ -553,6 +563,19 @@ export default function CareerConsultationForm() {
       if (decoded) return decoded.split(",").filter(Boolean);
       return undefined;
     };
+    const getPreferencesParam = () => {
+      const list = getList("preferences" as keyof FormData);
+      if (!list) return undefined;
+      return list
+        .map((item) => {
+          const [pref, combo] = item.split(":");
+          return {
+            preference_name: pref || "",
+            subject_combination: combo || "",
+          };
+        })
+        .filter((p) => p.preference_name);
+    };
     const getBool = (keys: string[], defaultValue = false) => {
       for (const key of keys) {
         const value = getDecoded(key as keyof FormData);
@@ -581,6 +604,7 @@ export default function CareerConsultationForm() {
       gender: getVal("gender"),
       address: getVal("address"),
       phone: getVal("phone"),
+      parentPhone: getVal("parentPhone"),
       nationalId: getVal("nationalId"),
       email: getVal("email"),
       utmCampaign: getVal("utmCampaign"),
@@ -593,6 +617,7 @@ export default function CareerConsultationForm() {
       academicPerformance: getVal("academicPerformance"),
       gpa: getVal("gpa"),
       aspirations: getList("aspirations"),
+      preferences: getPreferencesParam(),
       notifyVia: getList("notifyVia"),
       confirmAccuracy: getBool(
         ["confirmAccuracy"],
@@ -615,9 +640,23 @@ export default function CareerConsultationForm() {
       metaOptions.schools,
     );
     const normalizedRole = coerceToValue(mappedData.role, roleOptions);
-    const normalizedAspirations = (mappedData.aspirations || []).map((item) =>
-      coerceToValue(item, preferenceOptions),
-    );
+    const normalizedPreferences =
+      mappedData.preferences && Array.isArray(mappedData.preferences)
+        ? mappedData.preferences
+            .slice(0, 3)
+            .map((pref: any) => ({
+              preference_name: coerceToValue(
+                pref?.preference_name,
+                preferenceOptions,
+              ) || "",
+              subject_combination: pref?.subject_combination || "",
+            }))
+        : (mappedData.aspirations || [])
+            .slice(0, 3)
+            .map((item) => ({
+              preference_name: coerceToValue(item, preferenceOptions) || "",
+              subject_combination: "",
+            }));
 
     const allowedGenders = genderOptions.map((o) => o.value);
     const allowedGrades = gradeOptions.map((o) => o.value);
@@ -632,11 +671,10 @@ export default function CareerConsultationForm() {
       if (allowedRoles.length === 0) return candidate;
       return allowedRoles.includes(candidate) ? candidate : "";
     })();
-    const resolvedAspirations = (
-      normalizedAspirations ?? initialFormData.aspirations
-    )
-      .filter((item): item is string => Boolean(item))
-      .slice(0, 3);
+    const resolvedPreferences =
+      (normalizedPreferences ?? initialFormData.preferences).filter(
+        (p) => p.preference_name,
+      );
     const normalizeNotifyArray = (value: string[] | undefined) => {
       if (Array.isArray(value)) return value.filter(Boolean);
       return initialFormData.notifyVia;
@@ -659,6 +697,7 @@ export default function CareerConsultationForm() {
       phone: prefer(mappedData.phone, initialFormData.phone),
       nationalId: prefer(mappedData.nationalId, initialFormData.nationalId),
       email: prefer(mappedData.email, initialFormData.email),
+      parentPhone: prefer(mappedData.parentPhone, initialFormData.parentPhone),
       utmCampaign: prefer(mappedData.utmCampaign, initialFormData.utmCampaign),
       utmCampaignQr: prefer(
         mappedData.utmCampaignQr,
@@ -687,7 +726,7 @@ export default function CareerConsultationForm() {
       ),
       role: resolvedRole,
       gpa: prefer(mappedData.gpa, initialFormData.gpa),
-      aspirations: resolvedAspirations,
+      preferences: resolvedPreferences,
       socials: initialFormData.socials ?? [],
       notifyVia: resolvedNotify,
       confirmAccuracy:
@@ -748,6 +787,7 @@ export default function CareerConsultationForm() {
     addParam("gender", formData.gender);
     addParam("address", formData.address);
     addParam("phone", formData.phone);
+    addParam("parentPhone", formData.parentPhone);
     addParam("nationalId", formData.nationalId);
     addParam("email", formData.email);
     addParam("utmCampaign", formData.utmCampaign);
@@ -759,7 +799,18 @@ export default function CareerConsultationForm() {
     addParam("gradeLevel", formData.gradeLevel);
     addParam("academicPerformance", formData.academicPerformance);
     addParam("gpa", formData.gpa);
-    addParam("aspirations", formData.aspirations || []);
+    addParam(
+      "preferences",
+      (formData.preferences || [])
+        .map((p) =>
+          [p.preference_name, p.subject_combination].filter(Boolean).join(":"),
+        )
+        .filter(Boolean),
+    );
+    addParam(
+      "aspirations",
+      (formData.preferences || []).map((p) => p.preference_name),
+    );
     addParam(
       "socials",
       socials
@@ -776,23 +827,30 @@ export default function CareerConsultationForm() {
     router.replace(target, { scroll: false });
   }, [formData, router, pathname]);
 
-  const handleAddAspiration = (value: string) => {
+  const handleAddPreference = (value: string) => {
     const trimmed = value.trim();
     if (!trimmed) return;
-    if (aspirations.includes(trimmed)) {
-      handleRemoveAspiration(trimmed);
+    if (preferences.some((p) => p.preference_name === trimmed)) {
+      handleRemovePreference(trimmed);
       return;
     }
-    if (aspirations.length >= 3) return;
-    setValue("aspirations", [...aspirations, trimmed]);
+    if (preferences.length >= 3) return;
+    const next = [
+      ...preferences,
+      { preference_name: trimmed, subject_combination: "" },
+    ];
+    setValue("preferences", next, { shouldDirty: true, shouldTouch: true });
     setAspirationInput("");
   };
 
-  const handleRemoveAspiration = (value: string) => {
-    setValue(
-      "aspirations",
-      aspirations.filter((item) => item !== value),
-    );
+  const handleRemovePreference = (value: string) => {
+    const next = preferences.filter((item) => item.preference_name !== value);
+    setValue("preferences", next, { shouldDirty: true, shouldTouch: true });
+    setComboOptions((prev) => {
+      const copy = { ...prev };
+      delete copy[value];
+      return copy;
+    });
   };
 
   const handleNotifyChange = (channel: string, checked: boolean) => {
@@ -854,9 +912,15 @@ export default function CareerConsultationForm() {
           rawDateOfBirth && rawDateOfBirth.trim()
             ? rawDateOfBirth
             : null;
+        const preferencesPayload =
+          data.preferences?.map((pref) => ({
+            preference_name: pref.preference_name,
+            subject_combination: pref.subject_combination,
+          })) || [];
         const payload = {
           full_name: data.fullName,
           mobile_no: data.phone,
+          parent_phone: data.parentPhone || undefined,
           email: data.email,
           gender: data.gender,
           date_of_birth: dateOfBirth,
@@ -868,7 +932,7 @@ export default function CareerConsultationForm() {
           class_stream: "",
           grade_level: data.gradeLevel,
           performance: data.academicPerformance,
-          preferences: data.aspirations || [],
+          preferences: preferencesPayload,
           certificates: [],
           utm_campaign: data.utmCampaign || undefined,
           utm_campaign_qr: data.utmCampaignQr || undefined,
@@ -1107,6 +1171,14 @@ export default function CareerConsultationForm() {
                 required
                 placeholder="Nhập số điện thoại"
                 inputProps={{ ...register("phone"), className: inputClass }}
+              />
+              <LabeledInput
+                label="Số điện thoại phụ huynh"
+                placeholder="Nhập số điện thoại phụ huynh"
+                inputProps={{
+                  ...register("parentPhone"),
+                  className: inputClass,
+                }}
               />
 
               <LabeledInput
@@ -1350,19 +1422,19 @@ export default function CareerConsultationForm() {
                     Nguyện vọng (Tối đa 3 nguyện vọng)
                   </label>
                   <span className="text-xs text-slate-500">
-                    {aspirations.length}/3
+                    {aspirationNames.length}/3
                   </span>
                 </div>
                 <div className="relative">
                   <Input
                     value={aspirationInput}
-                    disabled={aspirations.length >= 3}
+                    disabled={aspirationNames.length >= 3}
                     onChange={(e) => setAspirationInput(e.target.value)}
                     onFocus={() =>
-                      aspirations.length < 3 && setShowAspirationDropdown(true)
+                      aspirationNames.length < 3 && setShowAspirationDropdown(true)
                     }
                     onClick={() =>
-                      aspirations.length < 3 && setShowAspirationDropdown(true)
+                      aspirationNames.length < 3 && setShowAspirationDropdown(true)
                     }
                     onBlur={() =>
                       setTimeout(() => setShowAspirationDropdown(false), 120)
@@ -1370,23 +1442,23 @@ export default function CareerConsultationForm() {
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
-                        handleAddAspiration(aspirationInput);
+                        handleAddPreference(aspirationInput);
                       }
                     }}
                     placeholder={
-                      aspirations.length >= 3
+                      aspirationNames.length >= 3
                         ? "Đã đủ 3 nguyện vọng"
                         : "Tìm kiếm ngành/ưu tiên"
                     }
                     className={cn(
                       inputClass,
                       "pr-11",
-                      aspirations.length >= 3 &&
+                      aspirationNames.length >= 3 &&
                         "bg-slate-100 cursor-not-allowed",
                     )}
                   />
                   <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                  {showAspirationDropdown && aspirations.length < 3 && (
+                  {showAspirationDropdown && aspirationNames.length < 3 && (
                     <div className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg">
                       {preferenceOptions
                         .filter((option) =>
@@ -1401,17 +1473,17 @@ export default function CareerConsultationForm() {
                             key={option.value}
                             className={cn(
                               "flex w-full items-center justify-between px-3 py-2 text-left text-sm",
-                              aspirations.includes(option.value)
+                              aspirationNames.includes(option.value)
                                 ? "bg-[#eaf0ff]"
                                 : "hover:bg-slate-100",
                             )}
                             onMouseDown={(e) => {
                               e.preventDefault();
-                              handleAddAspiration(option.value);
+                              handleAddPreference(option.value);
                             }}
                           >
                             <span>{option.display}</span>
-                            {aspirations.includes(option.value) && (
+                            {aspirationNames.includes(option.value) && (
                               <Check className="h-4 w-4 text-[#1f3f77]" />
                             )}
                           </button>
@@ -1423,13 +1495,13 @@ export default function CareerConsultationForm() {
                               aspirationInput.toLowerCase() ||
                             opt.value === aspirationInput,
                         ) &&
-                        !aspirations.includes(aspirationInput) && (
+                        !aspirationNames.includes(aspirationInput) && (
                           <button
                             type="button"
                             className="flex w-full items-center px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-100"
                             onMouseDown={(e) => {
                               e.preventDefault();
-                              handleAddAspiration(aspirationInput);
+                              handleAddPreference(aspirationInput);
                             }}
                           >
                             Thêm “{aspirationInput}”
@@ -1438,17 +1510,82 @@ export default function CareerConsultationForm() {
                     </div>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {aspirations.map((item) => (
-                    <button
-                      type="button"
-                      key={item}
-                      onClick={() => handleRemoveAspiration(item)}
-                      className="inline-flex items-center gap-2 rounded-[5px] border border-[#1A3561] bg-white px-3 py-1 text-sm text-slate-800 hover:bg-slate-100"
+                <div className="space-y-2">
+                  {preferences.map((pref, idx) => (
+                    <div
+                      key={`${pref.preference_name}-${idx}`}
+                      className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                     >
-                      {getPreferenceDisplay(item)}
-                      <span className="text-slate-500">×</span>
-                    </button>
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold text-slate-900">
+                          {getPreferenceDisplay(pref.preference_name)}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          Chọn tổ hợp xét tuyển
+                        </div>
+                        <div className="mt-2">
+                          <select
+                            value={pref.subject_combination}
+                            onChange={(e) => {
+                              const next = [...preferences];
+                              next[idx] = {
+                                ...pref,
+                                subject_combination: e.target.value,
+                              };
+                              setValue("preferences", next, {
+                                shouldDirty: true,
+                                shouldTouch: true,
+                              });
+                            }}
+                            onFocus={async () => {
+                              if (comboOptions[pref.preference_name]) return;
+                              try {
+                                const res = await searchSubjectCombination(
+                                  pref.preference_name,
+                                );
+                                const options =
+                                  (res?.data || []).map((item: any) => ({
+                                    value: item?.name || "",
+                                    display: item?.name || "",
+                                  })) || [];
+                                setComboOptions((prev) => ({
+                                  ...prev,
+                                  [pref.preference_name]: options,
+                                }));
+                              } catch (err) {
+                                console.warn(
+                                  "Load subject combination failed",
+                                  err,
+                                );
+                              }
+                            }}
+                            className={cn(
+                              selectClass,
+                              "appearance-none leading-tight",
+                            )}
+                          >
+                            <option value="">Chọn tổ hợp</option>
+                            {(comboOptions[pref.preference_name] || []).map(
+                              (opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.display}
+                                </option>
+                              ),
+                            )}
+                          </select>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleRemovePreference(pref.preference_name)
+                        }
+                        className="text-sm text-slate-500 hover:text-red-600"
+                        aria-label="Xóa nguyện vọng"
+                      >
+                        ×
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>

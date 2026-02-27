@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 const FRAPPE_BASE_URL = process.env.NEXT_PUBLIC_FRAPPE_BASE_URL || 'https://erpnext.aurora-tech.com';
 
 const CAREER_POST_ENDPOINT =
-  `${FRAPPE_BASE_URL}/api/method/lead.create_lead`;
+  `${FRAPPE_BASE_URL}/api/method/v2.lead.create_lead`;
   
 const CAREER_POST_TOKEN = process.env.NEXT_PUBLIC_FRAPPE_TOKEN || ""
 
