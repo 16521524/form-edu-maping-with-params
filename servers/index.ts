@@ -6,3 +6,4 @@ export * from "./get-campaigns.api";
 export * from "./post-admission-application.api";
 export * from "./get-ward.api";
 export * from "./search-subject-combination.api";
+export * from "./search-preference.api";

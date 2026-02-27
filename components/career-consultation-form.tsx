@@ -38,6 +38,7 @@ import {
   postCareerLead,
   updateCampaignTotalScans,
   searchSubjectCombination,
+  searchPreference,
 } from "@/servers";
 import CareerSuccessModal from "./career-success-modal";
 
@@ -230,6 +231,7 @@ export default function CareerConsultationForm() {
   const campaignScanTracked = useRef(false);
   const initialCampaignName = useRef<string | null>(null);
   const initialSchoolQuery = useRef<string | null>(null);
+  const fetchedComboPref = useRef<Set<string>>(new Set());
   if (initialCampaignName.current === null) {
     initialCampaignName.current = searchParams.get("utmCampaignQr");
   }
@@ -279,6 +281,8 @@ export default function CareerConsultationForm() {
   const [comboOptions, setComboOptions] = useState<
     Record<string, OptionItem[]>
   >({});
+  const [preferenceSearch, setPreferenceSearch] = useState<OptionItem[]>([]);
+  const [preferenceLoading, setPreferenceLoading] = useState(false);
   const [socials, setSocials] = useState<
     { platform: string; link_profile: string }[]
   >([]);
@@ -525,6 +529,32 @@ export default function CareerConsultationForm() {
 
     trackScan();
   }, []);
+
+  useEffect(() => {
+    if (!showAspirationDropdown) return;
+    const query = aspirationInput.trim();
+    if (!query) {
+      setPreferenceSearch([]);
+      return;
+    }
+    let active = true;
+    setPreferenceLoading(true);
+    searchPreference(query)
+      .then((res) => {
+        if (!active) return;
+        setPreferenceSearch(mapDataOptions(res.data) || []);
+      })
+      .catch((err) => {
+        console.warn("searchPreference failed", err);
+        if (active) setPreferenceSearch([]);
+      })
+      .finally(() => {
+        if (active) setPreferenceLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [aspirationInput, showAspirationDropdown]);
 
   useEffect(() => {
     if (!metaReady) return;
@@ -827,6 +857,58 @@ export default function CareerConsultationForm() {
     router.replace(target, { scroll: false });
   }, [formData, router, pathname]);
 
+  useEffect(() => {
+    if (!hasHydrated.current) return;
+    (preferences || []).forEach((pref) => {
+      const prefName = pref.preference_name;
+      if (!prefName) return;
+      if (fetchedComboPref.current.has(prefName)) return;
+      fetchedComboPref.current.add(prefName);
+      const addFallbackOption = (options: OptionItem[]) => {
+        if (
+          pref.subject_combination &&
+          !options.some((opt) => opt.value === pref.subject_combination)
+        ) {
+          return [
+            ...options,
+            {
+              value: pref.subject_combination,
+              display: pref.subject_combination,
+            },
+          ];
+        }
+        return options;
+      };
+      searchSubjectCombination(prefName)
+        .then((res) => {
+          const options =
+            (res?.data || []).map((item: any) => ({
+              value: item?.name || "",
+              display: item?.name || "",
+            })) || [];
+          setComboOptions((prev) => ({
+            ...prev,
+            [prefName]: addFallbackOption(options),
+          }));
+        })
+        .catch(() => {
+          setComboOptions((prev) => {
+            if (prev[prefName]?.length) return prev;
+            if (!pref.subject_combination) return prev;
+            return {
+              ...prev,
+              [prefName]: [
+                {
+                  value: pref.subject_combination,
+                  display: pref.subject_combination,
+                },
+              ],
+            };
+          });
+        });
+    });
+  }, [preferences]);
+
   const handleAddPreference = (value: string) => {
     const trimmed = value.trim();
     if (!trimmed) return;
@@ -841,9 +923,11 @@ export default function CareerConsultationForm() {
     ];
     setValue("preferences", next, { shouldDirty: true, shouldTouch: true });
     setAspirationInput("");
+    setShowAspirationDropdown(false);
   };
 
   const handleRemovePreference = (value: string) => {
+    fetchedComboPref.current.delete(value);
     const next = preferences.filter((item) => item.preference_name !== value);
     setValue("preferences", next, { shouldDirty: true, shouldTouch: true });
     setComboOptions((prev) => {
@@ -851,6 +935,7 @@ export default function CareerConsultationForm() {
       delete copy[value];
       return copy;
     });
+    setShowAspirationDropdown(false);
   };
 
   const handleNotifyChange = (channel: string, checked: boolean) => {
@@ -1460,13 +1545,11 @@ export default function CareerConsultationForm() {
                   <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
                   {showAspirationDropdown && aspirationNames.length < 3 && (
                     <div className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg">
-                      {preferenceOptions
-                        .filter((option) =>
-                          option.display
-                            .toLowerCase()
-                            .includes(aspirationInput.toLowerCase()),
-                        )
-                        .slice(0, 10)
+                      {(preferenceSearch.length
+                        ? preferenceSearch
+                        : preferenceOptions
+                      )
+                        .slice(0, 20)
                         .map((option) => (
                           <button
                             type="button"
@@ -1488,25 +1571,11 @@ export default function CareerConsultationForm() {
                             )}
                           </button>
                         ))}
-                      {aspirationInput &&
-                        !preferenceOptions.some(
-                          (opt) =>
-                            opt.display.toLowerCase() ===
-                              aspirationInput.toLowerCase() ||
-                            opt.value === aspirationInput,
-                        ) &&
-                        !aspirationNames.includes(aspirationInput) && (
-                          <button
-                            type="button"
-                            className="flex w-full items-center px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-100"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              handleAddPreference(aspirationInput);
-                            }}
-                          >
-                            Thêm “{aspirationInput}”
-                          </button>
-                        )}
+                      {preferenceLoading && (
+                        <div className="px-3 py-2 text-sm text-slate-500">
+                          Đang tìm...
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1538,7 +1607,13 @@ export default function CareerConsultationForm() {
                               });
                             }}
                             onFocus={async () => {
-                              if (comboOptions[pref.preference_name]) return;
+                              const existing =
+                                comboOptions[pref.preference_name] || [];
+                              const onlyFallback =
+                                existing.length === 1 &&
+                                pref.subject_combination &&
+                                existing[0].value === pref.subject_combination;
+                              if (existing.length > 0 && !onlyFallback) return;
                               try {
                                 const res = await searchSubjectCombination(
                                   pref.preference_name,
@@ -1550,7 +1625,20 @@ export default function CareerConsultationForm() {
                                   })) || [];
                                 setComboOptions((prev) => ({
                                   ...prev,
-                                  [pref.preference_name]: options,
+                                  [pref.preference_name]:
+                                    pref.subject_combination &&
+                                    !options.some(
+                                      (opt) =>
+                                        opt.value === pref.subject_combination,
+                                    )
+                                      ? [
+                                          ...options,
+                                          {
+                                            value: pref.subject_combination,
+                                            display: pref.subject_combination,
+                                          },
+                                        ]
+                                      : options,
                                 }));
                               } catch (err) {
                                 console.warn(
@@ -1565,13 +1653,30 @@ export default function CareerConsultationForm() {
                             )}
                           >
                             <option value="">Chọn tổ hợp</option>
-                            {(comboOptions[pref.preference_name] || []).map(
-                              (opt) => (
+                            {(() => {
+                              const baseOptions =
+                                comboOptions[pref.preference_name] || [];
+                              const hasSelected =
+                                pref.subject_combination &&
+                                !baseOptions.some(
+                                  (opt) =>
+                                    opt.value === pref.subject_combination,
+                                );
+                              const options = hasSelected
+                                ? [
+                                    {
+                                      value: pref.subject_combination,
+                                      display: pref.subject_combination,
+                                    },
+                                    ...baseOptions,
+                                  ]
+                                : baseOptions;
+                              return options.map((opt) => (
                                 <option key={opt.value} value={opt.value}>
                                   {opt.display}
                                 </option>
-                              ),
-                            )}
+                              ));
+                            })()}
                           </select>
                         </div>
                       </div>
