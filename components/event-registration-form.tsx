@@ -10,6 +10,8 @@ import eventDefaultsData from "@/lib/form-defaults-event.json"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { DatePickerInput } from "@/components/ui/date-picker-input"
+import { ddMmYyyyToIso, isoToDdMmYyyy } from "@/lib/date-format"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -294,7 +296,7 @@ export default function EventRegistrationForm() {
     const allowedGenders = (metaOptions.genders.length ? metaOptions.genders : fallbackGenders).map((o) => o.value)
     const mappedData: FormData = {
       fullName: prefer(getVal("fullName"), studentDefaults.fullName),
-      birthDate: prefer(getVal("birthDate"), studentDefaults.birthDate),
+      birthDate: isoToDdMmYyyy(prefer(getVal("birthDate"), studentDefaults.birthDate)),
       nationalId: prefer(getVal("nationalId"), studentDefaults.nationalId),
       gender: ensureOption(getVal("gender"), allowedGenders, studentDefaults.gender),
       phone: prefer(getVal("phone"), studentDefaults.phone),
@@ -404,7 +406,7 @@ export default function EventRegistrationForm() {
     }
 
     addParam("fullName", formData.fullName)
-    addParam("birthDate", formData.birthDate)
+    addParam("birthDate", ddMmYyyyToIso(formData.birthDate) || formData.birthDate)
     addParam("nationalId", formData.nationalId)
     addParam("gender", formData.gender)
     addParam("phone", formData.phone)
@@ -483,7 +485,8 @@ export default function EventRegistrationForm() {
 
   const onSubmit = (data: FormData) =>
     new Promise<void>((resolve) => {
-      console.log("Form submitted:", data)
+      const payload = { ...data, birthDate: ddMmYyyyToIso(data.birthDate) || data.birthDate }
+      console.log("Form submitted:", payload)
       setTimeout(() => {
         alert("Đăng ký thành công!")
         resolve()
@@ -545,11 +548,18 @@ export default function EventRegistrationForm() {
               </div>
               <div>
                 <Label htmlFor="birthDate">Ngày tháng năm sinh</Label>
-                <Input
-                  id="birthDate"
-                  type="date"
-                  disabled={isPersonalSectionDisabled}
-                  {...register("birthDate")}
+                <Controller
+                  name="birthDate"
+                  control={control}
+                  render={({ field }) => (
+                    <DatePickerInput
+                      id="birthDate"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      disabled={isPersonalSectionDisabled}
+                    />
+                  )}
                 />
               </div>
               <div>

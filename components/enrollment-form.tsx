@@ -9,6 +9,8 @@ import enrollmentDefaultsData from "@/lib/form-defaults-enrollment.json"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { DatePickerInput } from "@/components/ui/date-picker-input"
+import { ddMmYyyyToIso, isoToDdMmYyyy } from "@/lib/date-format"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -282,7 +284,7 @@ export default function EnrollmentForm() {
 
     reset({
       fullName: normalize(mappedData.fullName, studentDefaults.fullName),
-      birthDate: normalize(mappedData.birthDate, studentDefaults.birthDate),
+      birthDate: isoToDdMmYyyy(normalize(mappedData.birthDate, studentDefaults.birthDate)),
       nationalId: normalize(mappedData.nationalId, studentDefaults.nationalId),
       gender: ensureOption(mappedData.gender, allowedGenders, studentDefaults.gender),
       phone: normalize(mappedData.phone, studentDefaults.phone),
@@ -302,7 +304,7 @@ export default function EnrollmentForm() {
     })
     hydratedSnapshot.current = {
       fullName: normalize(mappedData.fullName, studentDefaults.fullName),
-      birthDate: normalize(mappedData.birthDate, studentDefaults.birthDate),
+      birthDate: isoToDdMmYyyy(normalize(mappedData.birthDate, studentDefaults.birthDate)),
       nationalId: normalize(mappedData.nationalId, studentDefaults.nationalId),
       gender: ensureOption(mappedData.gender, allowedGenders, studentDefaults.gender),
       phone: normalize(mappedData.phone, studentDefaults.phone),
@@ -359,7 +361,7 @@ export default function EnrollmentForm() {
     }
 
     addParam("fullName", formData.fullName)
-    addParam("birthDate", formData.birthDate)
+    addParam("birthDate", ddMmYyyyToIso(formData.birthDate) || formData.birthDate)
     addParam("nationalId", formData.nationalId)
     addParam("gender", formData.gender)
     addParam("phone", formData.phone)
@@ -403,7 +405,8 @@ export default function EnrollmentForm() {
 
   const onSubmit = (data: FormData) =>
     new Promise<void>((resolve) => {
-      console.log("Form submitted:", data)
+      const payload = { ...data, birthDate: ddMmYyyyToIso(data.birthDate) || data.birthDate }
+      console.log("Form submitted:", payload)
       setTimeout(() => {
         alert("Đăng ký thành công!")
         resolve()
@@ -449,7 +452,18 @@ export default function EnrollmentForm() {
               </div>
               <div>
                 <Label htmlFor="birthDate">Ngày tháng năm sinh</Label>
-                <Input id="birthDate" type="date" {...register("birthDate")} />
+                <Controller
+                  name="birthDate"
+                  control={control}
+                  render={({ field }) => (
+                    <DatePickerInput
+                      id="birthDate"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                    />
+                  )}
+                />
               </div>
               <div>
                 <Label htmlFor="nationalId">Căn cước công dân</Label>

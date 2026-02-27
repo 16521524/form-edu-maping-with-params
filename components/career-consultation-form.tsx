@@ -10,6 +10,7 @@ import {
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   useController,
+  Controller,
   useForm,
   useWatch,
   type Control,
@@ -17,7 +18,6 @@ import {
 import Image from "next/image";
 import { Inter } from "next/font/google";
 import {
-  CalendarDays,
   Check,
   ChevronDown,
   Loader2,
@@ -28,6 +28,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { DatePickerInput } from "@/components/ui/date-picker-input";
+import { ddMmYyyyToIso, isoToDdMmYyyy } from "@/lib/date-format";
 import { cn } from "@/lib/utils";
 import {
   getMetadataCareer,
@@ -167,33 +169,6 @@ const SOCIAL_OPTIONS = [
   { value: "WhatsApp", label: "WhatsApp", icon: "/social/whatsapp.png" },
 ];
 
-const isoToDdMmYyyy = (val?: string) => {
-  if (!val) return "";
-  const match = val.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return val;
-  const [, y, m, d] = match;
-  return `${d}/${m}/${y}`;
-};
-
-const ddMmYyyyToIso = (val?: string) => {
-  if (!val) return "";
-  const match = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (!match) return val;
-  const [, d, m, y] = match;
-  return `${y}-${m}-${d}`;
-};
-
-const formatBirthInput = (raw: string) => {
-  const digits = raw.replace(/\D/g, "").slice(0, 8);
-  const day = digits.slice(0, 2);
-  const month = digits.slice(2, 4);
-  const year = digits.slice(4, 8);
-  let result = day;
-  if (month) result = `${day}/${month}`;
-  if (year) result = `${day}/${month}/${year}`;
-  return result;
-};
-
 const normalizeText = (val: string) =>
   (val || "")
     .normalize("NFD")
@@ -295,7 +270,6 @@ export default function CareerConsultationForm() {
   const [metaReady, setMetaReady] = useState(false);
   const [loadingSchoolOptions, setLoadingSchoolOptions] = useState(false);
   const [showAspirationDropdown, setShowAspirationDropdown] = useState(false);
-  const birthInputRef = useRef<HTMLInputElement | null>(null);
   const [socials, setSocials] = useState<
     { platform: string; link_profile: string }[]
   >([]);
@@ -1078,40 +1052,22 @@ export default function CareerConsultationForm() {
                   <label className="text-sm font-semibold text-slate-900">
                     Ngày/ Tháng/ Năm sinh
                   </label>
-                  <div className="relative">
-                    <Input
-                      ref={birthInputRef}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={10}
-                      {...register("birthDate", {
-                        onChange: (e) => {
-                          const formatted = formatBirthInput(e.target.value);
-                          setValue("birthDate", formatted, {
-                            shouldValidate: true,
-                            shouldDirty: true,
-                          });
-                        },
-                      })}
-                      placeholder="dd/mm/yyyy"
-                      className={cn(
-                        inputClass,
-                        "pr-11 appearance-none career-date-input",
-                      )}
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-[#1f3f77]"
-                      onClick={() => {
-                        const node = birthInputRef.current;
-                        if (!node) return;
-                        node.focus();
-                      }}
-                      aria-label="Chọn ngày sinh"
-                    >
-                      <CalendarDays className="h-5 w-5" />
-                    </button>
-                  </div>
+                  <Controller
+                    name="birthDate"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePickerInput
+                        id="birthDate"
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        inputClassName={cn(
+                          inputClass,
+                          "appearance-none career-date-input",
+                        )}
+                      />
+                    )}
+                  />
                 </div>
 
                 <div className="space-y-2">

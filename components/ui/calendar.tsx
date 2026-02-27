@@ -6,6 +6,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from 'lucide-react'
+import { Locale } from 'date-fns'
+import { vi as viLocale } from 'date-fns/locale'
 import { DayButton, DayPicker, getDefaultClassNames } from 'react-day-picker'
 
 import { cn } from '@/lib/utils'
@@ -19,15 +21,18 @@ function Calendar({
   buttonVariant = 'ghost',
   formatters,
   components,
+  locale = viLocale,
   ...props
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>['variant']
+  locale?: Locale
 }) {
   const defaultClassNames = getDefaultClassNames()
 
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      locale={locale}
       className={cn(
         'bg-background group/calendar p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent',
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
@@ -36,8 +41,11 @@ function Calendar({
       )}
       captionLayout={captionLayout}
       formatters={{
-        formatMonthDropdown: (date) =>
-          date.toLocaleString('default', { month: 'short' }),
+        formatMonthDropdown: (date, options) =>
+          date.toLocaleDateString(locale?.code || 'vi', {
+            month: 'long',
+            ...(options ?? {}),
+          }),
         ...formatters,
       }}
       classNames={{
@@ -46,7 +54,7 @@ function Calendar({
           'flex gap-4 flex-col md:flex-row relative',
           defaultClassNames.months,
         ),
-        month: cn('flex flex-col w-full gap-4', defaultClassNames.month),
+        month: cn('flex flex-col w-full gap-3', defaultClassNames.month),
         nav: cn(
           'flex items-center gap-1 w-full absolute top-0 inset-x-0 justify-between',
           defaultClassNames.nav,
@@ -74,11 +82,11 @@ function Calendar({
           defaultClassNames.dropdown_root,
         ),
         dropdown: cn(
-          'absolute bg-popover inset-0 opacity-0',
+          'absolute bg-popover inset-0 opacity-100',
           defaultClassNames.dropdown,
         ),
         caption_label: cn(
-          'select-none font-medium',
+          'hidden',
           captionLayout === 'label'
             ? 'text-sm'
             : 'rounded-md pl-2 pr-1 flex items-center gap-1 text-sm h-8 [&>svg]:text-muted-foreground [&>svg]:size-3.5',

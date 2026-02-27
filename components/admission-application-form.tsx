@@ -19,11 +19,13 @@ import {
   type UseFormRegisterReturn,
 } from "react-hook-form";
 import { Inter } from "next/font/google";
-import { CalendarDays, ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { DatePickerInput } from "@/components/ui/date-picker-input";
+import { ddMmYyyyToIso, isoToDdMmYyyy } from "@/lib/date-format";
 import { cn } from "@/lib/utils";
 import {
   ICareerMetadataSchool,
@@ -128,33 +130,6 @@ const normalizeText = (val: string) =>
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
-
-const isoToDdMmYyyy = (val?: string) => {
-  if (!val) return "";
-  const match = val.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return val;
-  const [, y, m, d] = match;
-  return `${d}/${m}/${y}`;
-};
-
-const ddMmYyyyToIso = (val?: string) => {
-  if (!val) return "";
-  const match = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (!match) return val;
-  const [, d, m, y] = match;
-  return `${y}-${m}-${d}`;
-};
-
-const formatBirthInput = (raw: string) => {
-  const digits = raw.replace(/\D/g, "").slice(0, 8);
-  const day = digits.slice(0, 2);
-  const month = digits.slice(2, 4);
-  const year = digits.slice(4, 8);
-  let result = day;
-  if (month) result = `${day}/${month}`;
-  if (year) result = `${day}/${month}/${year}`;
-  return result;
-};
 
 function mapDataOptions(items: any[] | undefined): OptionItem[] {
   if (!Array.isArray(items)) return [];
@@ -280,7 +255,6 @@ export default function AdmissionApplicationForm() {
   const [loadingGrade12School, setLoadingGrade12School] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const birthInputRef = useRef<HTMLInputElement | null>(null);
   const [metaReady, setMetaReady] = useState(false);
   const [metaOptions, setMetaOptions] = useState<{
     genders: OptionItem[];
@@ -1044,36 +1018,22 @@ export default function AdmissionApplicationForm() {
                     Ngày/ Tháng/ Năm sinh{" "}
                     <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative">
-                    <Input
-                      ref={birthInputRef}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={10}
-                      {...register("birthDate", {
-                        onChange: (e) => {
-                          const formatted = formatBirthInput(e.target.value);
-                          setValue("birthDate", formatted, {
-                            shouldValidate: true,
-                            shouldDirty: true,
-                          });
-                        },
-                      })}
-                      placeholder="dd/mm/yyyy"
-                      className={cn(
-                        inputClass,
-                        "pr-11 appearance-none date-input",
-                      )}
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-[#1f3f77]"
-                      onClick={() => birthInputRef.current?.focus()}
-                      aria-label="Chọn ngày sinh"
-                    >
-                      <CalendarDays className="h-5 w-5" />
-                    </button>
-                  </div>
+                  <Controller
+                    name="birthDate"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePickerInput
+                        id="birthDate"
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        inputClassName={cn(
+                          inputClass,
+                          "appearance-none date-input",
+                        )}
+                      />
+                    )}
+                  />
                 </div>
 
                 <LabeledInput
