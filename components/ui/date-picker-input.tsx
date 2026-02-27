@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react"
 import { CalendarDays } from "lucide-react"
 
-import { formatToDisplay, maskDdMmYyyy, parseDdMmYyyy } from "@/lib/date-format"
+import { formatToDisplay, parseDdMmYyyy } from "@/lib/date-format"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -56,7 +56,19 @@ export function DatePickerInput({
             id={id}
             name={name}
             value={value || ""}
-            onChange={(e) => onChange(maskDdMmYyyy(e.target.value))}
+            readOnly
+            aria-readonly="true"
+            onChange={() => {
+              /* typing is blocked; value only changes via calendar */
+            }}
+            onKeyDown={(e) => {
+              // Chặn nhập tay các phím ký tự/số nhưng vẫn cho tab/thoát
+              const isCharKey = e.key.length === 1
+              const blockedKeys = ["Backspace", "Delete"]
+              if (isCharKey || blockedKeys.includes(e.key)) {
+                e.preventDefault()
+              }
+            }}
             onBlur={onBlur}
             onClick={() => setOpen(true)}
             onFocus={() => setOpen(true)}
@@ -70,9 +82,11 @@ export function DatePickerInput({
         </div>
       </PopoverAnchor>
       <PopoverContent
-        className="p-0"
+        className="p-0 w-auto min-w-[280px]"
         align="start"
+        side="bottom"
         sideOffset={6}
+        collisionPadding={12}
         onInteractOutside={(event) => {
           // Đừng đóng popup khi click lại vào ô input/trigger
           if (triggerRef.current?.contains(event.target as Node)) {

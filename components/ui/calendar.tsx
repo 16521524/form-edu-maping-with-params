@@ -78,11 +78,11 @@ function Calendar({
           defaultClassNames.dropdowns,
         ),
         dropdown_root: cn(
-          'relative has-focus:border-ring border border-input shadow-xs has-focus:ring-ring/50 has-focus:ring-[3px] rounded-md',
+          'relative has-focus:border-ring border border-input shadow-xs has-focus:ring-ring/50 has-focus:ring-[3px] rounded-md h-(--cell-size) min-w-[120px] overflow-hidden',
           defaultClassNames.dropdown_root,
         ),
         dropdown: cn(
-          'absolute bg-popover inset-0 opacity-100',
+          'w-full h-full bg-popover opacity-100 appearance-none outline-none cursor-pointer pl-2 pr-7 text-left',
           defaultClassNames.dropdown,
         ),
         caption_label: cn(
