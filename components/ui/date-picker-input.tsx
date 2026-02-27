@@ -82,7 +82,7 @@ export function DatePickerInput({
         </div>
       </PopoverAnchor>
       <PopoverContent
-        className="p-0 w-auto min-w-[280px]"
+        className="p-0 w-auto min-w-[200px]"
         align="start"
         side="bottom"
         sideOffset={6}
@@ -95,8 +95,10 @@ export function DatePickerInput({
         }}
       >
         <Calendar
+          className="p-2 pt-3 text-[10px] [--cell-size:22px]"
           mode="single"
           captionLayout="dropdown"
+          hideWeekdays
           fromYear={1930}
           toYear={new Date().getFullYear()}
           selected={selectedDate || undefined}
@@ -107,11 +109,12 @@ export function DatePickerInput({
             return false
           }}
         />
-        <div className="flex items-center justify-between border-t px-3 pb-3 pt-2">
+        <div className="flex items-center justify-between border-t px-2 pb-2 pt-1 text-[10px]">
           <Button
             variant="ghost"
             size="sm"
             type="button"
+            className="h-7 px-2 text-[10px] font-medium"
             onClick={() => {
               onChange("")
               setOpen(false)
@@ -123,6 +126,7 @@ export function DatePickerInput({
             variant="ghost"
             size="sm"
             type="button"
+            className="h-7 px-2 text-[10px] font-medium"
             onClick={() => {
               const today = new Date()
               onChange(formatToDisplay(today))
