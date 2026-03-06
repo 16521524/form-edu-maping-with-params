@@ -18,6 +18,7 @@ function Calendar({
   classNames,
   showOutsideDays = true,
   captionLayout = 'label',
+  navLayout = 'around',
   buttonVariant = 'ghost',
   formatters,
   components,
@@ -40,6 +41,7 @@ function Calendar({
         className,
       )}
       captionLayout={captionLayout}
+      navLayout={navLayout}
       formatters={{
         formatMonthDropdown: (date, options) =>
           date.toLocaleDateString(locale?.code || 'vi', {
@@ -54,36 +56,51 @@ function Calendar({
           'flex gap-3 flex-col md:flex-row relative',
           defaultClassNames.months,
         ),
-        month: cn('flex flex-col w-full gap-2', defaultClassNames.month),
+        month: cn(
+          'grid w-full grid-cols-[32px_minmax(0,1fr)_32px] gap-x-2 gap-y-2 items-center',
+          defaultClassNames.month,
+        ),
         nav: cn(
-          'flex items-center gap-2 w-full justify-between mt-2 mb-2 px-4',
+          'hidden',
           defaultClassNames.nav,
         ),
         button_previous: cn(
           buttonVariants({ variant: buttonVariant }),
-          'h-8 w-8 aria-disabled:opacity-50 p-0 select-none order-1',
+          'col-start-1 row-start-1 h-8 w-8 shrink-0 justify-self-start aria-disabled:opacity-50 p-0 select-none',
           defaultClassNames.button_previous,
         ),
         button_next: cn(
           buttonVariants({ variant: buttonVariant }),
-          'h-8 w-8 aria-disabled:opacity-50 p-0 select-none order-3',
+          'col-start-3 row-start-1 h-8 w-8 shrink-0 justify-self-end aria-disabled:opacity-50 p-0 select-none',
           defaultClassNames.button_next,
         ),
         month_caption: cn(
-          'flex items-center justify-center h-9 w-full px-2 order-2',
+          'col-start-2 row-start-1 flex min-w-0 items-center gap-2 h-9 w-full px-1',
           defaultClassNames.month_caption,
         ),
         dropdowns: cn(
-          'w-full flex items-center text-[12px] font-medium justify-center h-9 gap-2',
+          'grid w-full grid-cols-[minmax(104px,1.35fr)_minmax(82px,1fr)] items-center h-9 gap-2 text-[12px] font-medium',
           defaultClassNames.dropdowns,
         ),
+        month_grid: cn(
+          'col-span-3 row-start-2 w-full',
+          defaultClassNames.month_grid,
+        ),
         dropdown_root: cn(
-          'relative has-focus:border-ring border border-slate-300 bg-white shadow-none has-focus:ring-ring/50 has-focus:ring-[3px] rounded-md h-9 min-h-[36px] min-w-[100px] overflow-hidden text-[12px]',
+          'relative w-full has-focus:border-ring border border-slate-300 bg-white shadow-none has-focus:ring-ring/50 has-focus:ring-[3px] rounded-md h-9 min-h-[36px] min-w-0 overflow-hidden text-[12px]',
           defaultClassNames.dropdown_root,
         ),
         dropdown: cn(
           'w-full h-full bg-transparent opacity-100 appearance-none outline-none cursor-pointer pl-3 pr-6 text-left text-[12px]',
           defaultClassNames.dropdown,
+        ),
+        months_dropdown: cn(
+          'min-w-[104px]',
+          defaultClassNames.months_dropdown,
+        ),
+        years_dropdown: cn(
+          'min-w-[82px]',
+          defaultClassNames.years_dropdown,
         ),
         caption_label: cn(
           'hidden',
