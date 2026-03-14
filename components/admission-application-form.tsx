@@ -1262,7 +1262,7 @@ export default function AdmissionApplicationForm() {
               disabled={submitDisabled}
               className="w-full h-11 rounded-md bg-[#1a3561] text-white text-[15px] font-semibold hover:bg-[#18335f]"
             >
-              {isSubmitting ? "Đang gửi..." : "Tiếp tục"}
+              {isSubmitting ? "Đang gửi..." : "Nộp đơn"}
             </Button>
             {submitError && (
               <p className="text-sm text-red-600 text-center">{submitError}</p>
