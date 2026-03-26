@@ -73,7 +73,7 @@ export default function HomePage() {
                 <GraduationCap className="h-6 w-6 text-blue-600" />
                 Form Đăng ký Nhập học
               </CardTitle>
-              <CardDescription>Đăng ký xét tuyển vào các ngành học tại trường</CardDescription>
+              <CardDescription>Đăng ký dự tuyển vào các ngành học tại trường</CardDescription>
             </CardHeader>
             <CardContent>
               <Link href={`/dang-ky-nhap-hoc?${enrollmentParams}`}>
@@ -91,9 +91,9 @@ export default function HomePage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ClipboardList className="h-6 w-6 text-slate-700" />
-                Form Đăng ký hồ sơ xét tuyển
+                Form Đăng ký hồ sơ dự tuyển
               </CardTitle>
-              <CardDescription>Flow mới theo layout mobile gửi hồ sơ xét tuyển</CardDescription>
+              <CardDescription>Flow mới theo layout mobile gửi hồ sơ dự tuyển</CardDescription>
             </CardHeader>
             <CardContent>
               <Link href={`/dang-ky-ho-so-xet-tuyen?${admissionParams}`}>
@@ -171,7 +171,7 @@ export default function HomePage() {
                 ?fullName=...&birthDate=...&gender=...&address=...&phone=...&nationalId=...&email=...&utmCampaign=...&utmCampaignQr=...&city=...&school=...&gradeLevel=...&academicPerformance=...&gpa=...&aspirations=...&notifyVia=...&confirmAccuracy=true
               </code>
 
-              <p className="font-semibold mt-4 mb-2 font-sans">Form Đăng ký hồ sơ xét tuyển:</p>
+              <p className="font-semibold mt-4 mb-2 font-sans">Form Đăng ký hồ sơ dự tuyển:</p>
               <code className="text-xs break-all">
                 ?fullName=...&gender=...&birthDate=...&nationalId=...&studentPhone=...&parentPhone=...&email=...&permanentProvince=...&permanentWard=...&permanentStreet=...&permanentHouse=...&grade12Province=...&grade12School=...&grade12Class=...&graduationYear=...&receivingProvince=...&receivingWard=...&receivingStreet=...&receivingHouse=...&applySameAddress=true&confirmAccuracy=true&conversationId=...&section_id=...
               </code>

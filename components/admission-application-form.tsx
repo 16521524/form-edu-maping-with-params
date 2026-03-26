@@ -955,7 +955,7 @@ export default function AdmissionApplicationForm() {
         <div className="mx-auto w-full max-w-5xl">
           <div className="flex flex-col items-center gap-3 pb-5 text-center">
             <h1 className="text-2xl md:text-3xl font-bold text-[#1a2e59] pt-5">
-              Đăng ký thông tin hồ sơ xét tuyển
+              Đăng ký thông tin hồ sơ dự tuyển
             </h1>
             <div className="w-full">
               <div className="flex items-center gap-3 rounded-2xl bg-[#1c2f57] px-4 py-4 text-white shadow-md">
