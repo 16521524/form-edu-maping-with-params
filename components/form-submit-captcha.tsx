@@ -173,6 +173,7 @@ export function useCaptchaSubmit<T>({
   )
   const [externalToken, setExternalToken] = useState("")
   const [externalReady, setExternalReady] = useState(provider === "local")
+  const [externalRenderKey, setExternalRenderKey] = useState(0)
 
   const refreshLocalChallenge = () => {
     setChallenge(createCaptchaChallenge())
@@ -186,11 +187,19 @@ export function useCaptchaSubmit<T>({
 
     if (provider === "recaptcha" && recaptchaWidgetIdRef.current !== null) {
       window.grecaptcha?.reset(recaptchaWidgetIdRef.current)
+      recaptchaWidgetIdRef.current = null
     }
 
     if (provider === "turnstile" && turnstileWidgetIdRef.current) {
-      window.turnstile?.reset(turnstileWidgetIdRef.current)
+      window.turnstile?.remove(turnstileWidgetIdRef.current)
+      turnstileWidgetIdRef.current = null
     }
+
+    if (externalContainerRef.current) {
+      externalContainerRef.current.innerHTML = ""
+    }
+
+    setExternalRenderKey((current) => current + 1)
   }
 
   const resetAllState = () => {
@@ -326,57 +335,67 @@ export function useCaptchaSubmit<T>({
       window.grecaptcha.ready(() => {
         if (!externalContainerRef.current) return
 
-        if (recaptchaWidgetIdRef.current !== null) {
-          window.grecaptcha?.reset(recaptchaWidgetIdRef.current)
-          return
-        }
+        try {
+          if (recaptchaWidgetIdRef.current !== null) {
+            window.grecaptcha?.reset(recaptchaWidgetIdRef.current)
+            return
+          }
 
-        recaptchaWidgetIdRef.current = window.grecaptcha?.render(
-          externalContainerRef.current,
-          {
-            sitekey: effectiveSiteKey,
-            theme: theme === "dark" ? "dark" : "light",
-            callback: (token: string) => {
-              setExternalToken(token)
-              setError(null)
+          recaptchaWidgetIdRef.current = window.grecaptcha?.render(
+            externalContainerRef.current,
+            {
+              sitekey: effectiveSiteKey,
+              theme: theme === "dark" ? "dark" : "light",
+              callback: (token: string) => {
+                setExternalToken(token)
+                setError(null)
+              },
+              "expired-callback": () => {
+                setExternalToken("")
+              },
+              "error-callback": () => {
+                setExternalToken("")
+                setError("Bước xác nhận đang tạm thời gián đoạn. Vui lòng thử lại.")
+              },
             },
-            "expired-callback": () => {
-              setExternalToken("")
-            },
-        "error-callback": () => {
-          setExternalToken("")
+          ) ?? null
+        } catch (captchaError) {
+          console.error("reCAPTCHA render failed", captchaError)
           setError("Bước xác nhận đang tạm thời gián đoạn. Vui lòng thử lại.")
-        },
-          },
-        ) ?? null
+        }
       })
 
       return
     }
 
     if (provider === "turnstile" && window.turnstile) {
-      if (turnstileWidgetIdRef.current) {
-        window.turnstile.reset(turnstileWidgetIdRef.current)
-        return
-      }
+      try {
+        if (turnstileWidgetIdRef.current) {
+          window.turnstile.remove(turnstileWidgetIdRef.current)
+          turnstileWidgetIdRef.current = null
+        }
 
-      turnstileWidgetIdRef.current = window.turnstile.render(container, {
-        sitekey: effectiveSiteKey,
-        theme,
-        callback: (token: string) => {
-          setExternalToken(token)
-          setError(null)
-        },
-        "expired-callback": () => {
-          setExternalToken("")
-        },
-        "error-callback": () => {
-          setExternalToken("")
-          setError("Bước xác nhận đang tạm thời gián đoạn. Vui lòng thử lại.")
-        },
-      })
+        turnstileWidgetIdRef.current = window.turnstile.render(container, {
+          sitekey: effectiveSiteKey,
+          theme,
+          callback: (token: string) => {
+            setExternalToken(token)
+            setError(null)
+          },
+          "expired-callback": () => {
+            setExternalToken("")
+          },
+          "error-callback": () => {
+            setExternalToken("")
+            setError("Bước xác nhận đang tạm thời gián đoạn. Vui lòng thử lại.")
+          },
+        })
+      } catch (captchaError) {
+        console.error("Turnstile render failed", captchaError)
+        setError("Bước xác nhận đang tạm thời gián đoạn. Vui lòng thử lại.")
+      }
     }
-  }, [effectiveSiteKey, externalReady, isOpen, provider, theme])
+  }, [effectiveSiteKey, externalReady, externalRenderKey, isOpen, provider, theme])
 
   const providerTitle = "Xác nhận bảo mật"
   const providerDescription =
@@ -450,6 +469,7 @@ export function useCaptchaSubmit<T>({
           ) : (
             <div className="space-y-3">
               <div
+                key={externalRenderKey}
                 ref={externalContainerRef}
                 className="min-h-[78px] overflow-hidden rounded-lg border border-dashed border-slate-300 bg-white p-3"
               />
