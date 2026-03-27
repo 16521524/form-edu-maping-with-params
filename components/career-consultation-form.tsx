@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { DatePickerInput } from "@/components/ui/date-picker-input";
 import { ddMmYyyyToIso, isoToDdMmYyyy } from "@/lib/date-format";
 import { cn } from "@/lib/utils";
+import type { CaptchaSubmission } from "@/lib/captcha-shared";
 import {
   getMetadataCareer,
   getMetadataSchools,
@@ -40,7 +41,8 @@ import {
   searchSubjectCombination,
   searchPreference,
 } from "@/servers";
-import CareerSuccessModal from "./career-success-modal";
+import FormSuccessModal from "./career-success-modal";
+import { useCaptchaSubmit } from "./form-submit-captcha";
 
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
@@ -985,7 +987,7 @@ export default function CareerConsultationForm() {
     setOpenSocialIndex(null);
   };
 
-  const onSubmit = (data: FormData) =>
+  const onSubmit = (data: FormData, captcha?: CaptchaSubmission) =>
     new Promise<void>(async (resolve, reject) => {
       try {
         setSubmitError(null);
@@ -1022,6 +1024,8 @@ export default function CareerConsultationForm() {
           utm_campaign: data.utmCampaign || undefined,
           utm_campaign_qr: data.utmCampaignQr || undefined,
           utm_sales: data.utmSales || undefined,
+          captchaProvider: captcha?.provider,
+          captchaToken: captcha?.token,
           notify_vias: data.notifyVia || [],
           socials: socials
             .filter(
@@ -1049,6 +1053,17 @@ export default function CareerConsultationForm() {
         reject(err);
       }
     });
+
+  const {
+    captchaDialog,
+    isCaptchaBusy,
+    isCaptchaSubmitting,
+    submitWithCaptcha,
+  } = useCaptchaSubmit<FormData>({
+    formLabel: "Đăng ký tư vấn hướng nghiệp",
+    onSubmit,
+  });
+  const isSubmitBlocked = submitDisabled || isCaptchaBusy;
 
   if (isHydrating) {
     return (
@@ -1137,7 +1152,7 @@ export default function CareerConsultationForm() {
         </div>
 
         <form
-          onSubmit={handleSubmit(onSubmit)}
+          onSubmit={handleSubmit(submitWithCaptcha)}
           className="px-4 pb-8 pt-5 space-y-4"
         >
           <section className={panelClass}>
@@ -1760,17 +1775,24 @@ export default function CareerConsultationForm() {
           </label>
           <Button
             type="submit"
-            disabled={submitDisabled}
+            disabled={isSubmitBlocked}
             className="w-full h-11 rounded-md bg-[#1a3561] text-white text-[15px] font-semibold hover:bg-[#18335f]"
           >
-            {isSubmitting ? "Đang gửi..." : "Đăng ký"}
+            {isSubmitting || isCaptchaSubmitting ? "Đang gửi..." : "Đăng ký"}
           </Button>
           {submitError && (
             <p className="text-sm text-red-600 text-center">{submitError}</p>
           )}
         </form>
       </div>
-      {showSuccess && <CareerSuccessModal />}
+      {captchaDialog}
+      {showSuccess && (
+        <FormSuccessModal
+          title="Đăng ký thành công"
+          description="Thông tin tư vấn của bạn đã được ghi nhận. Theo dõi các kênh bên dưới để nhận thêm thông tin mới nhất từ trường."
+          onClose={() => setShowSuccess(false)}
+        />
+      )}
     </main>
   );
 }

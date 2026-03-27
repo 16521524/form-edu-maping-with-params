@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server"
+import {
+  getClientIpFromRequest,
+  verifyCaptchaSubmission,
+} from "@/lib/captcha-server"
 
 const FRAPPE_BASE_URL =
   process.env.NEXT_PUBLIC_FRAPPE_BASE_URL || "https://erpnext.aurora-tech.com"
@@ -13,13 +17,27 @@ const FRAPPE_AUTH =
 export async function POST(req: Request): Promise<NextResponse> {
   try {
     const body = await req.json()
+    const { captchaProvider, captchaToken, ...upstreamBody } = body || {}
+    const captchaCheck = await verifyCaptchaSubmission({
+      provider: captchaProvider,
+      token: captchaToken,
+      remoteIp: getClientIpFromRequest(req),
+    })
+
+    if (!captchaCheck.ok) {
+      return NextResponse.json(
+        { message: captchaCheck.message || "Xác minh captcha thất bại." },
+        { status: 400 }
+      )
+    }
+
     const upstream = await fetch(ADMISSION_ENDPOINT, {
       method: "POST",
       headers: {
         Authorization: FRAPPE_AUTH,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(upstreamBody),
     })
 
     const data = await upstream.json()

@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { DatePickerInput } from "@/components/ui/date-picker-input";
 import { ddMmYyyyToIso, isoToDdMmYyyy } from "@/lib/date-format";
 import { cn } from "@/lib/utils";
+import type { CaptchaSubmission } from "@/lib/captcha-shared";
 import {
   ICareerMetadataSchool,
   getMetadataCareer,
@@ -35,7 +36,8 @@ import {
   getMetadataWards,
   postAdmissionApplication,
 } from "@/servers";
-import CareerSuccessModal from "./career-success-modal";
+import FormSuccessModal from "./career-success-modal";
+import { useCaptchaSubmit } from "./form-submit-captcha";
 
 type FormData = {
   fullName: string;
@@ -857,7 +859,7 @@ export default function AdmissionApplicationForm() {
     router.replace(target, { scroll: false });
   }, [formData, router, pathname]);
 
-  const onSubmit = (data: FormData) =>
+  const onSubmit = (data: FormData, captcha?: CaptchaSubmission) =>
     new Promise<void>(async (resolve, reject) => {
       try {
         setShowSuccess(false);
@@ -890,6 +892,8 @@ export default function AdmissionApplicationForm() {
             data.receivingHouse,
             data.receivingStreet,
           ),
+          captchaProvider: captcha?.provider,
+          captchaToken: captcha?.token,
         };
         await postAdmissionApplication(payload);
         setShowSuccess(true);
@@ -905,6 +909,17 @@ export default function AdmissionApplicationForm() {
         reject(err);
       }
     });
+
+  const {
+    captchaDialog,
+    isCaptchaBusy,
+    isCaptchaSubmitting,
+    submitWithCaptcha,
+  } = useCaptchaSubmit<FormData>({
+    formLabel: "Đăng ký hồ sơ dự tuyển",
+    onSubmit,
+  });
+  const isSubmitBlocked = submitDisabled || isCaptchaBusy;
 
   if (isHydrating) {
     return (
@@ -976,7 +991,7 @@ export default function AdmissionApplicationForm() {
           </div>
 
           <form
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={handleSubmit(submitWithCaptcha)}
             className="space-y-6 px-1 sm:px-2"
           >
             <SectionCard title="Thông tin thí sinh">
@@ -1259,10 +1274,10 @@ export default function AdmissionApplicationForm() {
             </label>
             <Button
               type="submit"
-              disabled={submitDisabled}
+              disabled={isSubmitBlocked}
               className="w-full h-11 rounded-md bg-[#1a3561] text-white text-[15px] font-semibold hover:bg-[#18335f]"
             >
-              {isSubmitting ? "Đang gửi..." : "Nộp đơn"}
+              {isSubmitting || isCaptchaSubmitting ? "Đang gửi..." : "Nộp đơn"}
             </Button>
             {submitError && (
               <p className="text-sm text-red-600 text-center">{submitError}</p>
@@ -1270,7 +1285,14 @@ export default function AdmissionApplicationForm() {
           </form>
         </div>
       </div>
-      {showSuccess && <CareerSuccessModal />}
+      {captchaDialog}
+      {showSuccess && (
+        <FormSuccessModal
+          title="Nộp hồ sơ thành công"
+          description="Hồ sơ của bạn đã được ghi nhận. Theo dõi các kênh bên dưới để nhận thêm thông tin tuyển sinh mới nhất."
+          onClose={() => setShowSuccess(false)}
+        />
+      )}
     </main>
   );
 }

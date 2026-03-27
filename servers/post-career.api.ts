@@ -19,6 +19,8 @@ export type CareerLeadPayload = {
   utm_campaign?: string
   utm_campaign_qr?: string
   utm_sales?: string
+  captchaProvider?: string
+  captchaToken?: string
 }
 
 export type CareerLeadResponse = {

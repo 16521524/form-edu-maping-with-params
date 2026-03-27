@@ -17,6 +17,8 @@ export type AdmissionApplicationPayload = {
   receiving_province: string
   receiving_ward: string
   receiving_street_address: string
+  captchaProvider?: string
+  captchaToken?: string
 }
 
 export type AdmissionApplicationResponse = {

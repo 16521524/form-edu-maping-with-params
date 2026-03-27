@@ -18,6 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Calendar, User, CalendarDays, Target, CheckCircle, Loader2 } from "lucide-react"
 import { getMetadataCareer } from "@/servers"
+import { useCaptchaSubmit } from "@/components/form-submit-captcha"
+import FormSuccessModal from "@/components/career-success-modal"
 
 interface FormData {
   // 1. Personal info
@@ -182,6 +184,7 @@ export default function EventRegistrationForm() {
   const skipNextSync = useRef(false)
   const hydratedSnapshot = useRef<FormData | null>(null)
   const [isHydrating, setIsHydrating] = useState(true)
+  const [showSuccess, setShowSuccess] = useState(false)
   const [metaOptions, setMetaOptions] = useState<{
     genders: OptionItem[]
     grades: OptionItem[]
@@ -485,13 +488,19 @@ export default function EventRegistrationForm() {
 
   const onSubmit = (data: FormData) =>
     new Promise<void>((resolve) => {
+      setShowSuccess(false)
       const payload = { ...data, birthDate: ddMmYyyyToIso(data.birthDate) || data.birthDate }
       console.log("Form submitted:", payload)
       setTimeout(() => {
-        alert("Đăng ký thành công!")
+        setShowSuccess(true)
         resolve()
       }, 600)
     })
+
+  const { captchaDialog, isCaptchaBusy, isCaptchaSubmitting, submitWithCaptcha } = useCaptchaSubmit<FormData>({
+    formLabel: "Đăng ký sự kiện",
+    onSubmit,
+  })
 
   if (isHydrating) {
     return (
@@ -525,7 +534,7 @@ export default function EventRegistrationForm() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(submitWithCaptcha)} className="space-y-6">
           {/* Section 1: Thông tin cá nhân */}
           <Card className={isPersonalSectionDisabled ? "opacity-60" : ""} aria-disabled={isPersonalSectionDisabled}>
             <CardHeader>
@@ -893,9 +902,9 @@ export default function EventRegistrationForm() {
           <Button
             type="submit"
             className="w-full h-12 text-lg bg-green-600 hover:bg-green-700"
-            disabled={!isSubmitEnabled || isSubmitting}
+            disabled={!isSubmitEnabled || isSubmitting || isCaptchaBusy}
           >
-            {isSubmitting ? (
+            {isSubmitting || isCaptchaSubmitting ? (
               <span className="inline-flex items-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin" />
                 Đang gửi...
@@ -905,6 +914,10 @@ export default function EventRegistrationForm() {
             )}
           </Button>
         </form>
+        {captchaDialog}
+        {showSuccess && (
+          <FormSuccessModal onClose={() => setShowSuccess(false)} />
+        )}
       </div>
     </main>
   )

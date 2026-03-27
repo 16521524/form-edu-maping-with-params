@@ -17,6 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { GraduationCap, User, BookOpen, Target, CheckCircle, Loader2 } from "lucide-react"
 import { getMetadataCareer } from "@/servers"
+import { useCaptchaSubmit } from "@/components/form-submit-captcha"
+import FormSuccessModal from "@/components/career-success-modal"
 
 interface FormData {
   // 1. Personal info
@@ -120,6 +122,7 @@ export default function EnrollmentForm() {
   const skipNextSync = useRef(false)
   const hydratedSnapshot = useRef<FormData | null>(null)
   const [isHydrating, setIsHydrating] = useState(true)
+  const [showSuccess, setShowSuccess] = useState(false)
   const [metaOptions, setMetaOptions] = useState<{
     genders: OptionItem[]
     grades: OptionItem[]
@@ -405,13 +408,19 @@ export default function EnrollmentForm() {
 
   const onSubmit = (data: FormData) =>
     new Promise<void>((resolve) => {
+      setShowSuccess(false)
       const payload = { ...data, birthDate: ddMmYyyyToIso(data.birthDate) || data.birthDate }
       console.log("Form submitted:", payload)
       setTimeout(() => {
-        alert("Đăng ký thành công!")
+        setShowSuccess(true)
         resolve()
       }, 600)
     })
+
+  const { captchaDialog, isCaptchaBusy, isCaptchaSubmitting, submitWithCaptcha } = useCaptchaSubmit<FormData>({
+    formLabel: "Đăng ký nhập học",
+    onSubmit,
+  })
 
   if (isHydrating) {
     return (
@@ -435,7 +444,7 @@ export default function EnrollmentForm() {
           <p className="text-muted-foreground mt-2">Điền đầy đủ thông tin để hoàn tất đăng ký</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(submitWithCaptcha)} className="space-y-6">
           {/* Section 1: Thông tin cá nhân */}
           <Card>
             <CardHeader>
@@ -656,9 +665,9 @@ export default function EnrollmentForm() {
         <Button
           type="submit"
           className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700"
-          disabled={!isSubmitEnabled || isSubmitting}
+          disabled={!isSubmitEnabled || isSubmitting || isCaptchaBusy}
         >
-          {isSubmitting ? (
+          {isSubmitting || isCaptchaSubmitting ? (
             <span className="inline-flex items-center gap-2">
               <Loader2 className="h-5 w-5 animate-spin" />
               Đang gửi...
@@ -668,6 +677,10 @@ export default function EnrollmentForm() {
           )}
         </Button>
         </form>
+        {captchaDialog}
+        {showSuccess && (
+          <FormSuccessModal onClose={() => setShowSuccess(false)} />
+        )}
       </div>
     </main>
   )
