@@ -47,6 +47,8 @@ type FormData = {
   studentPhone: string;
   parentPhone: string;
   email: string;
+  major: string;
+  specialization: string;
   permanentProvince: string;
   permanentWard: string;
   permanentStreet: string;
@@ -71,6 +73,7 @@ type OptionItem = {
   text_color?: string;
   background_color?: string;
   sub_title?: string;
+  type?: string;
 };
 
 const inter = Inter({
@@ -85,6 +88,7 @@ const fallbackGenders: OptionItem[] = [
   { value: "Other", display: "Khác" },
 ];
 const fallbackSchools: OptionItem[] = [];
+const fallbackPreferences: OptionItem[] = [];
 const admissionBannerSrc = "/assets/admission/banner-2026.jpg";
 
 const initialFormData: FormData = {
@@ -95,6 +99,8 @@ const initialFormData: FormData = {
   studentPhone: "",
   parentPhone: "",
   email: "",
+  major: "",
+  specialization: "",
   permanentProvince: "",
   permanentWard: "",
   permanentStreet: "",
@@ -149,6 +155,7 @@ function mapDataOptions(items: any[] | undefined): OptionItem[] {
         text_color: item.text_color,
         background_color: item.background_color,
         sub_title: item.sub_title ?? "",
+        type: item.type,
       };
     })
     .filter(Boolean) as OptionItem[];
@@ -169,6 +176,7 @@ const toOptionItem = (item: any): OptionItem | null => {
     text_color: item.text_color,
     background_color: item.background_color,
     sub_title: sub_title ? String(sub_title) : undefined,
+    type: item.type,
   };
 };
 
@@ -200,6 +208,48 @@ const buildStreetAddress = (house?: string, street?: string) => {
   return parts.join(" ").trim();
 };
 
+const getPreferenceKind = (option?: OptionItem) => {
+  if (!option) return "major";
+  const normalizedType = normalizeText(option.type || "");
+  const normalizedDisplay = normalizeText(option.display);
+  if (
+    normalizedType === "specialization" ||
+    normalizedDisplay.includes("chuyen nganh") ||
+    option.value.includes("-")
+  ) {
+    return "specialization";
+  }
+  return "major";
+};
+
+const isMajorOption = (option: OptionItem) => getPreferenceKind(option) === "major";
+
+const isSpecializationOption = (option: OptionItem) =>
+  getPreferenceKind(option) === "specialization";
+
+const getMajorValueFromSpecialization = (value?: string) => {
+  if (!value) return "";
+  const [major] = value.split("-");
+  return major || "";
+};
+
+const specializationBelongsToMajor = (
+  specializationValue: string | undefined,
+  majorValue: string | undefined,
+) => {
+  if (!specializationValue || !majorValue) return false;
+  return getMajorValueFromSpecialization(specializationValue) === majorValue;
+};
+
+const inferMajorFromSpecialization = (
+  specializationValue: string | undefined,
+  majorOptions: OptionItem[],
+) => {
+  const inferredMajor = getMajorValueFromSpecialization(specializationValue);
+  if (!inferredMajor) return "";
+  return majorOptions.find((option) => option.value === inferredMajor)?.value || "";
+};
+
 const buildQueryString = (data: FormData) => {
   const params = new URLSearchParams();
   const addParam = (key: string, value?: string | boolean) => {
@@ -222,6 +272,8 @@ const buildQueryString = (data: FormData) => {
   addParam("studentPhone", data.studentPhone);
   addParam("parentPhone", data.parentPhone);
   addParam("email", data.email);
+  addParam("major", data.major);
+  addParam("specialization", data.specialization);
   addParam("permanentProvince", data.permanentProvince);
   addParam("permanentWard", data.permanentWard);
   addParam("permanentStreet", data.permanentStreet);
@@ -262,9 +314,11 @@ export default function AdmissionApplicationForm() {
   const [metaReady, setMetaReady] = useState(false);
   const [metaOptions, setMetaOptions] = useState<{
     genders: OptionItem[];
+    preferences: OptionItem[];
     provinces: OptionItem[];
   }>({
     genders: [],
+    preferences: [],
     provinces: [],
   });
   const [wardOptionsPermanent, setWardOptionsPermanent] = useState<
@@ -299,10 +353,28 @@ export default function AdmissionApplicationForm() {
 
   const genderOptions =
     metaOptions.genders.length > 0 ? metaOptions.genders : fallbackGenders;
+  const preferenceOptions =
+    metaOptions.preferences.length > 0
+      ? metaOptions.preferences
+      : fallbackPreferences;
   const provinceOptions =
     metaOptions.provinces.length > 0
       ? metaOptions.provinces
       : fallbackProvinces;
+  const majorOptions = useMemo(
+    () => preferenceOptions.filter(isMajorOption),
+    [preferenceOptions],
+  );
+  const specializationOptions = useMemo(
+    () => preferenceOptions.filter(isSpecializationOption),
+    [preferenceOptions],
+  );
+  const filteredSpecializationOptions = useMemo(() => {
+    if (!formData.major) return [];
+    return specializationOptions.filter((option) =>
+      specializationBelongsToMajor(option.value, formData.major),
+    );
+  }, [formData.major, specializationOptions]);
   const permanentWardOptions = wardOptionsPermanent;
   const receivingWardOptions = wardOptionsReceiving;
   const grade12SchoolOptions =
@@ -316,6 +388,7 @@ export default function AdmissionApplicationForm() {
     "studentPhone",
     "parentPhone",
     "email",
+    "major",
     "permanentProvince",
     "permanentWard",
     "permanentStreet",
@@ -356,12 +429,17 @@ export default function AdmissionApplicationForm() {
         if (!active) return;
         const data = json?.data ?? {};
         const genders = normalizeOptions(data.genders, fallbackGenders);
+        const preferences = normalizeOptions(
+          data.preferences,
+          fallbackPreferences,
+        );
         const provinces = normalizeOptions(data.provinces, fallbackProvinces);
-        setMetaOptions({ genders, provinces });
+        setMetaOptions({ genders, preferences, provinces });
       } catch (err) {
         console.log(err);
         setMetaOptions({
           genders: fallbackGenders,
+          preferences: fallbackPreferences,
           provinces: fallbackProvinces,
         });
       } finally {
@@ -373,6 +451,36 @@ export default function AdmissionApplicationForm() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!formData.specialization) return;
+    const inferredMajor = inferMajorFromSpecialization(
+      formData.specialization,
+      majorOptions,
+    );
+    if (inferredMajor && inferredMajor !== formData.major) {
+      skipNextSync.current = true;
+      setValue("major", inferredMajor, { shouldDirty: true });
+    }
+  }, [formData.major, formData.specialization, majorOptions, setValue]);
+
+  useEffect(() => {
+    if (!formData.major) {
+      if (formData.specialization) {
+        skipNextSync.current = true;
+        setValue("specialization", "", { shouldDirty: true });
+      }
+      return;
+    }
+
+    if (
+      formData.specialization &&
+      !specializationBelongsToMajor(formData.specialization, formData.major)
+    ) {
+      skipNextSync.current = true;
+      setValue("specialization", "", { shouldDirty: true });
+    }
+  }, [formData.major, formData.specialization, setValue]);
 
   useEffect(() => {
     if (!formData.permanentProvince) {
@@ -655,6 +763,8 @@ export default function AdmissionApplicationForm() {
       studentPhone: getVal("studentPhone"),
       parentPhone: getVal("parentPhone"),
       email: getVal("email"),
+      major: getVal("major"),
+      specialization: getVal("specialization"),
       permanentProvince: getVal("permanentProvince"),
       permanentWard: getVal("permanentWard"),
       permanentStreet: getVal("permanentStreet"),
@@ -680,6 +790,11 @@ export default function AdmissionApplicationForm() {
     }
 
     const normalizedGender = coerceToValue(mappedData.gender, genderOptions);
+    const normalizedMajor = coerceToValue(mappedData.major, majorOptions);
+    const normalizedSpecialization = coerceToValue(
+      mappedData.specialization,
+      specializationOptions,
+    );
     const normalizedPermanentProvince = coerceToValue(
       mappedData.permanentProvince,
       provinceOptions,
@@ -706,6 +821,8 @@ export default function AdmissionApplicationForm() {
     );
 
     const allowedGenders = genderOptions.map((o) => o.value);
+    const allowedMajors = majorOptions.map((o) => o.value);
+    const allowedSpecializations = specializationOptions.map((o) => o.value);
     const allowedProvinces = provinceOptions.map((o) => o.value);
     const allowedPermanentWards = permanentWardOptions.map((o) => o.value);
     const allowedReceivingWards = receivingWardOptions.map((o) => o.value);
@@ -726,6 +843,28 @@ export default function AdmissionApplicationForm() {
     const prefer = (value: string | undefined, fallback: string | undefined) =>
       value === undefined ? (fallback ?? "") : value;
 
+    const inferredMajorFromSpecialization = inferMajorFromSpecialization(
+      normalizedSpecialization || mappedData.specialization,
+      majorOptions,
+    );
+    const resolvedMajor = ensureOption(
+      inferredMajorFromSpecialization || normalizedMajor,
+      allowedMajors,
+      initialFormData.major,
+    );
+    const resolvedSpecialization = (() => {
+      const candidate = ensureOption(
+        normalizedSpecialization,
+        allowedSpecializations,
+        initialFormData.specialization,
+      );
+      if (!candidate) return "";
+      if (!resolvedMajor) return candidate;
+      return specializationBelongsToMajor(candidate, resolvedMajor)
+        ? candidate
+        : "";
+    })();
+
     const hydratedData: FormData = {
       fullName: prefer(mappedData.fullName, initialFormData.fullName),
       gender: ensureOption(
@@ -743,6 +882,8 @@ export default function AdmissionApplicationForm() {
       ),
       parentPhone: prefer(mappedData.parentPhone, initialFormData.parentPhone),
       email: prefer(mappedData.email, initialFormData.email),
+      major: resolvedMajor,
+      specialization: resolvedSpecialization,
       permanentProvince: ensureOption(
         normalizedPermanentProvince,
         allowedProvinces,
@@ -834,6 +975,8 @@ export default function AdmissionApplicationForm() {
     metaReady,
     genderOptions,
     provinceOptions,
+    majorOptions,
+    specializationOptions,
     permanentWardOptions,
     receivingWardOptions,
     grade12SchoolOptions,
@@ -868,8 +1011,18 @@ export default function AdmissionApplicationForm() {
         const rawDateOfBirth = ddMmYyyyToIso(data.birthDate);
         const dateOfBirth =
           rawDateOfBirth && rawDateOfBirth.trim() ? rawDateOfBirth : null;
+        const preferences =
+          data.major && data.major.trim()
+            ? [
+                {
+                  major: data.major,
+                  specialization: data.specialization || undefined,
+                },
+              ]
+            : [];
         const payload = {
-          conversation_id: data.sectionId || undefined,
+          conversation_id:
+            data.conversationId || data.sectionId || undefined,
           full_name: data.fullName,
           national_id: data.nationalId,
           parent_phone: data.parentPhone,
@@ -893,6 +1046,7 @@ export default function AdmissionApplicationForm() {
             data.receivingHouse,
             data.receivingStreet,
           ),
+          preferences,
           captchaProvider: captcha?.provider,
           captchaToken: captcha?.token,
         };
@@ -1183,6 +1337,36 @@ export default function AdmissionApplicationForm() {
               </div>
             </SectionCard>
 
+            <SectionCard title="Ngành đăng ký">
+              <div className="grid gap-4 md:grid-cols-2">
+                <SearchSelectField
+                  label="Ngành"
+                  name="major"
+                  control={control}
+                  required
+                  placeholder="Chọn ngành"
+                  options={majorOptions}
+                />
+                <div className="space-y-2">
+                  <SearchSelectField
+                    label="Chuyên ngành"
+                    name="specialization"
+                    control={control}
+                    placeholder={
+                      formData.major
+                        ? "Chọn chuyên ngành"
+                        : "Chọn ngành trước"
+                    }
+                    options={filteredSpecializationOptions}
+                    disabled={!formData.major}
+                  />
+                  <p className="text-xs text-slate-500">
+                    {/* Có thể bỏ trống nếu ngành không chia chuyên ngành. */}
+                  </p>
+                </div>
+              </div>
+            </SectionCard>
+
             <SectionCard title="Địa chỉ nhận giấy báo">
               <div className="space-y-3">
                 <label className="flex items-start gap-3 text-sm text-slate-800">
@@ -1436,11 +1620,12 @@ function SearchSelectField({
           autoComplete="off"
           className={cn(
             selectClass,
-            "appearance-none pr-10 text-left",
+            "appearance-none text-left",
+            value && !disabled && !loading ? "pr-16" : "pr-10",
             (disabled || loading) && "bg-slate-100",
           )}
         />
-        {/* {value && !disabled && !loading && (
+        {value && !disabled && !loading && (
           <button
             type="button"
             className="absolute right-9 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
@@ -1452,7 +1637,7 @@ function SearchSelectField({
           >
             ×
           </button>
-        )} */}
+        )}
         {loading ? (
           <Loader2 className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#1f3f77] animate-spin" />
         ) : (

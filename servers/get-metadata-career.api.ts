@@ -3,6 +3,7 @@ export type MetadataOption = {
   display?: string
   text_color?: string
   background_color?: string
+  type?: string
 }
 
 export type CareerMetadataResponse = {

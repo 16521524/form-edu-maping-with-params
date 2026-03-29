@@ -10,12 +10,20 @@ const FRAPPE_AUTH =
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const text = searchParams.get("text") || "";
+  const major = searchParams.get("major") || "";
 
   if (!text) {
     return NextResponse.json({ data: [], message: "missing text" });
   }
 
-  const url = `${FRAPPE_BASE_URL}/api/method/search.search_preference?text=${encodeURIComponent(text)}`;
+  const upstreamParams = new URLSearchParams({
+    text,
+  });
+  if (major) {
+    upstreamParams.set("major", major);
+  }
+
+  const url = `${FRAPPE_BASE_URL}/api/method/search.search_preference?${upstreamParams.toString()}`;
   const res = await fetch(url, {
     headers: {
       Authorization: FRAPPE_AUTH,
