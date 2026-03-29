@@ -85,6 +85,7 @@ const fallbackGenders: OptionItem[] = [
   { value: "Other", display: "Khác" },
 ];
 const fallbackSchools: OptionItem[] = [];
+const admissionBannerSrc = "/assets/admission/banner-2026.jpg";
 
 const initialFormData: FormData = {
   fullName: "",
@@ -940,7 +941,7 @@ export default function AdmissionApplicationForm() {
   return (
     <main
       className={cn(
-        "min-h-screen bg-[#eef3f8] flex justify-center px-2",
+        "min-h-screen bg-[#eef3f8]",
         inter.className,
       )}
     >
@@ -967,9 +968,20 @@ export default function AdmissionApplicationForm() {
         }
       `}</style>
       <div className="admission-form w-full pb-10">
-        <div className="mx-auto w-full max-w-5xl">
+        <div className="w-full overflow-hidden shadow-[0_18px_40px_rgba(26,46,89,0.16)]">
+          <Image
+            src={admissionBannerSrc}
+            alt="Banner tuyển sinh Đại học Gia Định 2026"
+            width={1600}
+            height={630}
+            priority
+            sizes="100vw"
+            className="h-auto w-full object-cover"
+          />
+        </div>
+        <div className="mx-auto w-full max-w-5xl px-2">
           <div className="flex flex-col items-center gap-3 pb-5 text-center">
-            <h1 className="text-2xl md:text-3xl font-bold text-[#1a2e59] pt-5">
+            <h1 className="text-2xl md:text-3xl font-bold text-[#1a2e59] py-11">
               Đăng ký thông tin hồ sơ dự tuyển
             </h1>
             <div className="w-full">
