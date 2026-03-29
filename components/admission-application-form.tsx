@@ -939,12 +939,7 @@ export default function AdmissionApplicationForm() {
   }
 
   return (
-    <main
-      className={cn(
-        "min-h-screen bg-[#eef3f8]",
-        inter.className,
-      )}
-    >
+    <main className={cn("min-h-screen bg-[#eef3f8]", inter.className)}>
       <style jsx global>{`
         .admission-form input,
         .admission-form select,
@@ -981,7 +976,7 @@ export default function AdmissionApplicationForm() {
         </div>
         <div className="mx-auto w-full max-w-5xl px-2">
           <div className="flex flex-col items-center gap-3 pb-5 text-center">
-            <h1 className="text-2xl md:text-3xl font-bold text-[#1a2e59] py-11">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1a2e59] py-4 sm:py-6 lg:py-11">
               Đăng ký thông tin hồ sơ dự tuyển
             </h1>
             <div className="w-full">
