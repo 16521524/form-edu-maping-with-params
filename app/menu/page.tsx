@@ -29,16 +29,18 @@ const careerSampleData = {
   aspirations: (careerDefaults.aspirations || []).join(","),
   confirmAccuracy: "true",
 }
-const careerParams = new URLSearchParams(careerSampleData as Record<string, string>).toString()
+const careerParams = new URLSearchParams(careerSampleData as unknown as Record<string, string>).toString()
 
 const admissionSampleData = {
   fullName: "Hồ Văn Phúc",
-  gender: "Nam",
+  gender: "Male",
   birthDate: "21/08/2006",
   nationalId: "079203001234",
   studentPhone: "0987654321",
   parentPhone: "0909123456",
   email: "phuc.hovan@example.com",
+  majors: "7380101,7380101",
+  specializations: "7380101-TP",
   permanentProvince: "Thành phố Hồ Chí Minh",
   permanentWard: "32248",
   permanentStreet: "Nguyễn Văn Cừ",
@@ -170,7 +172,7 @@ export default function MenuPage() {
 
               <p className="font-semibold mt-4 mb-2 font-sans">Form Đăng ký hồ sơ dự tuyển:</p>
               <code className="text-xs break-all">
-                ?fullName=...&gender=...&birthDate=...&nationalId=...&studentPhone=...&parentPhone=...&email=...&permanentProvince=...&permanentWard=...&permanentStreet=...&permanentHouse=...&grade12Province=...&grade12School=...&grade12Class=...&graduationYear=...&receivingProvince=...&receivingWard=...&receivingStreet=...&receivingHouse=...&applySameAddress=true&confirmAccuracy=true&conversationId=...&section_id=...
+                ?fullName=...&gender=...&birthDate=...&nationalId=...&studentPhone=...&parentPhone=...&email=...&majors=7380101,7380101&specializations=7380101-TP&permanentProvince=...&permanentWard=...&permanentStreet=...&permanentHouse=...&grade12Province=...&grade12School=...&grade12Class=...&graduationYear=...&receivingProvince=...&receivingWard=...&receivingStreet=...&receivingHouse=...&applySameAddress=true&confirmAccuracy=true&conversationId=...&section_id=...
               </code>
             </div>
           </CardContent>

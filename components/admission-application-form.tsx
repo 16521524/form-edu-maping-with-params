@@ -20,7 +20,7 @@ import {
   type UseFormRegisterReturn,
 } from "react-hook-form";
 import { Inter } from "next/font/google";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown, Loader2, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,6 +39,11 @@ import {
 import FormSuccessModal from "./career-success-modal";
 import { useCaptchaSubmit } from "./form-submit-captcha";
 
+type AdmissionPreference = {
+  major: string;
+  specialization: string;
+};
+
 type FormData = {
   fullName: string;
   gender: string;
@@ -47,8 +52,7 @@ type FormData = {
   studentPhone: string;
   parentPhone: string;
   email: string;
-  major: string;
-  specialization: string;
+  preferences: AdmissionPreference[];
   permanentProvince: string;
   permanentWard: string;
   permanentStreet: string;
@@ -90,6 +94,10 @@ const fallbackGenders: OptionItem[] = [
 const fallbackSchools: OptionItem[] = [];
 const fallbackPreferences: OptionItem[] = [];
 const admissionBannerSrc = "/assets/admission/banner-2026.jpg";
+const createEmptyPreference = (): AdmissionPreference => ({
+  major: "",
+  specialization: "",
+});
 
 const initialFormData: FormData = {
   fullName: "",
@@ -99,8 +107,7 @@ const initialFormData: FormData = {
   studentPhone: "",
   parentPhone: "",
   email: "",
-  major: "",
-  specialization: "",
+  preferences: [createEmptyPreference()],
   permanentProvince: "",
   permanentWard: "",
   permanentStreet: "",
@@ -250,6 +257,22 @@ const inferMajorFromSpecialization = (
   return majorOptions.find((option) => option.value === inferredMajor)?.value || "";
 };
 
+const splitCommaValues = (value?: string) => {
+  if (value === undefined) return undefined;
+  return value.split(",").map((item) => item.trim());
+};
+
+const serializeCommaValues = (values: string[]) => {
+  let end = values.length;
+  while (end > 0 && !values[end - 1]?.trim()) {
+    end -= 1;
+  }
+  return values
+    .slice(0, end)
+    .map((value) => value.trim())
+    .join(",");
+};
+
 const buildQueryString = (data: FormData) => {
   const params = new URLSearchParams();
   const addParam = (key: string, value?: string | boolean) => {
@@ -272,8 +295,14 @@ const buildQueryString = (data: FormData) => {
   addParam("studentPhone", data.studentPhone);
   addParam("parentPhone", data.parentPhone);
   addParam("email", data.email);
-  addParam("major", data.major);
-  addParam("specialization", data.specialization);
+  const majors = serializeCommaValues(
+    (data.preferences || []).map((pref) => pref.major),
+  );
+  const specializations = serializeCommaValues(
+    (data.preferences || []).map((pref) => pref.specialization),
+  );
+  if (majors) addParam("majors", majors);
+  if (specializations) addParam("specializations", specializations);
   addParam("permanentProvince", data.permanentProvince);
   addParam("permanentWard", data.permanentWard);
   addParam("permanentStreet", data.permanentStreet);
@@ -369,12 +398,22 @@ export default function AdmissionApplicationForm() {
     () => preferenceOptions.filter(isSpecializationOption),
     [preferenceOptions],
   );
-  const filteredSpecializationOptions = useMemo(() => {
-    if (!formData.major) return [];
+  const getSpecializationOptionsForMajor = (majorValue?: string) => {
+    if (!majorValue) return [];
     return specializationOptions.filter((option) =>
-      specializationBelongsToMajor(option.value, formData.major),
+      specializationBelongsToMajor(option.value, majorValue),
     );
-  }, [formData.major, specializationOptions]);
+  };
+  const preferenceValues = useMemo<AdmissionPreference[]>(() => {
+    const source =
+      formData.preferences && formData.preferences.length > 0
+        ? formData.preferences
+        : initialFormData.preferences;
+    return source.map((pref) => ({
+      major: pref?.major || "",
+      specialization: pref?.specialization || "",
+    }));
+  }, [formData.preferences]);
   const permanentWardOptions = wardOptionsPermanent;
   const receivingWardOptions = wardOptionsReceiving;
   const grade12SchoolOptions =
@@ -388,7 +427,6 @@ export default function AdmissionApplicationForm() {
     "studentPhone",
     "parentPhone",
     "email",
-    "major",
     "permanentProvince",
     "permanentWard",
     "permanentStreet",
@@ -400,13 +438,16 @@ export default function AdmissionApplicationForm() {
     "receivingWard",
     "receivingStreet",
   ];
+  const hasSelectedPreference = preferenceValues.some((pref) =>
+    pref.major.trim(),
+  );
 
   const requiredFieldsFilled = requiredFields.every((field) => {
     const value = formData[field];
     if (typeof value === "string") return value.trim() !== "";
     if (Array.isArray(value)) return value.length > 0;
     return Boolean(value);
-  });
+  }) && hasSelectedPreference;
 
   const submitDisabled =
     isSubmitting || !confirmAccuracyField.value || !requiredFieldsFilled;
@@ -452,35 +493,53 @@ export default function AdmissionApplicationForm() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!formData.specialization) return;
+  const setPreferenceRows = (next: AdmissionPreference[]) => {
+    skipNextSync.current = true;
+    setValue(
+      "preferences",
+      next.length > 0 ? next : [createEmptyPreference()],
+      { shouldDirty: true, shouldTouch: true },
+    );
+  };
+
+  const handleAddPreferenceRow = () => {
+    setPreferenceRows([...preferenceValues, createEmptyPreference()]);
+  };
+
+  const handleRemovePreferenceRow = (index: number) => {
+    setPreferenceRows(preferenceValues.filter((_, idx) => idx !== index));
+  };
+
+  const handleMajorChange = (index: number, majorValue: string) => {
+    const next = [...preferenceValues];
+    const current = next[index] || createEmptyPreference();
+    next[index] = {
+      major: majorValue,
+      specialization:
+        current.specialization &&
+        specializationBelongsToMajor(current.specialization, majorValue)
+          ? current.specialization
+          : "",
+    };
+    setPreferenceRows(next);
+  };
+
+  const handleSpecializationChange = (
+    index: number,
+    specializationValue: string,
+  ) => {
+    const next = [...preferenceValues];
+    const current = next[index] || createEmptyPreference();
     const inferredMajor = inferMajorFromSpecialization(
-      formData.specialization,
+      specializationValue,
       majorOptions,
     );
-    if (inferredMajor && inferredMajor !== formData.major) {
-      skipNextSync.current = true;
-      setValue("major", inferredMajor, { shouldDirty: true });
-    }
-  }, [formData.major, formData.specialization, majorOptions, setValue]);
-
-  useEffect(() => {
-    if (!formData.major) {
-      if (formData.specialization) {
-        skipNextSync.current = true;
-        setValue("specialization", "", { shouldDirty: true });
-      }
-      return;
-    }
-
-    if (
-      formData.specialization &&
-      !specializationBelongsToMajor(formData.specialization, formData.major)
-    ) {
-      skipNextSync.current = true;
-      setValue("specialization", "", { shouldDirty: true });
-    }
-  }, [formData.major, formData.specialization, setValue]);
+    next[index] = {
+      major: current.major || inferredMajor,
+      specialization: specializationValue,
+    };
+    setPreferenceRows(next);
+  };
 
   useEffect(() => {
     if (!formData.permanentProvince) {
@@ -754,6 +813,36 @@ export default function AdmissionApplicationForm() {
       }
       return fallback;
     };
+    const getPreferencesParam = () => {
+      const majors = splitCommaValues(getVal("majors"));
+      const specializations = splitCommaValues(getVal("specializations"));
+      if (majors || specializations) {
+        const length = Math.max(
+          majors?.length ?? 0,
+          specializations?.length ?? 0,
+        );
+        const preferences = Array.from({ length }, (_, idx) => ({
+          major: majors?.[idx] ?? "",
+          specialization: specializations?.[idx] ?? "",
+        })).filter((pref) => pref.major || pref.specialization);
+        return preferences.length > 0
+          ? preferences
+          : [createEmptyPreference()];
+      }
+
+      const legacyMajor = getVal("major");
+      const legacySpecialization = getVal("specialization");
+      if (legacyMajor !== undefined || legacySpecialization !== undefined) {
+        return [
+          {
+            major: legacyMajor || "",
+            specialization: legacySpecialization || "",
+          },
+        ];
+      }
+
+      return undefined;
+    };
 
     const mappedData: Partial<FormData> = {
       fullName: getVal("fullName"),
@@ -763,8 +852,7 @@ export default function AdmissionApplicationForm() {
       studentPhone: getVal("studentPhone"),
       parentPhone: getVal("parentPhone"),
       email: getVal("email"),
-      major: getVal("major"),
-      specialization: getVal("specialization"),
+      preferences: getPreferencesParam(),
       permanentProvince: getVal("permanentProvince"),
       permanentWard: getVal("permanentWard"),
       permanentStreet: getVal("permanentStreet"),
@@ -790,11 +878,6 @@ export default function AdmissionApplicationForm() {
     }
 
     const normalizedGender = coerceToValue(mappedData.gender, genderOptions);
-    const normalizedMajor = coerceToValue(mappedData.major, majorOptions);
-    const normalizedSpecialization = coerceToValue(
-      mappedData.specialization,
-      specializationOptions,
-    );
     const normalizedPermanentProvince = coerceToValue(
       mappedData.permanentProvince,
       provinceOptions,
@@ -842,28 +925,49 @@ export default function AdmissionApplicationForm() {
 
     const prefer = (value: string | undefined, fallback: string | undefined) =>
       value === undefined ? (fallback ?? "") : value;
+    const normalizedPreferences = (
+      mappedData.preferences && mappedData.preferences.length > 0
+        ? mappedData.preferences
+        : initialFormData.preferences
+    )
+      .map((pref) => {
+        const normalizedMajor = coerceToValue(pref.major, majorOptions);
+        const normalizedSpecialization = coerceToValue(
+          pref.specialization,
+          specializationOptions,
+        );
+        const inferredMajor = inferMajorFromSpecialization(
+          normalizedSpecialization || pref.specialization,
+          majorOptions,
+        );
+        const resolvedMajor = ensureOption(
+          inferredMajor || normalizedMajor,
+          allowedMajors,
+          "",
+        );
+        const resolvedSpecialization = (() => {
+          const candidate = ensureOption(
+            normalizedSpecialization,
+            allowedSpecializations,
+            "",
+          );
+          if (!candidate) return "";
+          if (!resolvedMajor) return candidate;
+          return specializationBelongsToMajor(candidate, resolvedMajor)
+            ? candidate
+            : "";
+        })();
 
-    const inferredMajorFromSpecialization = inferMajorFromSpecialization(
-      normalizedSpecialization || mappedData.specialization,
-      majorOptions,
-    );
-    const resolvedMajor = ensureOption(
-      inferredMajorFromSpecialization || normalizedMajor,
-      allowedMajors,
-      initialFormData.major,
-    );
-    const resolvedSpecialization = (() => {
-      const candidate = ensureOption(
-        normalizedSpecialization,
-        allowedSpecializations,
-        initialFormData.specialization,
-      );
-      if (!candidate) return "";
-      if (!resolvedMajor) return candidate;
-      return specializationBelongsToMajor(candidate, resolvedMajor)
-        ? candidate
-        : "";
-    })();
+        return {
+          major: resolvedMajor,
+          specialization: resolvedSpecialization,
+        };
+      })
+      .filter((pref) => pref.major || pref.specialization);
+    const hydratedPreferences =
+      normalizedPreferences.length > 0
+        ? normalizedPreferences
+        : [createEmptyPreference()];
 
     const hydratedData: FormData = {
       fullName: prefer(mappedData.fullName, initialFormData.fullName),
@@ -882,8 +986,7 @@ export default function AdmissionApplicationForm() {
       ),
       parentPhone: prefer(mappedData.parentPhone, initialFormData.parentPhone),
       email: prefer(mappedData.email, initialFormData.email),
-      major: resolvedMajor,
-      specialization: resolvedSpecialization,
+      preferences: hydratedPreferences,
       permanentProvince: ensureOption(
         normalizedPermanentProvince,
         allowedProvinces,
@@ -1012,14 +1115,12 @@ export default function AdmissionApplicationForm() {
         const dateOfBirth =
           rawDateOfBirth && rawDateOfBirth.trim() ? rawDateOfBirth : null;
         const preferences =
-          data.major && data.major.trim()
-            ? [
-                {
-                  major: data.major,
-                  specialization: data.specialization || undefined,
-                },
-              ]
-            : [];
+          data.preferences
+            ?.map((pref) => ({
+              major: pref.major.trim(),
+              specialization: pref.specialization.trim() || undefined,
+            }))
+            .filter((pref) => pref.major) || [];
         const payload = {
           conversation_id:
             data.conversationId || data.sectionId || undefined,
@@ -1338,31 +1439,87 @@ export default function AdmissionApplicationForm() {
             </SectionCard>
 
             <SectionCard title="Ngành đăng ký">
-              <div className="grid gap-4 md:grid-cols-2">
-                <SearchSelectField
-                  label="Ngành"
-                  name="major"
-                  control={control}
-                  required
-                  placeholder="Chọn ngành"
-                  options={majorOptions}
-                />
-                <div className="space-y-2">
-                  <SearchSelectField
-                    label="Chuyên ngành"
-                    name="specialization"
-                    control={control}
-                    placeholder={
-                      formData.major
-                        ? "Chọn chuyên ngành"
-                        : "Chọn ngành trước"
-                    }
-                    options={filteredSpecializationOptions}
-                    disabled={!formData.major}
-                  />
-                  <p className="text-xs text-slate-500">
-                    {/* Có thể bỏ trống nếu ngành không chia chuyên ngành. */}
+              <div className="space-y-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm text-slate-500">
+                    {/* Có thể chọn nhiều ngành. Chuyên ngành có thể để trống nếu
+                    ngành không phân nhánh. */}
+                    Chọn nguyện vọng
                   </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-10 w-full bg-white sm:w-auto"
+                    onClick={handleAddPreferenceRow}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Thêm nguyện vọng
+                  </Button>
+                </div>
+
+                <div className="space-y-3">
+                  {preferenceValues.map((pref, index) => (
+                    <div
+                      key={`${index}-${pref.major}-${pref.specialization}`}
+                      className="rounded-2xl border border-[#d7dde7] bg-slate-50/80 p-4"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">
+                            Nguyện vọng {index + 1}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {/* Chọn ngành và chuyên ngành tương ứng. */}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                          onClick={() => handleRemovePreferenceRow(index)}
+                          disabled={preferenceValues.length === 1}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Xóa
+                        </button>
+                      </div>
+
+                      <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <SearchSelectField
+                          label="Ngành"
+                          name={`preferences.${index}.major`}
+                          control={control}
+                          required={index === 0}
+                          placeholder="Chọn ngành"
+                          options={majorOptions}
+                          onValueChange={(value) =>
+                            handleMajorChange(index, value)
+                          }
+                        />
+                        <div className="space-y-2">
+                          <SearchSelectField
+                            label="Chuyên ngành"
+                            name={`preferences.${index}.specialization`}
+                            control={control}
+                            placeholder={
+                              pref.major
+                                ? "Chọn chuyên ngành"
+                                : "Chọn ngành trước"
+                            }
+                            options={getSpecializationOptionsForMajor(
+                              pref.major,
+                            )}
+                            disabled={!pref.major}
+                            onValueChange={(value) =>
+                              handleSpecializationChange(index, value)
+                            }
+                          />
+                          <p className="text-xs text-slate-500">
+                            {/* Có thể bỏ trống nếu ngành không chia chuyên ngành. */}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </SectionCard>
@@ -1513,6 +1670,11 @@ function LabeledInput({
   );
 }
 
+type SearchSelectFieldName =
+  | keyof FormData
+  | `preferences.${number}.major`
+  | `preferences.${number}.specialization`;
+
 function SearchSelectField({
   label,
   name,
@@ -1522,19 +1684,21 @@ function SearchSelectField({
   placeholder,
   disabled,
   loading,
+  onValueChange,
 }: {
   label: string;
-  name: keyof FormData;
+  name: SearchSelectFieldName;
   control: Control<FormData>;
   options: OptionItem[];
   required?: boolean;
   placeholder?: string;
   disabled?: boolean;
   loading?: boolean;
+  onValueChange?: (value: string) => void;
 }) {
   const {
     field: { value, onChange, onBlur, name: fieldName, ref },
-  } = useController({ name, control });
+  } = useController({ name: name as any, control });
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -1578,6 +1742,7 @@ function SearchSelectField({
 
   const handleSelect = (option: OptionItem | null) => {
     onChange(option?.value || "");
+    onValueChange?.(option?.value || "");
     setQuery(option?.display || "");
     setOpen(false);
   };
