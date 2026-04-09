@@ -3,6 +3,7 @@ import { Info, Pin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { leads as defaultLeads, type Lead } from "./data";
 import {
+  flexRender,
   getCoreRowModel,
   useReactTable,
   type ColumnDef,
@@ -25,6 +26,7 @@ type MetadataOption = {
 
 type MetaColor = { bg: string; text: string; label: string };
 type MetaPalette = Record<string, MetaColor>;
+type FLevelColor = { text: string; bg: string; border: string };
 const FALLBACK_PILL: MetaColor = {
   bg: "#eaf1ff",
   text: "#1c2f57",
@@ -34,6 +36,23 @@ const UNKNOWN_PILL: MetaColor = {
   bg: "#dfe5f2",
   text: "#1c2f57",
   label: "Unknown",
+};
+const F_LEVEL_COLORS: Record<string, FLevelColor> = {
+  F1: {
+    text: "#1E3A5F",
+    bg: "rgba(30,58,95,0.12)",
+    border: "rgba(30,58,95,0.18)",
+  },
+  F2: {
+    text: "#F07C2A",
+    bg: "rgba(240,124,42,0.12)",
+    border: "rgba(240,124,42,0.18)",
+  },
+  F3: {
+    text: "#7B6FA0",
+    bg: "rgba(123,111,160,0.14)",
+    border: "rgba(123,111,160,0.2)",
+  },
 };
 
 export function MobileTable({
@@ -187,6 +206,13 @@ export function MobileTable({
         cell: ({ row }) => (
           <MetaPill value={row.original.status} palette={statusPalette} />
         ),
+      },
+      {
+        accessorKey: "level",
+        header: "F-level",
+        size: 120,
+        minSize: 110,
+        cell: ({ row }) => <FLevelPill level={row.original.level} />,
       },
       {
         accessorKey: "source",
@@ -577,10 +603,10 @@ export function MobileTable({
                           onMouseEnter={() => setHoveredKey(column.id)}
                           onMouseLeave={() => setHoveredKey(null)}
                         >
-                          {cell.column.columnDef.cell?.({
-                            ...cell,
-                            getValue: cell.getValue,
-                          })}
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
                         </div>
                       );
                     })}
@@ -663,4 +689,41 @@ function MetaText({ value, palette }: { value: string; palette: MetaPalette }) {
   const label = entry?.label || key || fallback.label;
 
   return <span className="font-medium">{label}</span>;
+}
+
+function FLevelPill({ level }: { level: number | null }) {
+  if (typeof level !== "number") {
+    return <span className="font-medium text-[#1c3055]">-</span>;
+  }
+
+  const label = `F${level}`;
+  const palette = F_LEVEL_COLORS[label];
+
+  if (!palette) {
+    return (
+      <span
+        className="inline-flex min-w-[56px] items-center justify-center rounded-full px-3 py-1 text-sm font-semibold"
+        style={{
+          color: "#1c3055",
+          backgroundColor: "rgba(28,48,85,0.08)",
+          border: "1px solid rgba(28,48,85,0.12)",
+        }}
+      >
+        {label}
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="inline-flex min-w-[56px] items-center justify-center rounded-full px-3 py-1 text-sm font-semibold"
+      style={{
+        color: palette.text,
+        backgroundColor: palette.bg,
+        border: `1px solid ${palette.border}`,
+      }}
+    >
+      {label}
+    </span>
+  );
 }

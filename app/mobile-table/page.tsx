@@ -137,6 +137,7 @@ function mapLeadRecordToLead(item: LeadRecord): Lead {
     role: item.custom_role ?? "",
     stage: item.custom_stage ?? "",
     status: item.status ?? "",
+    level: typeof item.level === "number" ? item.level : null,
     source: item.source ?? "",
     segment: item.segment ?? "",
     leadScore:

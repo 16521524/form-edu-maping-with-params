@@ -4,6 +4,7 @@ export type Lead = {
   role: string;
   stage: string;
   status: string;
+  level: number | null;
   source: string;
   segment: string;
   leadScore: string;
@@ -20,6 +21,7 @@ export const leads: Lead[] = [
     role: "Phụ huynh",
     stage: "Prospecting",
     status: "Disqualified",
+    level: 1,
     source: "Zalo",
     segment: "Parent-Driven",
     leadScore: "3.5",
@@ -34,6 +36,7 @@ export const leads: Lead[] = [
     role: "Học sinh",
     stage: "Engagement",
     status: "Profile Created",
+    level: 2,
     source: "Facebook",
     segment: "Immigration/ Career Abroad",
     leadScore: "3.5",
@@ -48,6 +51,7 @@ export const leads: Lead[] = [
     role: "Phụ huynh",
     stage: "Qualifying",
     status: "AI Validated",
+    level: 3,
     source: "Website",
     segment: "High-Achiever Scholarship Hunter",
     leadScore: "3.5",
@@ -62,6 +66,7 @@ export const leads: Lead[] = [
     role: "Học sinh",
     stage: "Advising",
     status: "Nurturing",
+    level: null,
     source: "Tiktok",
     segment: "Brand/Ranking Seeker",
     leadScore: "3.5",
@@ -76,6 +81,7 @@ export const leads: Lead[] = [
     role: "Phụ huynh",
     stage: "Closing",
     status: "Enrolled & Paid",
+    level: 1,
     source: "Tiktok",
     segment: "Career Accelerator",
     leadScore: "3.5",
@@ -90,6 +96,7 @@ export const leads: Lead[] = [
     role: "Học sinh",
     stage: "Closing",
     status: "Enrolled & Paid",
+    level: 2,
     source: "Tiktok",
     segment: "Career Accelerator",
     leadScore: "3.5",
@@ -104,6 +111,7 @@ export const leads: Lead[] = [
     role: "Phụ huynh",
     stage: "Prospecting",
     status: "Disqualified",
+    level: 3,
     source: "Zalo",
     segment: "Parent-Driven",
     leadScore: "3.5",

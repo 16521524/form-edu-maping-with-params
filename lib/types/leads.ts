@@ -27,6 +27,8 @@ export type LeadRecord = {
   segment?: string | null;
   summary?: string | null;
   stage_position?: number | null;
+  level?: number | null;
+  f_level?: string | null;
   profile?: string | null;
   topic?: string | null;
   stage_conversion_rate?: string | null;
