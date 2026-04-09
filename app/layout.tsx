@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Be_Vietnam_Pro } from "next/font/google"
+import { createMetadata } from "@/lib/seo"
 // import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
@@ -10,21 +11,7 @@ const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-sans",
 })
 
-export const metadata: Metadata = {
-  title: "Đại học Gia Định",
-  description: "Đại học Gia Định",
-  icons: {
-    icon: "https://giadinh.edu.vn/upload/photo/logo-dai-hoc-gia-dinh-9904.png",
-    shortcut: "https://giadinh.edu.vn/upload/photo/logo-dai-hoc-gia-dinh-9904.png",
-    apple: "https://giadinh.edu.vn/upload/photo/logo-dai-hoc-gia-dinh-9904.png",
-  },
-  openGraph: {
-    title: "Đại học Gia Định",
-    description: "Đại học Gia Định",
-    images: ["https://giadinh.edu.vn/upload/photo/logo-dai-hoc-gia-dinh-9904.png"],
-  },
-    generator: 'Edu'
-}
+export const metadata: Metadata = createMetadata()
 
 export default function RootLayout({
   children,
