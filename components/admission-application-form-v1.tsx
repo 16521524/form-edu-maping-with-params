@@ -421,17 +421,33 @@ export default function AdmissionApplicationForm() {
 
   const requiredFields: (keyof FormData)[] = [
     "fullName",
+    "gender",
+    "birthDate",
+    "nationalId",
     "studentPhone",
+    "parentPhone",
     "email",
+    "permanentProvince",
+    "permanentWard",
+    "permanentStreet",
     "grade12Province",
     "grade12School",
+    "grade12Class",
+    "graduationYear",
+    "receivingProvince",
+    "receivingWard",
+    "receivingStreet",
   ];
+  const hasSelectedPreference = preferenceValues.some((pref) =>
+    pref.major.trim(),
+  );
+
   const requiredFieldsFilled = requiredFields.every((field) => {
     const value = formData[field];
     if (typeof value === "string") return value.trim() !== "";
     if (Array.isArray(value)) return value.length > 0;
     return Boolean(value);
-  });
+  }) && hasSelectedPreference;
 
   const submitDisabled =
     isSubmitting || !confirmAccuracyField.value || !requiredFieldsFilled;
@@ -1254,7 +1270,7 @@ export default function AdmissionApplicationForm() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-900">
-                    Giới Tính
+                    Giới Tính <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <select
@@ -1277,7 +1293,8 @@ export default function AdmissionApplicationForm() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-900">
-                    Ngày/ Tháng/ Năm sinh
+                    Ngày/ Tháng/ Năm sinh{" "}
+                    <span className="text-red-500">*</span>
                   </label>
                   <Controller
                     name="birthDate"
@@ -1310,6 +1327,7 @@ export default function AdmissionApplicationForm() {
 
                 <LabeledInput
                   label="Số CCCD/ Mã định danh"
+                  required
                   placeholder="Nhập căn cước công dân"
                   inputProps={{
                     ...register("nationalId"),
@@ -1331,6 +1349,7 @@ export default function AdmissionApplicationForm() {
 
                   <LabeledInput
                     label="Số điện thoại phụ huynh"
+                    required
                     placeholder="Nhập số điện thoại"
                     inputProps={{
                       ...register("parentPhone"),
@@ -1348,6 +1367,7 @@ export default function AdmissionApplicationForm() {
                   label="Tỉnh/ Thành phố"
                   name="permanentProvince"
                   control={control}
+                  required
                   placeholder="Chọn Tỉnh/ Thành phố"
                   options={provinceOptions}
                 />
@@ -1355,12 +1375,14 @@ export default function AdmissionApplicationForm() {
                   label="Xã/ Phường"
                   name="permanentWard"
                   control={control}
+                  required
                   placeholder="Chọn Xã/ Phường"
                   options={permanentWardOptions}
                   loading={loadingPermanentWard}
                 />
                 <LabeledInput
                   label="Đường/ Phố"
+                  required
                   placeholder="Nhập Đường/ Phố"
                   inputProps={{
                     ...register("permanentStreet"),
@@ -1399,12 +1421,14 @@ export default function AdmissionApplicationForm() {
                 />
                 <SelectField
                   label="Năm tốt nghiệp"
+                  required
                   placeholder="Chọn năm tốt nghiệp"
                   options={yearOptions.map((y) => ({ value: y, display: y }))}
                   registration={register("graduationYear")}
                 />
                 <LabeledInput
                   label="Tên lớp 12"
+                  required
                   placeholder="Nhập tên lớp"
                   inputProps={{
                     ...register("grade12Class"),
@@ -1464,6 +1488,7 @@ export default function AdmissionApplicationForm() {
                           label="Ngành"
                           name={`preferences.${index}.major`}
                           control={control}
+                          required={index === 0}
                           placeholder="Chọn ngành"
                           options={majorOptions}
                           onValueChange={(value) =>
@@ -1542,6 +1567,7 @@ export default function AdmissionApplicationForm() {
                     label="Tỉnh/ Thành phố"
                     name="receivingProvince"
                     control={control}
+                    required
                     placeholder="Chọn Tỉnh/ Thành phố"
                     options={provinceOptions}
                     disabled={applySameAddressField.value}
@@ -1550,6 +1576,7 @@ export default function AdmissionApplicationForm() {
                     label="Xã/ Phường"
                     name="receivingWard"
                     control={control}
+                    required
                     placeholder="Chọn Xã/ Phường"
                     options={receivingWardOptions}
                     disabled={applySameAddressField.value}
@@ -1557,6 +1584,7 @@ export default function AdmissionApplicationForm() {
                   />
                   <LabeledInput
                     label="Đường/ Phố"
+                    required
                     placeholder="Nhập Đường/ Phố"
                     inputProps={{
                       ...register("receivingStreet"),
