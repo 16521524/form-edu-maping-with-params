@@ -15,8 +15,10 @@ import {
   useWatch,
   type Control,
 } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { Inter } from "next/font/google";
+import { z } from "zod";
 import {
   Check,
   ChevronDown,
@@ -31,6 +33,7 @@ import { Input } from "@/components/ui/input";
 import { DatePickerInput } from "@/components/ui/date-picker-input";
 import { ddMmYyyyToIso, isoToDdMmYyyy } from "@/lib/date-format";
 import { cn } from "@/lib/utils";
+import { formValidation } from "@/lib/form-validation";
 import type { CaptchaSubmission } from "@/lib/captcha-shared";
 import {
   getMetadataCareer,
@@ -222,6 +225,104 @@ const coerceToValue = (
   return raw;
 };
 
+const isValidEmail = (value: string) => z.string().email().safeParse(value).success;
+
+const careerConsultationSchema = z.object({
+  fullName: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập họ và tên.")
+    .superRefine((value, ctx) => {
+      if (!value) return
+      const message = formValidation.getFullNameError(value, "Họ và tên")
+      if (message) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message })
+      }
+    }),
+  birthDate: z
+    .string()
+    .trim()
+    .refine(
+      (value) => !value || formValidation.isValidBirthDate(value),
+      "Ngày sinh không hợp lệ. Dùng định dạng dd/MM/yyyy.",
+    ),
+  gender: z.string(),
+  address: z.string(),
+  phone: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập số điện thoại.")
+    .superRefine((value, ctx) => {
+      if (!value) return
+      const message = formValidation.getVietnamMobileError(value, "Số điện thoại")
+      if (message) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message })
+      }
+    }),
+  parentPhone: z
+    .string()
+    .trim()
+    .superRefine((value, ctx) => {
+      const message = formValidation.getVietnamMobileError(
+        value,
+        "Số điện thoại phụ huynh",
+      )
+      if (message) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message })
+      }
+    }),
+  nationalId: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập căn cước công dân.")
+    .superRefine((value, ctx) => {
+      if (!value) return
+      const message = formValidation.getNationalIdError(
+        value,
+        "Số CCCD/CMND",
+      )
+      if (message) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message })
+      }
+    }),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập email.")
+    .refine((value) => isValidEmail(value), "Email không hợp lệ."),
+  utmCampaign: z.string(),
+  utmCampaignQr: z.string(),
+  utmSales: z.string(),
+  role: z.string(),
+  city: z.string(),
+  school: z.string(),
+  gradeLevel: z.string(),
+  academicPerformance: z.string(),
+  gpa: z
+    .string()
+    .trim()
+    .refine((value) => !value || formValidation.isValidGpa(value), "Điểm trung bình phải từ 0 đến 10."),
+  preferences: z.array(
+    z.object({
+      preference_name: z.string(),
+      subject_combination: z.string(),
+    }),
+  ),
+  notifyVia: z.array(z.string()),
+  socials: z.array(
+    z.object({
+      platform: z.string(),
+      link_profile: z.string(),
+    }),
+  ),
+  confirmAccuracy: z
+    .boolean()
+    .refine(
+      (value) => value,
+      "Vui lòng xác nhận những thông tin trên là chính xác.",
+    ),
+});
+
 export default function CareerConsultationForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -248,9 +349,13 @@ export default function CareerConsultationForm() {
     control,
     reset,
     setValue,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm<FormData>({
     defaultValues: initialFormData,
+    resolver: zodResolver(careerConsultationSchema),
+    mode: "onSubmit",
+    reValidateMode: "onChange",
+    shouldFocusError: true,
   });
   const formData = useWatch({ control });
   const preferences = watch("preferences") || [];
@@ -309,20 +414,7 @@ export default function CareerConsultationForm() {
       : fallbackPreferenceOptions;
   const provinceOptions = metaOptions.provinces;
   const schoolOptions = metaOptions.schools;
-  const requiredFields: (keyof FormData)[] = [
-    "fullName",
-    "phone",
-    "email",
-    "nationalId",
-  ];
   const selectedRole = formData.role || "";
-
-  const requiredFieldsFilled = requiredFields.every((field) => {
-    const value = watch(field);
-    if (typeof value === "string") return value.trim() !== "";
-    if (Array.isArray(value)) return value.length > 0;
-    return Boolean(value);
-  });
   const emailReady = (watch("email") || "").trim() !== "";
   const socialReadySet = new Set(
     socials
@@ -347,8 +439,7 @@ export default function CareerConsultationForm() {
     const platform = channelPlatformMap[key] ?? channel;
     return platform ? socialReadySet.has(platform) : false;
   };
-  const submitDisabled =
-    isSubmitting || !watch("confirmAccuracy") || !requiredFieldsFilled;
+  const submitDisabled = isSubmitting;
   const phoneNumber = (watch("phone") || "").trim();
   const parentPhoneNumber = (watch("parentPhone") || "").trim();
   const campaignDisplay = useMemo(() => {
@@ -608,6 +699,7 @@ export default function CareerConsultationForm() {
         })
         .filter((p) => p.preference_name);
     };
+    const aspirationsParam = getList("aspirations" as keyof FormData);
     const getBool = (keys: string[], defaultValue = false) => {
       for (const key of keys) {
         const value = getDecoded(key as keyof FormData);
@@ -648,7 +740,6 @@ export default function CareerConsultationForm() {
       gradeLevel: getVal("gradeLevel"),
       academicPerformance: getVal("academicPerformance"),
       gpa: getVal("gpa"),
-      aspirations: getList("aspirations"),
       preferences: getPreferencesParam(),
       notifyVia: getList("notifyVia"),
       confirmAccuracy: getBool(
@@ -676,16 +767,16 @@ export default function CareerConsultationForm() {
       mappedData.preferences && Array.isArray(mappedData.preferences)
         ? mappedData.preferences
             .slice(0, 3)
-            .map((pref: any) => ({
+            .map((pref: FormData["preferences"][number]) => ({
               preference_name: coerceToValue(
                 pref?.preference_name,
                 preferenceOptions,
               ) || "",
               subject_combination: pref?.subject_combination || "",
             }))
-        : (mappedData.aspirations || [])
+        : (aspirationsParam || [])
             .slice(0, 3)
-            .map((item) => ({
+            .map((item: string) => ({
               preference_name: coerceToValue(item, preferenceOptions) || "",
               subject_combination: "",
             }));
@@ -841,7 +932,9 @@ export default function CareerConsultationForm() {
     );
     addParam(
       "aspirations",
-      (formData.preferences || []).map((p) => p.preference_name),
+      (formData.preferences || [])
+        .map((p) => p.preference_name || "")
+        .filter(Boolean) as string[],
     );
     addParam(
       "socials",
@@ -1000,19 +1093,20 @@ export default function CareerConsultationForm() {
             ? rawDateOfBirth
             : null;
         const preferencesPayload =
-          data.preferences?.map((pref) => ({
-            preference_name: pref.preference_name,
-            subject_combination: pref.subject_combination,
-          })) || [];
+          data.preferences
+            ?.map((pref) => pref.preference_name)
+            .filter(Boolean) || [];
         const payload = {
           full_name: data.fullName,
-          mobile_no: data.phone,
-          parent_phone: data.parentPhone || undefined,
+          mobile_no: formValidation.normalizePhoneForSubmit(data.phone),
+          parent_phone:
+            formValidation.normalizePhoneForSubmit(data.parentPhone) ||
+            undefined,
           email: data.email,
           gender: data.gender,
           date_of_birth: dateOfBirth,
           role: primaryRole,
-          national_id: data.nationalId,
+          national_id: formValidation.extractDigits(data.nationalId),
           province: data.city,
           state: data.city,
           school_name: data.school,
@@ -1153,6 +1247,7 @@ export default function CareerConsultationForm() {
 
         <form
           onSubmit={handleSubmit(submitWithCaptcha)}
+          noValidate
           className="px-4 pb-8 pt-5 space-y-4"
         >
           <section className={panelClass}>
@@ -1162,6 +1257,7 @@ export default function CareerConsultationForm() {
                 required
                 placeholder="Nhập họ và tên"
                 inputProps={{ ...register("fullName"), className: inputClass }}
+                error={formValidation.getErrorMessage(errors.fullName?.message)}
               />
 
               <div className="space-y-2">
@@ -1219,17 +1315,26 @@ export default function CareerConsultationForm() {
                   <Controller
                     name="birthDate"
                     control={control}
-                    render={({ field }) => (
-                      <DatePickerInput
-                        id="birthDate"
-                        value={field.value}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        inputClassName={cn(
-                          inputClass,
-                          "appearance-none career-date-input",
+                    render={({ field, fieldState }) => (
+                      <>
+                        <DatePickerInput
+                          id="birthDate"
+                          value={field.value}
+                          onChange={field.onChange}
+                          onBlur={field.onBlur}
+                          inputClassName={cn(
+                            inputClass,
+                            "appearance-none career-date-input",
+                            fieldState.error &&
+                              "border-red-500 focus:border-red-500 focus:ring-red-500/15",
+                          )}
+                        />
+                        {fieldState.error?.message && (
+                          <p className="text-sm text-red-600">
+                            {fieldState.error.message}
+                          </p>
                         )}
-                      />
+                      </>
                     )}
                   />
                 </div>
@@ -1271,6 +1376,7 @@ export default function CareerConsultationForm() {
                 required
                 placeholder="Nhập số điện thoại"
                 inputProps={{ ...register("phone"), className: inputClass }}
+                error={formValidation.getErrorMessage(errors.phone?.message)}
               />
               <LabeledInput
                 label="Số điện thoại phụ huynh"
@@ -1279,6 +1385,9 @@ export default function CareerConsultationForm() {
                   ...register("parentPhone"),
                   className: inputClass,
                 }}
+                error={formValidation.getErrorMessage(
+                  errors.parentPhone?.message,
+                )}
               />
 
               <LabeledInput
@@ -1289,6 +1398,9 @@ export default function CareerConsultationForm() {
                   ...register("nationalId"),
                   className: inputClass,
                 }}
+                error={formValidation.getErrorMessage(
+                  errors.nationalId?.message,
+                )}
               />
 
               <LabeledInput
@@ -1300,6 +1412,7 @@ export default function CareerConsultationForm() {
                   className: inputClass,
                   type: "email",
                 }}
+                error={formValidation.getErrorMessage(errors.email?.message)}
               />
 
               <div className="space-y-2">
@@ -1513,6 +1626,7 @@ export default function CareerConsultationForm() {
                     inputMode: "decimal",
                     className: inputClass,
                   }}
+                  error={formValidation.getErrorMessage(errors.gpa?.message)}
                 />
               </div>
 
@@ -1765,7 +1879,11 @@ export default function CareerConsultationForm() {
             <Checkbox
               checked={watch("confirmAccuracy")}
               onCheckedChange={(checked) =>
-                setValue("confirmAccuracy", Boolean(checked))
+                setValue("confirmAccuracy", Boolean(checked), {
+                  shouldDirty: true,
+                  shouldTouch: true,
+                  shouldValidate: true,
+                })
               }
               className="mt-0.5"
             />
@@ -1773,6 +1891,11 @@ export default function CareerConsultationForm() {
               Xác nhận những thông tin trên là chính xác.
             </span>
           </label>
+          {formValidation.getErrorMessage(errors.confirmAccuracy?.message) && (
+            <p className="text-sm text-red-600">
+              {formValidation.getErrorMessage(errors.confirmAccuracy?.message)}
+            </p>
+          )}
           <Button
             type="submit"
             disabled={isSubmitBlocked}
@@ -1802,6 +1925,7 @@ type LabeledInputProps = {
   required?: boolean;
   placeholder?: string;
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+  error?: string;
 };
 
 function SearchSelectField({
@@ -1827,6 +1951,7 @@ function SearchSelectField({
 }) {
   const {
     field: { value, onChange, onBlur, name: fieldName, ref },
+    fieldState,
   } = useController({ name, control });
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [query, setQuery] = useState("");
@@ -1915,10 +2040,13 @@ function SearchSelectField({
           placeholder={placeholder || "Chọn"}
           disabled={disabled || loading}
           autoComplete="off"
+          aria-invalid={Boolean(fieldState.error)}
           className={cn(
             selectClass,
             "appearance-none pr-10 text-left",
             (disabled || loading) && "bg-slate-100",
+            fieldState.error &&
+              "border-red-500 focus:border-red-500 focus:ring-red-500/15",
           )}
         />
         {value && !disabled && !loading && (
@@ -1981,6 +2109,9 @@ function SearchSelectField({
           </div>
         )}
       </div>
+      {fieldState.error?.message && (
+        <p className="text-sm text-red-600">{fieldState.error.message}</p>
+      )}
     </div>
   );
 }
@@ -1990,6 +2121,7 @@ function LabeledInput({
   required,
   placeholder,
   inputProps,
+  error,
 }: LabeledInputProps) {
   return (
     <div className="space-y-2">
@@ -1999,8 +2131,14 @@ function LabeledInput({
       <Input
         {...inputProps}
         placeholder={placeholder}
-        className={cn("italic", inputProps?.className)}
+        aria-invalid={Boolean(error)}
+        className={cn(
+          "italic",
+          inputProps?.className,
+          error && "border-red-500 focus:border-red-500 focus:ring-red-500/15",
+        )}
       />
+      {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );
 }

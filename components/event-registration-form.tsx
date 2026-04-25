@@ -5,7 +5,9 @@ import type React from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import { useForm, Controller, useWatch } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
+import { z } from "zod"
 import eventDefaultsData from "@/lib/form-defaults-event.json"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -20,6 +22,8 @@ import { Calendar, User, CalendarDays, Target, CheckCircle, Loader2 } from "luci
 import { getMetadataCareer } from "@/servers"
 import { useCaptchaSubmit } from "@/components/form-submit-captcha"
 import FormSuccessModal from "@/components/career-success-modal"
+import { cn } from "@/lib/utils"
+import { formValidation } from "@/lib/form-validation"
 
 interface FormData {
   // 1. Personal info
@@ -161,6 +165,143 @@ const EVENT_SESSIONS = [
 
 const DEFAULT_CLUB_NAME = "Câu lạc bộ Robotics"
 const NOTIFICATION_CHANNELS = ["email", "zalo", "messenger", "whatsapp"]
+const inputErrorClass = "border-red-500 focus-visible:ring-red-500/20"
+const isValidEmail = (value: string) => z.string().email().safeParse(value).success
+
+const eventRegistrationSchema = z
+  .object({
+    fullName: z
+      .string()
+      .trim()
+      .superRefine((value, ctx) => {
+        const message = formValidation.getFullNameError(value, "Họ và tên")
+        if (message) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message })
+        }
+      }),
+    birthDate: z
+      .string()
+      .trim()
+      .refine(
+        (value) => !value || formValidation.isValidBirthDate(value),
+        "Ngày sinh không hợp lệ. Dùng định dạng dd/MM/yyyy.",
+      ),
+    nationalId: z
+      .string()
+      .trim()
+      .superRefine((value, ctx) => {
+        const message = formValidation.getNationalIdError(
+          value,
+          "Số CCCD/CMND",
+        )
+        if (message) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message })
+        }
+      }),
+    gender: z.string(),
+    phone: z
+      .string()
+      .trim()
+      .superRefine((value, ctx) => {
+        const message = formValidation.getVietnamMobileError(value, "Số điện thoại")
+        if (message) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message })
+        }
+      }),
+    email: z
+      .string()
+      .trim()
+      .refine((value) => !value || isValidEmail(value), "Email không hợp lệ."),
+    highSchool: z.string(),
+    gradeLevel: z.string(),
+    socialLink: z
+      .string()
+      .trim()
+      .refine(
+        (value) => !value || formValidation.isLikelyProfileUrl(value),
+        "Liên kết mạng xã hội không hợp lệ.",
+      ),
+    parentName: z
+      .string()
+      .trim()
+      .superRefine((value, ctx) => {
+        const message = formValidation.getFullNameError(
+          value,
+          "Họ và tên phụ huynh",
+        )
+        if (message) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message })
+        }
+      }),
+    parentPhone: z
+      .string()
+      .trim()
+      .superRefine((value, ctx) => {
+        const message = formValidation.getVietnamMobileError(
+          value,
+          "Số điện thoại phụ huynh",
+        )
+        if (message) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message })
+        }
+      }),
+    parentEmail: z
+      .string()
+      .trim()
+      .refine((value) => !value || isValidEmail(value), "Email phụ huynh không hợp lệ."),
+    parentRelation: z.string(),
+    clubName: z.string(),
+    eventName: z.string(),
+    eventDate: z.string(),
+    eventSlot: z.string(),
+    selectedSessions: z.array(z.string()),
+    eventObjectives: z.array(z.string()),
+    heardFrom: z.string(),
+    notifyVia: z.array(z.string()),
+    consentUseInfo: z.boolean(),
+    confirmAccuracy: z
+      .boolean()
+      .refine((value) => value, "Vui lòng xác nhận thông tin trước khi gửi."),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.consentUseInfo) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["consentUseInfo"],
+        message: "Vui lòng đồng ý sử dụng thông tin để tiếp tục đăng ký.",
+      })
+      return
+    }
+
+    if (!data.fullName.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["fullName"],
+        message: "Vui lòng nhập họ và tên.",
+      })
+    }
+    if (!data.phone.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["phone"],
+        message: "Vui lòng nhập số điện thoại.",
+      })
+    }
+    if (!data.email.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["email"],
+        message: "Vui lòng nhập email.",
+      })
+    }
+    if (!data.highSchool.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["highSchool"],
+        message: "Vui lòng nhập trường THPT.",
+      })
+    }
+  })
 
 const mapDataOptions = (items: any[] | undefined): OptionItem[] => {
   if (!Array.isArray(items)) return []
@@ -195,8 +336,14 @@ export default function EventRegistrationForm() {
     handleSubmit,
     reset,
     setValue,
-    formState: { isSubmitting },
-  } = useForm<FormData>({ defaultValues: initialFormData })
+    formState: { isSubmitting, errors },
+  } = useForm<FormData>({
+    defaultValues: initialFormData,
+    resolver: zodResolver(eventRegistrationSchema),
+    mode: "onSubmit",
+    reValidateMode: "onChange",
+    shouldFocusError: true,
+  })
   const formData = useWatch({ control })
 
   useEffect(() => {
@@ -319,7 +466,7 @@ export default function EventRegistrationForm() {
         PARENT_RELATION_OPTIONS.map((o) => o.value),
         parentDefaults.parentRelation,
       ),
-      clubName: prefer(getVal("clubName"), eventDefaults.clubName ?? DEFAULT_CLUB_NAME ?? parentDefaults.clubName),
+      clubName: prefer(getVal("clubName"), eventDefaults.clubName ?? DEFAULT_CLUB_NAME),
       eventName: prefer(eventNameParam, eventDefaults.eventName),
       eventDate: prefer(getVal("eventDate"), eventDefaults.eventDate),
       eventSlot: prefer(getVal("eventSlot"), eventDefaults.eventSlot),
@@ -440,19 +587,23 @@ export default function EventRegistrationForm() {
   }, [formData, router, pathname])
 
   const handleInputChange = (field: keyof FormData, value: string | boolean | string[]) => {
-    setValue(field, value as any)
+    setValue(field, value as any, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    })
   }
 
   const handleMucDichChange = (mucDich: string, checked: boolean) => {
     const current = formData.eventObjectives || []
     const next = checked ? [...current, mucDich] : current.filter((m) => m !== mucDich)
-    setValue("eventObjectives", next)
+    setValue("eventObjectives", next, { shouldDirty: true, shouldTouch: true })
   }
 
   const handleNotificationChange = (channel: string, checked: boolean) => {
     const current = formData.notifyVia || []
     const next = checked ? Array.from(new Set([...current, channel])) : current.filter((c) => c !== channel)
-    setValue("notifyVia", next)
+    setValue("notifyVia", next, { shouldDirty: true, shouldTouch: true })
   }
 
   const handleSessionToggle = (session: (typeof EVENT_SESSIONS)[number], checked: boolean) => {
@@ -473,23 +624,18 @@ export default function EventRegistrationForm() {
     setValue("eventSlot", firstSession?.slotValue || "")
   }
 
-  const requiredPersonalFields: (keyof FormData)[] = ["fullName", "phone", "email", "highSchool"]
-  const requiredFields = requiredPersonalFields
-
-  const requiredFieldsFilled = requiredFields.every((field) => {
-    const value = formData[field]
-    if (typeof value === "string") return value.trim() !== ""
-    if (Array.isArray(value)) return value.length > 0
-    return Boolean(value)
-  })
-
-  const isSubmitEnabled = requiredFieldsFilled && formData.consentUseInfo && formData.confirmAccuracy
   const isPersonalSectionDisabled = !formData.consentUseInfo
 
   const onSubmit = (data: FormData) =>
     new Promise<void>((resolve) => {
       setShowSuccess(false)
-      const payload = { ...data, birthDate: ddMmYyyyToIso(data.birthDate) || data.birthDate }
+      const payload = {
+        ...data,
+        birthDate: ddMmYyyyToIso(data.birthDate) || data.birthDate,
+        phone: formValidation.normalizePhoneForSubmit(data.phone),
+        parentPhone: formValidation.normalizePhoneForSubmit(data.parentPhone),
+        nationalId: formValidation.extractDigits(data.nationalId),
+      }
       console.log("Form submitted:", payload)
       setTimeout(() => {
         setShowSuccess(true)
@@ -532,9 +678,10 @@ export default function EventRegistrationForm() {
               Tôi đồng ý sử dụng những thông tin này để đăng ký nhập học.
             </Label>
           </div>
+          <FieldError center message={errors.consentUseInfo?.message} />
         </div>
 
-        <form onSubmit={handleSubmit(submitWithCaptcha)} className="space-y-6">
+        <form onSubmit={handleSubmit(submitWithCaptcha)} noValidate className="space-y-6">
           {/* Section 1: Thông tin cá nhân */}
           <Card className={isPersonalSectionDisabled ? "opacity-60" : ""} aria-disabled={isPersonalSectionDisabled}>
             <CardHeader>
@@ -552,22 +699,29 @@ export default function EventRegistrationForm() {
                   placeholder="Nguyễn Văn A"
                   required={formData.consentUseInfo}
                   disabled={isPersonalSectionDisabled}
+                  aria-invalid={Boolean(errors.fullName)}
+                  className={cn(errors.fullName && inputErrorClass)}
                   {...register("fullName")}
                 />
+                <FieldError message={errors.fullName?.message} />
               </div>
               <div>
                 <Label htmlFor="birthDate">Ngày tháng năm sinh</Label>
                 <Controller
                   name="birthDate"
                   control={control}
-                  render={({ field }) => (
-                    <DatePickerInput
-                      id="birthDate"
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      disabled={isPersonalSectionDisabled}
-                    />
+                  render={({ field, fieldState }) => (
+                    <>
+                      <DatePickerInput
+                        id="birthDate"
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        disabled={isPersonalSectionDisabled}
+                        inputClassName={cn(fieldState.error && inputErrorClass)}
+                      />
+                      <FieldError message={fieldState.error?.message} />
+                    </>
                   )}
                 />
               </div>
@@ -577,8 +731,11 @@ export default function EventRegistrationForm() {
                   id="nationalId"
                   placeholder="Số căn cước công dân"
                   disabled={isPersonalSectionDisabled}
+                  aria-invalid={Boolean(errors.nationalId)}
+                  className={cn(errors.nationalId && inputErrorClass)}
                   {...register("nationalId")}
                 />
+                <FieldError message={errors.nationalId?.message} />
               </div>
               <div>
                 <Label htmlFor="gender">Giới tính</Label>
@@ -609,8 +766,11 @@ export default function EventRegistrationForm() {
                   placeholder="0901234567"
                   required={formData.consentUseInfo}
                   disabled={isPersonalSectionDisabled}
+                  aria-invalid={Boolean(errors.phone)}
+                  className={cn(errors.phone && inputErrorClass)}
                   {...register("phone")}
                 />
+                <FieldError message={errors.phone?.message} />
               </div>
               <div>
                 <Label htmlFor="email">Email cá nhân *</Label>
@@ -620,8 +780,11 @@ export default function EventRegistrationForm() {
                   placeholder="email@example.com"
                   required={formData.consentUseInfo}
                   disabled={isPersonalSectionDisabled}
+                  aria-invalid={Boolean(errors.email)}
+                  className={cn(errors.email && inputErrorClass)}
                   {...register("email")}
                 />
+                <FieldError message={errors.email?.message} />
               </div>
               <div className="sm:col-span-2">
                 <Label htmlFor="highSchool">Trường THPT đang học *</Label>
@@ -630,8 +793,11 @@ export default function EventRegistrationForm() {
                   placeholder="Trường THPT..."
                   required={formData.consentUseInfo}
                   disabled={isPersonalSectionDisabled}
+                  aria-invalid={Boolean(errors.highSchool)}
+                  className={cn(errors.highSchool && inputErrorClass)}
                   {...register("highSchool")}
                 />
+                <FieldError message={errors.highSchool?.message} />
               </div>
               <div>
                 <Label htmlFor="gradeLevel">Lớp hiện tại</Label>
@@ -660,8 +826,11 @@ export default function EventRegistrationForm() {
                   id="socialLink"
                   placeholder="https://facebook.com/tenban"
                   disabled={isPersonalSectionDisabled}
+                  aria-invalid={Boolean(errors.socialLink)}
+                  className={cn(errors.socialLink && inputErrorClass)}
                   {...register("socialLink")}
                 />
+                <FieldError message={errors.socialLink?.message} />
               </div>
             </CardContent>
           </Card>
@@ -682,8 +851,11 @@ export default function EventRegistrationForm() {
                   id="parentName"
                   placeholder="Nguyễn Văn B..."
                   disabled={isPersonalSectionDisabled}
+                  aria-invalid={Boolean(errors.parentName)}
+                  className={cn(errors.parentName && inputErrorClass)}
                   {...register("parentName")}
                 />
+                <FieldError message={errors.parentName?.message} />
               </div>
               <div>
                 <Label htmlFor="parentPhone">Số điện thoại</Label>
@@ -692,8 +864,11 @@ export default function EventRegistrationForm() {
                   type="tel"
                   placeholder="090xxxxxxx"
                   disabled={isPersonalSectionDisabled}
+                  aria-invalid={Boolean(errors.parentPhone)}
+                  className={cn(errors.parentPhone && inputErrorClass)}
                   {...register("parentPhone")}
                 />
+                <FieldError message={errors.parentPhone?.message} />
               </div>
               <div>
                 <Label htmlFor="parentEmail">Email (không bắt buộc)</Label>
@@ -702,8 +877,11 @@ export default function EventRegistrationForm() {
                   type="email"
                   placeholder="email@example.com"
                   disabled={isPersonalSectionDisabled}
+                  aria-invalid={Boolean(errors.parentEmail)}
+                  className={cn(errors.parentEmail && inputErrorClass)}
                   {...register("parentEmail")}
                 />
+                <FieldError message={errors.parentEmail?.message} />
               </div>
               <div>
                 <Label htmlFor="parentRelation">Mối quan hệ</Label>
@@ -780,7 +958,7 @@ export default function EventRegistrationForm() {
                     </TableHeader>
                     <TableBody>
                       {EVENT_SESSIONS.map((session, idx) => {
-                        const isSelected = formData.selectedSessions.includes(session.id)
+                        const isSelected = (formData.selectedSessions || []).includes(session.id)
                         return (
                           <TableRow key={session.id} className={isSelected ? "bg-green-50" : ""}>
                             <TableCell className="font-medium text-center">{idx + 1}</TableCell>
@@ -822,7 +1000,7 @@ export default function EventRegistrationForm() {
                     <div key={objective} className="flex items-center space-x-2">
                       <Checkbox
                         id={`objective-${objective}`}
-                        checked={formData.eventObjectives.includes(objective)}
+                        checked={(formData.eventObjectives || []).includes(objective)}
                         onCheckedChange={(checked) => handleMucDichChange(objective, checked as boolean)}
                       />
                       <Label htmlFor={`objective-${objective}`} className="font-normal cursor-pointer">
@@ -872,7 +1050,7 @@ export default function EventRegistrationForm() {
                     <div key={channel} className="flex items-center space-x-2">
                       <Checkbox
                         id={`notify-${channel}`}
-                        checked={formData.notifyVia.includes(channel)}
+                        checked={(formData.notifyVia || []).includes(channel)}
                         onCheckedChange={(checked) => handleNotificationChange(channel, checked as boolean)}
                       />
                       <Label htmlFor={`notify-${channel}`} className="font-normal cursor-pointer">
@@ -893,6 +1071,7 @@ export default function EventRegistrationForm() {
                   Tôi xác nhận thông tin là chính xác và đồng ý nhận thông tin từ Ban Tổ Chức.
                 </Label>
               </div>
+              <FieldError message={errors.confirmAccuracy?.message} />
               <p className="italic text-sm text-muted-foreground">
                 Vui lòng hoàn thành đầy đủ các thông tin bắt buộc (*) trước khi hoàn tất đăng ký.
               </p>
@@ -902,7 +1081,7 @@ export default function EventRegistrationForm() {
           <Button
             type="submit"
             className="w-full h-12 text-lg bg-green-600 hover:bg-green-700"
-            disabled={!isSubmitEnabled || isSubmitting || isCaptchaBusy}
+            disabled={isSubmitting || isCaptchaBusy}
           >
             {isSubmitting || isCaptchaSubmitting ? (
               <span className="inline-flex items-center gap-2">
@@ -921,4 +1100,10 @@ export default function EventRegistrationForm() {
       </div>
     </main>
   )
+}
+
+function FieldError({ message, center = false }: { message?: string; center?: boolean }) {
+  const text = formValidation.getErrorMessage(message)
+  if (!text) return null
+  return <p className={cn("mt-1 text-sm text-red-600", center && "text-center")}>{text}</p>
 }

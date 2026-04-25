@@ -31,9 +31,9 @@ import { DatePickerInput } from "@/components/ui/date-picker-input";
 import {
   ddMmYyyyToIso,
   isoToDdMmYyyy,
-  parseDdMmYyyy,
 } from "@/lib/date-format";
 import { cn } from "@/lib/utils";
+import { formValidation } from "@/lib/form-validation";
 import type { CaptchaSubmission } from "@/lib/captcha-shared";
 import {
   ICareerMetadataSchool,
@@ -147,47 +147,6 @@ const yearOptions = (() => {
   return Array.from({ length: 8 }, (_, idx) => String(limit - idx));
 })();
 
-const fullNamePattern = /^[\p{L}\s.'-]+$/u;
-const phonePattern = /^[0-9+\s().-]+$/;
-
-const extractDigits = (value: string) => value.replace(/\D/g, "");
-const hasAllSameDigits = (value: string) => /^(\d)\1+$/.test(value);
-
-const normalizePhoneForSubmit = (value: string) => {
-  const digits = extractDigits(value);
-  if (!digits) return "";
-  return value.trim().startsWith("+") ? `+${digits}` : digits;
-};
-
-const isValidPhoneNumber = (value: string) => {
-  const trimmed = value.trim();
-  if (!trimmed || !phonePattern.test(trimmed)) return false;
-  const digits = extractDigits(trimmed);
-  if (hasAllSameDigits(digits)) return false;
-
-  if (trimmed.startsWith("+")) {
-    return /^84(?:3|5|7|8|9)\d{8}$/.test(digits);
-  }
-
-  return /^0(?:3|5|7|8|9)\d{8}$/.test(digits);
-};
-
-const isValidNationalId = (value: string) => {
-  const trimmed = value.trim();
-  if (!/^[0-9\s]+$/.test(trimmed)) return false;
-  const digits = extractDigits(value);
-  if (hasAllSameDigits(digits)) return false;
-  return digits.length === 9 || digits.length === 12;
-};
-
-const isValidBirthDate = (value: string) => {
-  const parsed = parseDdMmYyyy(value.trim());
-  if (!parsed) return false;
-  const now = new Date();
-  const minDate = new Date(1900, 0, 1);
-  return parsed >= minDate && parsed <= now;
-};
-
 const isValidGraduationYear = (value: string) => {
   const trimmed = value.trim();
   if (!/^\d{4}$/.test(trimmed)) return false;
@@ -200,41 +159,59 @@ const admissionApplicationSchema = z.object({
     .string()
     .trim()
     .min(1, "Vui lòng nhập họ và tên.")
-    .min(2, "Họ và tên phải có ít nhất 2 ký tự.")
-    .refine(
-      (value) => fullNamePattern.test(value) && /[\p{L}]/u.test(value),
-      "Họ và tên không đúng định dạng.",
-    ),
+    .superRefine((value, ctx) => {
+      if (!value) return;
+      const message = formValidation.getFullNameError(value, "Họ và tên");
+      if (message) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message });
+      }
+    }),
   gender: z.string(),
   birthDate: z
     .string()
     .trim()
     .refine(
-      (value) => !value || isValidBirthDate(value),
+      (value) => !value || formValidation.isValidBirthDate(value),
       "Ngày sinh không hợp lệ. Dùng định dạng dd/MM/yyyy.",
     ),
   nationalId: z
     .string()
     .trim()
-    .refine(
-      (value) => !value || isValidNationalId(value),
-      "CCCD/CMND phải gồm 9 hoặc 12 chữ số.",
-    ),
+    .superRefine((value, ctx) => {
+      const message = formValidation.getNationalIdError(
+        value,
+        "Số CCCD/Mã định danh",
+      );
+      if (message) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message });
+      }
+    }),
   studentPhone: z
     .string()
     .trim()
     .min(1, "Vui lòng nhập số điện thoại.")
-    .refine(
-      isValidPhoneNumber,
-      "Số điện thoại phải là số di động hợp lệ.",
-    ),
+    .superRefine((value, ctx) => {
+      if (!value) return;
+      const message = formValidation.getVietnamMobileError(
+        value,
+        "Số điện thoại",
+      );
+      if (message) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message });
+      }
+    }),
   parentPhone: z
     .string()
     .trim()
-    .refine(
-      (value) => !value || isValidPhoneNumber(value),
-      "Số điện thoại phụ huynh phải là số di động hợp lệ.",
-    ),
+    .superRefine((value, ctx) => {
+      const message = formValidation.getVietnamMobileError(
+        value,
+        "Số điện thoại phụ huynh",
+      );
+      if (message) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message });
+      }
+    }),
   email: z
     .string()
     .trim()
@@ -307,9 +284,6 @@ const admissionApplicationSchema = z.object({
   conversationId: z.string().optional(),
   sectionId: z.string().optional(),
 });
-
-const getErrorMessage = (message: unknown) =>
-  typeof message === "string" ? message : undefined;
 
 const normalizeText = (val: string) =>
   (val || "")
@@ -1276,12 +1250,14 @@ export default function AdmissionApplicationForm() {
           conversation_id:
             data.conversationId || data.sectionId || undefined,
           full_name: data.fullName,
-          national_id: extractDigits(data.nationalId),
-          parent_phone: normalizePhoneForSubmit(data.parentPhone),
+          national_id: formValidation.extractDigits(data.nationalId),
+          parent_phone: formValidation.normalizePhoneForSubmit(data.parentPhone),
           gender: data.gender,
           email: data.email,
           date_of_birth: dateOfBirth,
-          student_phone: normalizePhoneForSubmit(data.studentPhone),
+          student_phone: formValidation.normalizePhoneForSubmit(
+            data.studentPhone,
+          ),
           permanent_street_address: buildStreetAddress(
             data.permanentHouse,
             data.permanentStreet,
@@ -1418,7 +1394,7 @@ export default function AdmissionApplicationForm() {
                     ...register("fullName"),
                     className: inputClass,
                   }}
-                  error={getErrorMessage(errors.fullName?.message)}
+                  error={formValidation.getErrorMessage(errors.fullName?.message)}
                 />
 
                 <div className="space-y-2">
@@ -1484,7 +1460,7 @@ export default function AdmissionApplicationForm() {
                     className: inputClass,
                     type: "email",
                   }}
-                  error={getErrorMessage(errors.email?.message)}
+                  error={formValidation.getErrorMessage(errors.email?.message)}
                 />
 
                 <LabeledInput
@@ -1494,7 +1470,9 @@ export default function AdmissionApplicationForm() {
                     ...register("nationalId"),
                     className: inputClass,
                   }}
-                  error={getErrorMessage(errors.nationalId?.message)}
+                  error={formValidation.getErrorMessage(
+                    errors.nationalId?.message,
+                  )}
                 />
 
                 <div className="grid gap-4 md:grid-cols-2 md:col-span-2">
@@ -1507,7 +1485,9 @@ export default function AdmissionApplicationForm() {
                       className: inputClass,
                       inputMode: "tel",
                     }}
-                    error={getErrorMessage(errors.studentPhone?.message)}
+                    error={formValidation.getErrorMessage(
+                      errors.studentPhone?.message,
+                    )}
                   />
 
                   <LabeledInput
@@ -1518,7 +1498,9 @@ export default function AdmissionApplicationForm() {
                       className: inputClass,
                       inputMode: "tel",
                     }}
-                    error={getErrorMessage(errors.parentPhone?.message)}
+                    error={formValidation.getErrorMessage(
+                      errors.parentPhone?.message,
+                    )}
                   />
                 </div>
               </div>
@@ -1584,7 +1566,9 @@ export default function AdmissionApplicationForm() {
                   placeholder="Chọn năm tốt nghiệp"
                   options={yearOptions.map((y) => ({ value: y, display: y }))}
                   registration={register("graduationYear")}
-                  error={getErrorMessage(errors.graduationYear?.message)}
+                  error={formValidation.getErrorMessage(
+                    errors.graduationYear?.message,
+                  )}
                 />
                 <LabeledInput
                   label="Tên lớp 12"
@@ -1593,7 +1577,9 @@ export default function AdmissionApplicationForm() {
                     ...register("grade12Class"),
                     className: inputClass,
                   }}
-                  error={getErrorMessage(errors.grade12Class?.message)}
+                  error={formValidation.getErrorMessage(
+                    errors.grade12Class?.message,
+                  )}
                 />
               </div>
             </SectionCard>
@@ -1776,9 +1762,9 @@ export default function AdmissionApplicationForm() {
                 Xác nhận những thông tin trên là chính xác.
               </span>
             </label>
-            {getErrorMessage(errors.confirmAccuracy?.message) && (
+            {formValidation.getErrorMessage(errors.confirmAccuracy?.message) && (
               <p className="px-1 text-sm text-red-600">
-                {getErrorMessage(errors.confirmAccuracy?.message)}
+                {formValidation.getErrorMessage(errors.confirmAccuracy?.message)}
               </p>
             )}
             <Button

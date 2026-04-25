@@ -5,6 +5,8 @@ import type React from "react"
 import { usePathname, useSearchParams, useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import { useForm, Controller, useWatch } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
 import enrollmentDefaultsData from "@/lib/form-defaults-enrollment.json"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -19,6 +21,8 @@ import { GraduationCap, User, BookOpen, Target, CheckCircle, Loader2 } from "luc
 import { getMetadataCareer } from "@/servers"
 import { useCaptchaSubmit } from "@/components/form-submit-captcha"
 import FormSuccessModal from "@/components/career-success-modal"
+import { cn } from "@/lib/utils"
+import { formValidation } from "@/lib/form-validation"
 
 interface FormData {
   // 1. Personal info
@@ -97,6 +101,84 @@ const fallbackPerformances: OptionItem[] = [
 
 const NOTIFICATION_CHANNELS = ["email", "zalo", "messenger", "whatsapp"]
 
+const inputErrorClass = "border-red-500 focus-visible:ring-red-500/20"
+
+const enrollmentSchema = z.object({
+  fullName: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập họ và tên.")
+    .superRefine((value, ctx) => {
+      if (!value) return
+      const message = formValidation.getFullNameError(value, "Họ và tên")
+      if (message) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message })
+      }
+    }),
+  birthDate: z
+    .string()
+    .trim()
+    .refine(
+      (value) => !value || formValidation.isValidBirthDate(value),
+      "Ngày sinh không hợp lệ. Dùng định dạng dd/MM/yyyy.",
+    ),
+  nationalId: z
+    .string()
+    .trim()
+    .superRefine((value, ctx) => {
+      const message = formValidation.getNationalIdError(
+        value,
+        "Số CCCD/CMND",
+      )
+      if (message) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message })
+      }
+    }),
+  gender: z.string(),
+  phone: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập số điện thoại.")
+    .superRefine((value, ctx) => {
+      if (!value) return
+      const message = formValidation.getVietnamMobileError(value, "Số điện thoại")
+      if (message) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message })
+      }
+    }),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập email.")
+    .email("Email không hợp lệ."),
+  address: z.string(),
+  highSchool: z.string().trim().min(1, "Vui lòng nhập trường THPT."),
+  gradeLevel: z.string(),
+  academicPerformance: z.string(),
+  gpa: z
+    .string()
+    .trim()
+    .refine((value) => !value || formValidation.isValidGpa(value), "Điểm trung bình phải từ 0 đến 10."),
+  strongSubjects: z.string(),
+  socialLink: z
+    .string()
+    .trim()
+    .refine(
+      (value) => !value || formValidation.isLikelyProfileUrl(value),
+      "Liên kết mạng xã hội không hợp lệ.",
+    ),
+  majorPreference1: z.string().trim().min(1, "Vui lòng nhập nguyện vọng 1."),
+  majorPreference2: z.string(),
+  majorPreference3: z.string(),
+  notifyVia: z.array(z.string()),
+  confirmAccuracy: z
+    .boolean()
+    .refine(
+      (value) => value,
+      "Vui lòng xác nhận thông tin trước khi gửi.",
+    ),
+})
+
 const mapDataOptions = (items: any[] | undefined): OptionItem[] => {
   if (!Array.isArray(items)) return []
   return items
@@ -135,9 +217,13 @@ export default function EnrollmentForm() {
     handleSubmit,
     reset,
     setValue,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm<FormData>({
     defaultValues: initialFormData,
+    resolver: zodResolver(enrollmentSchema),
+    mode: "onSubmit",
+    reValidateMode: "onChange",
+    shouldFocusError: true,
   })
   const formData = useWatch({ control })
 
@@ -392,24 +478,18 @@ export default function EnrollmentForm() {
   const handleNotificationChange = (channel: string, checked: boolean) => {
     const current = formData.notifyVia || []
     const next = checked ? Array.from(new Set([...current, channel])) : current.filter((c) => c !== channel)
-    setValue("notifyVia", next)
+    setValue("notifyVia", next, { shouldDirty: true, shouldTouch: true })
   }
-
-  const requiredFields: (keyof FormData)[] = ["fullName", "phone", "email", "highSchool", "majorPreference1"]
-
-  const requiredFieldsFilled = requiredFields.every((field) => {
-    const value = formData[field]
-    if (typeof value === "string") return value.trim() !== ""
-    if (Array.isArray(value)) return value.length > 0
-    return Boolean(value)
-  })
-
-  const isSubmitEnabled = requiredFieldsFilled
 
   const onSubmit = (data: FormData) =>
     new Promise<void>((resolve) => {
       setShowSuccess(false)
-      const payload = { ...data, birthDate: ddMmYyyyToIso(data.birthDate) || data.birthDate }
+      const payload = {
+        ...data,
+        birthDate: ddMmYyyyToIso(data.birthDate) || data.birthDate,
+        phone: formValidation.normalizePhoneForSubmit(data.phone),
+        nationalId: formValidation.extractDigits(data.nationalId),
+      }
       console.log("Form submitted:", payload)
       setTimeout(() => {
         setShowSuccess(true)
@@ -444,7 +524,7 @@ export default function EnrollmentForm() {
           <p className="text-muted-foreground mt-2">Điền đầy đủ thông tin để hoàn tất đăng ký</p>
         </div>
 
-        <form onSubmit={handleSubmit(submitWithCaptcha)} className="space-y-6">
+        <form onSubmit={handleSubmit(submitWithCaptcha)} noValidate className="space-y-6">
           {/* Section 1: Thông tin cá nhân */}
           <Card>
             <CardHeader>
@@ -457,26 +537,46 @@ export default function EnrollmentForm() {
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <Label htmlFor="fullName">Họ và tên đầy đủ *</Label>
-                <Input id="fullName" placeholder="Nguyễn Văn A" required {...register("fullName")} />
+                <Input
+                  id="fullName"
+                  placeholder="Nguyễn Văn A"
+                  required
+                  aria-invalid={Boolean(errors.fullName)}
+                  className={cn(errors.fullName && inputErrorClass)}
+                  {...register("fullName")}
+                />
+                <FieldError message={errors.fullName?.message} />
               </div>
               <div>
                 <Label htmlFor="birthDate">Ngày tháng năm sinh</Label>
                 <Controller
                   name="birthDate"
                   control={control}
-                  render={({ field }) => (
-                    <DatePickerInput
-                      id="birthDate"
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                    />
+                  render={({ field, fieldState }) => (
+                    <>
+                      <DatePickerInput
+                        id="birthDate"
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        inputClassName={cn(fieldState.error && inputErrorClass)}
+                      />
+                      <FieldError message={fieldState.error?.message} />
+                    </>
                   )}
                 />
               </div>
               <div>
                 <Label htmlFor="nationalId">Căn cước công dân</Label>
-                <Input id="nationalId" type="text" placeholder="Căn cước công dân" {...register("nationalId")} />
+                <Input
+                  id="nationalId"
+                  type="text"
+                  placeholder="Căn cước công dân"
+                  aria-invalid={Boolean(errors.nationalId)}
+                  className={cn(errors.nationalId && inputErrorClass)}
+                  {...register("nationalId")}
+                />
+                <FieldError message={errors.nationalId?.message} />
               </div>
               <div>
                 <Label htmlFor="gender">Giới tính</Label>
@@ -501,15 +601,40 @@ export default function EnrollmentForm() {
               </div>
               <div>
                 <Label htmlFor="phone">Số điện thoại *</Label>
-                <Input id="phone" type="tel" placeholder="0901234567" required {...register("phone")} />
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="0901234567"
+                  required
+                  aria-invalid={Boolean(errors.phone)}
+                  className={cn(errors.phone && inputErrorClass)}
+                  {...register("phone")}
+                />
+                <FieldError message={errors.phone?.message} />
               </div>
               <div>
                 <Label htmlFor="email">Email cá nhân *</Label>
-                <Input id="email" type="email" placeholder="email@example.com" required {...register("email")} />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="email@example.com"
+                  required
+                  aria-invalid={Boolean(errors.email)}
+                  className={cn(errors.email && inputErrorClass)}
+                  {...register("email")}
+                />
+                <FieldError message={errors.email?.message} />
               </div>
               <div className="sm:col-span-2">
                 <Label htmlFor="socialLink">Mạng xã hội (tùy chọn)</Label>
-                <Input id="socialLink" placeholder="https://facebook.com/tenban" {...register("socialLink")} />
+                <Input
+                  id="socialLink"
+                  placeholder="https://facebook.com/tenban"
+                  aria-invalid={Boolean(errors.socialLink)}
+                  className={cn(errors.socialLink && inputErrorClass)}
+                  {...register("socialLink")}
+                />
+                <FieldError message={errors.socialLink?.message} />
               </div>
               <div className="sm:col-span-2">
                 <Label htmlFor="address">Địa chỉ liên hệ</Label>
@@ -530,7 +655,15 @@ export default function EnrollmentForm() {
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <Label htmlFor="highSchool">Trường THPT đang học *</Label>
-                <Input id="highSchool" placeholder="Trường THPT..." required {...register("highSchool")} />
+                <Input
+                  id="highSchool"
+                  placeholder="Trường THPT..."
+                  required
+                  aria-invalid={Boolean(errors.highSchool)}
+                  className={cn(errors.highSchool && inputErrorClass)}
+                  {...register("highSchool")}
+                />
+                <FieldError message={errors.highSchool?.message} />
               </div>
               <div>
                 <Label htmlFor="gradeLevel">Lớp hiện tại</Label>
@@ -578,7 +711,18 @@ export default function EnrollmentForm() {
               </div>
               <div>
                 <Label htmlFor="gpa">Điểm trung bình</Label>
-                <Input id="gpa" type="number" step="0.1" min="0" max="10" placeholder="8.5" {...register("gpa")} />
+                <Input
+                  id="gpa"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="10"
+                  placeholder="8.5"
+                  aria-invalid={Boolean(errors.gpa)}
+                  className={cn(errors.gpa && inputErrorClass)}
+                  {...register("gpa")}
+                />
+                <FieldError message={errors.gpa?.message} />
               </div>
               <div>
                 <Label htmlFor="strongSubjects">Môn học mạnh</Label>
@@ -603,8 +747,11 @@ export default function EnrollmentForm() {
                   id="majorPreference1"
                   placeholder="Ngành học ưu tiên 1"
                   required
+                  aria-invalid={Boolean(errors.majorPreference1)}
+                  className={cn(errors.majorPreference1 && inputErrorClass)}
                   {...register("majorPreference1")}
                 />
+                <FieldError message={errors.majorPreference1?.message} />
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
@@ -635,7 +782,7 @@ export default function EnrollmentForm() {
                     <div key={channel} className="flex items-center space-x-2">
                       <Checkbox
                         id={`notify-${channel}`}
-                        checked={formData.notifyVia.includes(channel)}
+                        checked={(formData.notifyVia || []).includes(channel)}
                         onCheckedChange={(checked) => handleNotificationChange(channel, checked as boolean)}
                       />
                       <Label htmlFor={`notify-${channel}`} className="font-normal cursor-pointer">
@@ -649,13 +796,20 @@ export default function EnrollmentForm() {
                 <Checkbox
                   id="confirmAccuracy"
                   checked={formData.confirmAccuracy}
-                  onCheckedChange={(checked) => setValue("confirmAccuracy", checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    setValue("confirmAccuracy", checked as boolean, {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                      shouldValidate: true,
+                    })
+                  }
                   required
                 />
                 <Label htmlFor="confirmAccuracy" className="font-normal cursor-pointer leading-relaxed">
                   Tôi xác nhận thông tin là chính xác và đồng ý nhận thông tin từ Ban Tổ Chức.
                 </Label>
               </div>
+              <FieldError message={errors.confirmAccuracy?.message} />
               <p className="italic text-sm text-muted-foreground">
                 Vui lòng hoàn thành đầy đủ các thông tin bắt buộc (*) trước khi hoàn tất đăng ký.
               </p>
@@ -665,7 +819,7 @@ export default function EnrollmentForm() {
         <Button
           type="submit"
           className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700"
-          disabled={!isSubmitEnabled || isSubmitting || isCaptchaBusy}
+          disabled={isSubmitting || isCaptchaBusy}
         >
           {isSubmitting || isCaptchaSubmitting ? (
             <span className="inline-flex items-center gap-2">
@@ -684,4 +838,10 @@ export default function EnrollmentForm() {
       </div>
     </main>
   )
+}
+
+function FieldError({ message }: { message?: string }) {
+  const text = formValidation.getErrorMessage(message)
+  if (!text) return null
+  return <p className="mt-1 text-sm text-red-600">{text}</p>
 }
