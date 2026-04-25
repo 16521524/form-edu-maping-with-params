@@ -19,14 +19,20 @@ import {
   type Control,
   type UseFormRegisterReturn,
 } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Inter } from "next/font/google";
 import { ChevronDown, Loader2, Plus, Trash2 } from "lucide-react";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { DatePickerInput } from "@/components/ui/date-picker-input";
-import { ddMmYyyyToIso, isoToDdMmYyyy } from "@/lib/date-format";
+import {
+  ddMmYyyyToIso,
+  isoToDdMmYyyy,
+  parseDdMmYyyy,
+} from "@/lib/date-format";
 import { cn } from "@/lib/utils";
 import type { CaptchaSubmission } from "@/lib/captcha-shared";
 import {
@@ -140,6 +146,170 @@ const yearOptions = (() => {
   const limit = current + 1;
   return Array.from({ length: 8 }, (_, idx) => String(limit - idx));
 })();
+
+const fullNamePattern = /^[\p{L}\s.'-]+$/u;
+const phonePattern = /^[0-9+\s().-]+$/;
+
+const extractDigits = (value: string) => value.replace(/\D/g, "");
+const hasAllSameDigits = (value: string) => /^(\d)\1+$/.test(value);
+
+const normalizePhoneForSubmit = (value: string) => {
+  const digits = extractDigits(value);
+  if (!digits) return "";
+  return value.trim().startsWith("+") ? `+${digits}` : digits;
+};
+
+const isValidPhoneNumber = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed || !phonePattern.test(trimmed)) return false;
+  const digits = extractDigits(trimmed);
+  if (hasAllSameDigits(digits)) return false;
+
+  if (trimmed.startsWith("+")) {
+    return /^84(?:3|5|7|8|9)\d{8}$/.test(digits);
+  }
+
+  return /^0(?:3|5|7|8|9)\d{8}$/.test(digits);
+};
+
+const isValidNationalId = (value: string) => {
+  const trimmed = value.trim();
+  if (!/^[0-9\s]+$/.test(trimmed)) return false;
+  const digits = extractDigits(value);
+  if (hasAllSameDigits(digits)) return false;
+  return digits.length === 9 || digits.length === 12;
+};
+
+const isValidBirthDate = (value: string) => {
+  const parsed = parseDdMmYyyy(value.trim());
+  if (!parsed) return false;
+  const now = new Date();
+  const minDate = new Date(1900, 0, 1);
+  return parsed >= minDate && parsed <= now;
+};
+
+const isValidGraduationYear = (value: string) => {
+  const trimmed = value.trim();
+  if (!/^\d{4}$/.test(trimmed)) return false;
+  const year = Number(trimmed);
+  return year >= 1900 && year <= new Date().getFullYear() + 1;
+};
+
+const admissionApplicationSchema = z.object({
+  fullName: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập họ và tên.")
+    .min(2, "Họ và tên phải có ít nhất 2 ký tự.")
+    .refine(
+      (value) => fullNamePattern.test(value) && /[\p{L}]/u.test(value),
+      "Họ và tên không đúng định dạng.",
+    ),
+  gender: z.string(),
+  birthDate: z
+    .string()
+    .trim()
+    .refine(
+      (value) => !value || isValidBirthDate(value),
+      "Ngày sinh không hợp lệ. Dùng định dạng dd/MM/yyyy.",
+    ),
+  nationalId: z
+    .string()
+    .trim()
+    .refine(
+      (value) => !value || isValidNationalId(value),
+      "CCCD/CMND phải gồm 9 hoặc 12 chữ số.",
+    ),
+  studentPhone: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập số điện thoại.")
+    .refine(
+      isValidPhoneNumber,
+      "Số điện thoại phải là số di động hợp lệ.",
+    ),
+  parentPhone: z
+    .string()
+    .trim()
+    .refine(
+      (value) => !value || isValidPhoneNumber(value),
+      "Số điện thoại phụ huynh phải là số di động hợp lệ.",
+    ),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập email.")
+    .email("Email không hợp lệ."),
+  preferences: z
+    .array(
+      z.object({
+        major: z.string(),
+        specialization: z.string(),
+      }),
+    )
+    .superRefine((preferences, ctx) => {
+      preferences.forEach((preference, index) => {
+        const major = preference.major.trim();
+        const specialization = preference.specialization.trim();
+
+        if (specialization && !major) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [index, "major"],
+            message: "Vui lòng chọn ngành trước khi chọn chuyên ngành.",
+          });
+        }
+
+        if (
+          major &&
+          specialization &&
+          !specializationBelongsToMajor(specialization, major)
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [index, "specialization"],
+            message: "Chuyên ngành không thuộc ngành đã chọn.",
+          });
+        }
+      });
+    }),
+  permanentProvince: z.string(),
+  permanentWard: z.string(),
+  permanentStreet: z.string(),
+  permanentHouse: z.string(),
+  grade12Province: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng chọn tỉnh/thành phố lớp 12."),
+  grade12School: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng chọn trường THPT lớp 12."),
+  grade12Class: z.string(),
+  graduationYear: z
+    .string()
+    .trim()
+    .refine(
+      (value) => !value || isValidGraduationYear(value),
+      "Năm tốt nghiệp không hợp lệ.",
+    ),
+  receivingProvince: z.string(),
+  receivingWard: z.string(),
+  receivingStreet: z.string(),
+  receivingHouse: z.string(),
+  applySameAddress: z.boolean(),
+  confirmAccuracy: z
+    .boolean()
+    .refine(
+      (value) => value,
+      "Vui lòng xác nhận những thông tin trên là chính xác.",
+    ),
+  conversationId: z.string().optional(),
+  sectionId: z.string().optional(),
+});
+
+const getErrorMessage = (message: unknown) =>
+  typeof message === "string" ? message : undefined;
 
 const normalizeText = (val: string) =>
   (val || "")
@@ -365,10 +535,13 @@ export default function AdmissionApplicationForm() {
     control,
     reset,
     setValue,
-    watch,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm<FormData>({
     defaultValues: initialFormData,
+    resolver: zodResolver(admissionApplicationSchema),
+    mode: "onSubmit",
+    reValidateMode: "onChange",
+    shouldFocusError: true,
   });
   const formData = useWatch({ control });
   const { field: applySameAddressField } = useController({
@@ -419,22 +592,7 @@ export default function AdmissionApplicationForm() {
   const grade12SchoolOptions =
     schoolOptionsGrade12.length > 0 ? schoolOptionsGrade12 : fallbackSchools;
 
-  const requiredFields: (keyof FormData)[] = [
-    "fullName",
-    "studentPhone",
-    "email",
-    "grade12Province",
-    "grade12School",
-  ];
-  const requiredFieldsFilled = requiredFields.every((field) => {
-    const value = formData[field];
-    if (typeof value === "string") return value.trim() !== "";
-    if (Array.isArray(value)) return value.length > 0;
-    return Boolean(value);
-  });
-
-  const submitDisabled =
-    isSubmitting || !confirmAccuracyField.value || !requiredFieldsFilled;
+  const submitDisabled = isSubmitting;
 
   useEffect(() => {
     const prevProvince = prevPermanentProvince.current;
@@ -482,7 +640,7 @@ export default function AdmissionApplicationForm() {
     setValue(
       "preferences",
       next.length > 0 ? next : [createEmptyPreference()],
-      { shouldDirty: true, shouldTouch: true },
+      { shouldDirty: true, shouldTouch: true, shouldValidate: true },
     );
   };
 
@@ -697,7 +855,10 @@ export default function AdmissionApplicationForm() {
       skipNextSync.current = true;
       setSchoolOptionsGrade12([]);
       if (formData.grade12School) {
-        setValue("grade12School", "", { shouldDirty: true });
+        setValue("grade12School", "", {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
       }
       initialGrade12SchoolQuery.current = null;
     }
@@ -707,7 +868,10 @@ export default function AdmissionApplicationForm() {
       setSchoolOptionsGrade12([]);
       if (formData.grade12School) {
         skipNextSync.current = true;
-        setValue("grade12School", "", { shouldDirty: true });
+        setValue("grade12School", "", {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
       }
       setLoadingGrade12School(false);
       return;
@@ -735,7 +899,10 @@ export default function AdmissionApplicationForm() {
         const normalizedSchool = coerceToValue(targetSchool, opts);
         if (normalizedSchool && normalizedSchool !== formData.grade12School) {
           skipNextSync.current = true;
-          setValue("grade12School", normalizedSchool, { shouldDirty: true });
+          setValue("grade12School", normalizedSchool, {
+            shouldDirty: true,
+            shouldValidate: true,
+          });
         }
         if (initialGrade12SchoolQuery.current && normalizedSchool) {
           initialGrade12SchoolQuery.current = null;
@@ -1109,12 +1276,12 @@ export default function AdmissionApplicationForm() {
           conversation_id:
             data.conversationId || data.sectionId || undefined,
           full_name: data.fullName,
-          national_id: data.nationalId,
-          parent_phone: data.parentPhone,
+          national_id: extractDigits(data.nationalId),
+          parent_phone: normalizePhoneForSubmit(data.parentPhone),
           gender: data.gender,
           email: data.email,
           date_of_birth: dateOfBirth,
-          student_phone: data.studentPhone,
+          student_phone: normalizePhoneForSubmit(data.studentPhone),
           permanent_street_address: buildStreetAddress(
             data.permanentHouse,
             data.permanentStreet,
@@ -1238,6 +1405,7 @@ export default function AdmissionApplicationForm() {
 
           <form
             onSubmit={handleSubmit(submitWithCaptcha)}
+            noValidate
             className="space-y-6 px-1 sm:px-2"
           >
             <SectionCard title="Thông tin thí sinh">
@@ -1250,6 +1418,7 @@ export default function AdmissionApplicationForm() {
                     ...register("fullName"),
                     className: inputClass,
                   }}
+                  error={getErrorMessage(errors.fullName?.message)}
                 />
 
                 <div className="space-y-2">
@@ -1282,17 +1451,26 @@ export default function AdmissionApplicationForm() {
                   <Controller
                     name="birthDate"
                     control={control}
-                    render={({ field }) => (
-                      <DatePickerInput
-                        id="birthDate"
-                        value={field.value}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        inputClassName={cn(
-                          inputClass,
-                          "appearance-none date-input",
+                    render={({ field, fieldState }) => (
+                      <>
+                        <DatePickerInput
+                          id="birthDate"
+                          value={field.value}
+                          onChange={field.onChange}
+                          onBlur={field.onBlur}
+                          inputClassName={cn(
+                            inputClass,
+                            "appearance-none date-input",
+                            fieldState.error &&
+                              "border-red-500 focus:border-red-500 focus:ring-red-500/15",
+                          )}
+                        />
+                        {fieldState.error?.message && (
+                          <p className="text-sm text-red-600">
+                            {fieldState.error.message}
+                          </p>
                         )}
-                      />
+                      </>
                     )}
                   />
                 </div>
@@ -1306,6 +1484,7 @@ export default function AdmissionApplicationForm() {
                     className: inputClass,
                     type: "email",
                   }}
+                  error={getErrorMessage(errors.email?.message)}
                 />
 
                 <LabeledInput
@@ -1315,6 +1494,7 @@ export default function AdmissionApplicationForm() {
                     ...register("nationalId"),
                     className: inputClass,
                   }}
+                  error={getErrorMessage(errors.nationalId?.message)}
                 />
 
                 <div className="grid gap-4 md:grid-cols-2 md:col-span-2">
@@ -1327,6 +1507,7 @@ export default function AdmissionApplicationForm() {
                       className: inputClass,
                       inputMode: "tel",
                     }}
+                    error={getErrorMessage(errors.studentPhone?.message)}
                   />
 
                   <LabeledInput
@@ -1337,6 +1518,7 @@ export default function AdmissionApplicationForm() {
                       className: inputClass,
                       inputMode: "tel",
                     }}
+                    error={getErrorMessage(errors.parentPhone?.message)}
                   />
                 </div>
               </div>
@@ -1402,6 +1584,7 @@ export default function AdmissionApplicationForm() {
                   placeholder="Chọn năm tốt nghiệp"
                   options={yearOptions.map((y) => ({ value: y, display: y }))}
                   registration={register("graduationYear")}
+                  error={getErrorMessage(errors.graduationYear?.message)}
                 />
                 <LabeledInput
                   label="Tên lớp 12"
@@ -1410,6 +1593,7 @@ export default function AdmissionApplicationForm() {
                     ...register("grade12Class"),
                     className: inputClass,
                   }}
+                  error={getErrorMessage(errors.grade12Class?.message)}
                 />
               </div>
             </SectionCard>
@@ -1592,6 +1776,11 @@ export default function AdmissionApplicationForm() {
                 Xác nhận những thông tin trên là chính xác.
               </span>
             </label>
+            {getErrorMessage(errors.confirmAccuracy?.message) && (
+              <p className="px-1 text-sm text-red-600">
+                {getErrorMessage(errors.confirmAccuracy?.message)}
+              </p>
+            )}
             <Button
               type="submit"
               disabled={isSubmitBlocked}
@@ -1622,11 +1811,13 @@ function LabeledInput({
   required,
   placeholder,
   inputProps,
+  error,
 }: {
   label: string;
   required?: boolean;
   placeholder?: string;
   inputProps?: InputHTMLAttributes<HTMLInputElement>;
+  error?: string;
 }) {
   return (
     <div className="space-y-2">
@@ -1636,8 +1827,14 @@ function LabeledInput({
       <Input
         {...inputProps}
         placeholder={placeholder}
-        className={cn("italic", inputProps?.className)}
+        aria-invalid={Boolean(error)}
+        className={cn(
+          "italic",
+          inputProps?.className,
+          error && "border-red-500 focus:border-red-500 focus:ring-red-500/15",
+        )}
       />
+      {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );
 }
@@ -1670,6 +1867,7 @@ function SearchSelectField({
 }) {
   const {
     field: { value, onChange, onBlur, name: fieldName, ref },
+    fieldState,
   } = useController({ name: name as any, control });
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [query, setQuery] = useState("");
@@ -1755,11 +1953,14 @@ function SearchSelectField({
           placeholder={placeholder || "Chọn"}
           disabled={disabled || loading}
           autoComplete="off"
+          aria-invalid={Boolean(fieldState.error)}
           className={cn(
             selectClass,
             "appearance-none text-left",
             value && !disabled && !loading ? "pr-16" : "pr-10",
             (disabled || loading) && "bg-slate-100",
+            fieldState.error &&
+              "border-red-500 focus:border-red-500 focus:ring-red-500/15",
           )}
         />
         {value && !disabled && !loading && (
@@ -1821,6 +2022,9 @@ function SearchSelectField({
           </div>
         )}
       </div>
+      {fieldState.error?.message && (
+        <p className="text-sm text-red-600">{fieldState.error.message}</p>
+      )}
     </div>
   );
 }
@@ -1832,6 +2036,7 @@ function SelectField({
   options,
   registration,
   disabled,
+  error,
 }: {
   label: string;
   required?: boolean;
@@ -1839,6 +2044,7 @@ function SelectField({
   options: OptionItem[];
   registration: UseFormRegisterReturn;
   disabled?: boolean;
+  error?: string;
 }) {
   return (
     <div className="space-y-2">
@@ -1849,10 +2055,12 @@ function SelectField({
         <select
           {...registration}
           disabled={disabled}
+          aria-invalid={Boolean(error)}
           className={cn(
             selectClass,
             "appearance-none leading-tight",
             disabled && "bg-slate-100",
+            error && "border-red-500 focus:border-red-500 focus:ring-red-500/15",
           )}
         >
           <option value="">{placeholder || "Chọn"}</option>
@@ -1864,6 +2072,7 @@ function SelectField({
         </select>
         <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#1f3f77]" />
       </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );
 }
