@@ -7,6 +7,5 @@ services:
     restart: unless-stopped
     environment:
       - NEXT_PUBLIC_FRAPPE_TOKEN=$NEXT_PUBLIC_FRAPPE_TOKEN
-      - NEXT_PUBLIC_FRAPPE_TOKEN=$NEXT_PUBLIC_FRAPPE_TOKEN
     ports:
       - "3000:3000"

@@ -6,15 +6,15 @@ import { usePathname, useSearchParams, useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import { useForm, Controller, useWatch } from "react-hook-form"
 import enrollmentDefaultsData from "@/lib/form-defaults-enrollment.json"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { DatePickerInput } from "@/components/ui/date-picker-input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "reactjs-platform/ui/card"
+import { Input } from "reactjs-platform/ui/input"
+import { Label } from "reactjs-platform/ui/label"
+import { DatePickerInput } from "reactjs-platform/ui/date-picker-input"
 import { ddMmYyyyToIso, isoToDdMmYyyy } from "@/lib/date-format"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+import { Button } from "reactjs-platform/ui/button"
+import { Checkbox } from "reactjs-platform/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "reactjs-platform/ui/select"
+import { Textarea } from "reactjs-platform/ui/textarea"
 import { ArrowLeft, GraduationCap, User, BookOpen, Target, CheckCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { getMetadataCareer } from "@/servers"
@@ -134,6 +134,7 @@ export default function EnrollmentForm() {
     defaultValues: initialFormData,
   })
   const formData = useWatch({ control })
+  const notifyVia = formData.notifyVia ?? []
 
   useEffect(() => {
     let active = true
@@ -627,7 +628,7 @@ export default function EnrollmentForm() {
                     <div key={channel} className="flex items-center space-x-2">
                       <Checkbox
                         id={`notify-${channel}`}
-                        checked={formData.notifyVia.includes(channel)}
+                        checked={notifyVia.includes(channel)}
                         onCheckedChange={(checked) => handleNotificationChange(channel, checked as boolean)}
                       />
                       <Label htmlFor={`notify-${channel}`} className="font-normal cursor-pointer">

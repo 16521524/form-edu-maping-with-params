@@ -4,6 +4,7 @@ FROM node:20-alpine AS base
 WORKDIR /app
 
 COPY package.json yarn.lock ./
+COPY reactjs-platform/package.json ./reactjs-platform/package.json
 RUN apk add --no-cache git \
   && yarn --frozen-lockfile \
   && yarn cache clean

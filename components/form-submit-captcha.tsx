@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { RefreshCcw, ShieldCheck } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "reactjs-platform/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -11,8 +11,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
+} from "reactjs-platform/ui/dialog"
+import { Input } from "reactjs-platform/ui/input"
 import {
   normalizeCaptchaProvider,
   normalizeCaptchaTheme,

@@ -1,6 +1,6 @@
 import Link from "next/link"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "reactjs-platform/ui/card"
+import { Button } from "reactjs-platform/ui/button"
 import { GraduationCap, Calendar, Compass, ClipboardList } from "lucide-react"
 import enrollmentDefaults from "@/lib/form-defaults-enrollment.json"
 import eventDefaults from "@/lib/form-defaults-event.json"

@@ -7,15 +7,15 @@ import { useEffect, useRef, useState } from "react"
 import { useForm, Controller, useWatch } from "react-hook-form"
 import { useRouter } from "next/navigation"
 import eventDefaultsData from "@/lib/form-defaults-event.json"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { DatePickerInput } from "@/components/ui/date-picker-input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "reactjs-platform/ui/card"
+import { Input } from "reactjs-platform/ui/input"
+import { Label } from "reactjs-platform/ui/label"
+import { DatePickerInput } from "reactjs-platform/ui/date-picker-input"
 import { ddMmYyyyToIso, isoToDdMmYyyy } from "@/lib/date-format"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from "reactjs-platform/ui/button"
+import { Checkbox } from "reactjs-platform/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "reactjs-platform/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "reactjs-platform/ui/table"
 import { ArrowLeft, Calendar, User, CalendarDays, Target, CheckCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { getMetadataCareer } from "@/servers"
@@ -196,6 +196,9 @@ export default function EventRegistrationForm() {
     formState: { isSubmitting },
   } = useForm<FormData>({ defaultValues: initialFormData })
   const formData = useWatch({ control })
+  const selectedSessions = formData.selectedSessions ?? []
+  const eventObjectives = formData.eventObjectives ?? []
+  const notifyVia = formData.notifyVia ?? []
 
   useEffect(() => {
     let active = true
@@ -299,7 +302,7 @@ export default function EventRegistrationForm() {
         PARENT_RELATION_OPTIONS.map((o) => o.value),
         parentDefaults.parentRelation,
       ),
-      clubName: prefer(getVal("clubName"), eventDefaults.clubName ?? DEFAULT_CLUB_NAME ?? parentDefaults.clubName),
+      clubName: prefer(getVal("clubName"), eventDefaults.clubName ?? DEFAULT_CLUB_NAME),
       eventName: prefer(eventNameParam, eventDefaults.eventName),
       eventDate: prefer(getVal("eventDate"), eventDefaults.eventDate),
       eventSlot: prefer(getVal("eventSlot"), eventDefaults.eventSlot),
@@ -769,7 +772,7 @@ export default function EventRegistrationForm() {
                     </TableHeader>
                     <TableBody>
                       {EVENT_SESSIONS.map((session, idx) => {
-                        const isSelected = formData.selectedSessions.includes(session.id)
+                        const isSelected = selectedSessions.includes(session.id)
                         return (
                           <TableRow key={session.id} className={isSelected ? "bg-green-50" : ""}>
                             <TableCell className="font-medium text-center">{idx + 1}</TableCell>
@@ -811,7 +814,7 @@ export default function EventRegistrationForm() {
                     <div key={objective} className="flex items-center space-x-2">
                       <Checkbox
                         id={`objective-${objective}`}
-                        checked={formData.eventObjectives.includes(objective)}
+                        checked={eventObjectives.includes(objective)}
                         onCheckedChange={(checked) => handleMucDichChange(objective, checked as boolean)}
                       />
                       <Label htmlFor={`objective-${objective}`} className="font-normal cursor-pointer">
@@ -861,7 +864,7 @@ export default function EventRegistrationForm() {
                     <div key={channel} className="flex items-center space-x-2">
                       <Checkbox
                         id={`notify-${channel}`}
-                        checked={formData.notifyVia.includes(channel)}
+                        checked={notifyVia.includes(channel)}
                         onCheckedChange={(checked) => handleNotificationChange(channel, checked as boolean)}
                       />
                       <Label htmlFor={`notify-${channel}`} className="font-normal cursor-pointer">

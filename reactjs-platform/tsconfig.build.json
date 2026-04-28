@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowJs": false,
+    "checkJs": false,
+    "declaration": true,
+    "declarationMap": false,
+    "emitDeclarationOnly": true,
+    "incremental": false,
+    "noEmit": false,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "sourceMap": false
+  },
+  "exclude": ["./dist", "./node_modules", "./tsup.config.ts", "./ui/core-table/**/*"]
+}

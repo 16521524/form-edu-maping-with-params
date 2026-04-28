@@ -27,10 +27,10 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { DatePickerInput } from "@/components/ui/date-picker-input";
+import { Button } from "reactjs-platform/ui/button";
+import { Checkbox } from "reactjs-platform/ui/checkbox";
+import { Input } from "reactjs-platform/ui/input";
+import { DatePickerInput } from "reactjs-platform/ui/date-picker-input";
 import { ddMmYyyyToIso, isoToDdMmYyyy } from "@/lib/date-format";
 import { cn } from "@/lib/utils";
 import { formValidation } from "@/lib/form-validation";
