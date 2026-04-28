@@ -47,6 +47,7 @@ export async function postCareerLead(payload: CareerLeadPayload): Promise<Career
     const errors = Array.isArray(json?.errors) ? json.errors : undefined
     const err = new Error(errorMessage)
     ;(err as any).detail = errors
+    ;(err as any).isCaptchaError = Array.isArray(json?.errorCodes)
     throw err
   }
 

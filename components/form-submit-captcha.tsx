@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import {
   normalizeCaptchaProvider,
   normalizeCaptchaTheme,
+  type CaptchaProvider,
   type CaptchaSubmission,
 } from "@/lib/captcha-shared"
 
@@ -36,7 +37,7 @@ type RecaptchaRenderOptions = {
   theme?: "light" | "dark"
   callback?: (token: string) => void
   "expired-callback"?: () => void
-  "error-callback"?: () => void
+  "error-callback"?: (errorCode?: string | number) => void
 }
 
 type Grecaptcha = {
@@ -50,7 +51,8 @@ type TurnstileRenderOptions = {
   theme?: "auto" | "light" | "dark"
   callback?: (token: string) => void
   "expired-callback"?: () => void
-  "error-callback"?: () => void
+  "timeout-callback"?: () => void
+  "error-callback"?: (errorCode?: string | number) => void
 }
 
 type TurnstileApi = {
@@ -85,6 +87,25 @@ const createCaptchaChallenge = (): CaptchaChallenge => {
     prompt: `${max} - ${min} = ?`,
     answer: String(max - min),
   }
+}
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error || "")
+
+const isCaptchaSubmitError = (error: unknown) => {
+  if ((error as { isCaptchaError?: unknown } | null)?.isCaptchaError === true) {
+    return true
+  }
+
+  const message = getErrorMessage(error).toLowerCase()
+
+  return (
+    message.includes("captcha") ||
+    message.includes("recaptcha") ||
+    message.includes("turnstile") ||
+    message.includes("cloudflare") ||
+    message.includes("xác minh")
+  )
 }
 
 const scriptState: Partial<Record<ScriptProvider, Promise<void>>> = {}
@@ -146,6 +167,7 @@ export function useCaptchaSubmit<T>({
   const externalContainerRef = useRef<HTMLDivElement | null>(null)
   const recaptchaWidgetIdRef = useRef<number | null>(null)
   const turnstileWidgetIdRef = useRef<string | null>(null)
+  const submitLockRef = useRef(false)
 
   const provider = useMemo(
     () => normalizeCaptchaProvider(process.env.NEXT_PUBLIC_CAPTCHA_PROVIDER),
@@ -172,8 +194,26 @@ export function useCaptchaSubmit<T>({
     createCaptchaChallenge,
   )
   const [externalToken, setExternalToken] = useState("")
+  const [activeProvider, setActiveProvider] = useState<CaptchaProvider>(provider)
   const [externalReady, setExternalReady] = useState(provider === "local")
   const [externalRenderKey, setExternalRenderKey] = useState(0)
+
+  const fallbackToLocalCaptcha = (message?: string) => {
+    if (activeProvider !== "local") {
+      resetExternalWidget()
+    }
+
+    setActiveProvider("local")
+    setExternalReady(true)
+    setExternalToken("")
+    setChallenge(createCaptchaChallenge())
+    setAnswer("")
+    setIsOpen(true)
+    setError(
+      message ||
+        "",
+    )
+  }
 
   const refreshLocalChallenge = () => {
     setChallenge(createCaptchaChallenge())
@@ -185,12 +225,12 @@ export function useCaptchaSubmit<T>({
     setExternalToken("")
     setError(null)
 
-    if (provider === "recaptcha" && recaptchaWidgetIdRef.current !== null) {
+    if (activeProvider === "recaptcha" && recaptchaWidgetIdRef.current !== null) {
       window.grecaptcha?.reset(recaptchaWidgetIdRef.current)
       recaptchaWidgetIdRef.current = null
     }
 
-    if (provider === "turnstile" && turnstileWidgetIdRef.current) {
+    if (activeProvider === "turnstile" && turnstileWidgetIdRef.current) {
       window.turnstile?.remove(turnstileWidgetIdRef.current)
       turnstileWidgetIdRef.current = null
     }
@@ -203,6 +243,7 @@ export function useCaptchaSubmit<T>({
   }
 
   const resetAllState = () => {
+    submitLockRef.current = false
     pendingDataRef.current = null
     setAnswer("")
     setError(null)
@@ -210,22 +251,25 @@ export function useCaptchaSubmit<T>({
   }
 
   const handleOpenChange = (open: boolean) => {
-    if (isSubmitting) return
+    if (isSubmitting || submitLockRef.current) return
     setIsOpen(open)
 
     if (!open) {
       resetAllState()
-      if (provider !== "local") {
+      setActiveProvider(provider)
+      setExternalReady(provider === "local")
+      if (activeProvider !== "local") {
         resetExternalWidget()
       }
     }
   }
 
   const submitWithCaptcha = (data: T) => {
-    if (isOpen || isSubmitting) return
+    if (isOpen || isSubmitting || submitLockRef.current) return
 
     pendingDataRef.current = data
     setError(null)
+    setActiveProvider(provider)
 
     if (provider === "local") {
       refreshLocalChallenge()
@@ -237,9 +281,13 @@ export function useCaptchaSubmit<T>({
   }
 
   const completeSubmit = async (captcha?: CaptchaSubmission) => {
+    if (submitLockRef.current) return
+
+    submitLockRef.current = true
     const pendingData = pendingDataRef.current
 
     if (!pendingData) {
+      submitLockRef.current = false
       handleOpenChange(false)
       return
     }
@@ -248,24 +296,40 @@ export function useCaptchaSubmit<T>({
     setIsOpen(false)
     setError(null)
     setIsSubmitting(true)
+    let fallbackToLocal = false
 
     try {
       await onSubmit(pendingData, captcha)
-    } catch {
+    } catch (submitError) {
+      if (captcha?.provider !== "local" && isCaptchaSubmitError(submitError)) {
+        fallbackToLocal = true
+        pendingDataRef.current = pendingData
+        fallbackToLocalCaptcha()
+      }
       // Submit errors are surfaced by the form-specific handler.
     } finally {
+      submitLockRef.current = false
       setIsSubmitting(false)
+
+      if (fallbackToLocal) {
+        return
+      }
+
       setAnswer("")
       setExternalToken("")
       setChallenge(createCaptchaChallenge())
-      if (provider !== "local") {
+      setActiveProvider(provider)
+      setExternalReady(provider === "local")
+      if (activeProvider !== "local") {
         resetExternalWidget()
       }
     }
   }
 
   const confirmCaptcha = async () => {
-    if (provider === "local") {
+    if (submitLockRef.current || isSubmitting) return
+
+    if (activeProvider === "local") {
       if (answer.trim() !== challenge.answer) {
         setError("Thông tin xác nhận chưa đúng. Vui lòng thử lại.")
         setChallenge(createCaptchaChallenge())
@@ -288,16 +352,16 @@ export function useCaptchaSubmit<T>({
     }
 
     await completeSubmit({
-      provider,
+      provider: activeProvider,
       token: externalToken,
     })
   }
 
   useEffect(() => {
-    if (!isOpen || provider === "local") return
+    if (!isOpen || activeProvider === "local") return
 
     if (!effectiveSiteKey) {
-      setExternalReady(false)
+      fallbackToLocalCaptcha()
       return
     }
 
@@ -305,7 +369,7 @@ export function useCaptchaSubmit<T>({
     setExternalReady(false)
     setError(null)
 
-    loadExternalCaptchaScript(provider)
+    loadExternalCaptchaScript(activeProvider)
       .then(() => {
         if (!cancelled) {
           setExternalReady(true)
@@ -314,24 +378,24 @@ export function useCaptchaSubmit<T>({
       .catch(() => {
         if (!cancelled) {
           setExternalReady(false)
-          setError("Bước xác nhận đang tạm thời gián đoạn. Vui lòng thử lại.")
+          fallbackToLocalCaptcha()
         }
       })
 
     return () => {
       cancelled = true
     }
-  }, [effectiveSiteKey, isOpen, provider])
+  }, [activeProvider, effectiveSiteKey, isOpen])
 
   useEffect(() => {
-    if (!isOpen || provider === "local" || !externalReady || !effectiveSiteKey) {
+    if (!isOpen || activeProvider === "local" || !externalReady || !effectiveSiteKey) {
       return
     }
 
     const container = externalContainerRef.current
     if (!container) return
 
-    if (provider === "recaptcha" && window.grecaptcha) {
+    if (activeProvider === "recaptcha" && window.grecaptcha) {
       window.grecaptcha.ready(() => {
         if (!externalContainerRef.current) return
 
@@ -352,23 +416,24 @@ export function useCaptchaSubmit<T>({
               },
               "expired-callback": () => {
                 setExternalToken("")
+                setError("Mã xác nhận đã hết hạn. Vui lòng xác nhận lại.")
               },
-              "error-callback": () => {
+              "error-callback": (errorCode?: string | number) => {
                 setExternalToken("")
-                setError("Bước xác nhận đang tạm thời gián đoạn. Vui lòng thử lại.")
+                fallbackToLocalCaptcha()
               },
             },
           ) ?? null
         } catch (captchaError) {
           console.error("reCAPTCHA render failed", captchaError)
-          setError("Bước xác nhận đang tạm thời gián đoạn. Vui lòng thử lại.")
+          fallbackToLocalCaptcha()
         }
       })
 
       return
     }
 
-    if (provider === "turnstile" && window.turnstile) {
+    if (activeProvider === "turnstile" && window.turnstile) {
       try {
         if (turnstileWidgetIdRef.current) {
           window.turnstile.remove(turnstileWidgetIdRef.current)
@@ -384,22 +449,27 @@ export function useCaptchaSubmit<T>({
           },
           "expired-callback": () => {
             setExternalToken("")
+            setError("Mã xác nhận đã hết hạn. Vui lòng xác nhận lại.")
           },
-          "error-callback": () => {
+          "timeout-callback": () => {
             setExternalToken("")
-            setError("Bước xác nhận đang tạm thời gián đoạn. Vui lòng thử lại.")
+            setError("Phiên xác nhận đã hết thời gian. Vui lòng xác nhận lại.")
+          },
+          "error-callback": (errorCode?: string | number) => {
+            setExternalToken("")
+            fallbackToLocalCaptcha()
           },
         })
       } catch (captchaError) {
         console.error("Turnstile render failed", captchaError)
-        setError("Bước xác nhận đang tạm thời gián đoạn. Vui lòng thử lại.")
+        fallbackToLocalCaptcha()
       }
     }
-  }, [effectiveSiteKey, externalReady, externalRenderKey, isOpen, provider, theme])
+  }, [activeProvider, effectiveSiteKey, externalReady, externalRenderKey, isOpen, theme])
 
   const providerTitle = "Xác nhận bảo mật"
   const providerDescription =
-    provider === "local"
+    activeProvider === "local"
       ? "Vui lòng nhập kết quả phép tính bên dưới để tiếp tục."
       : "Vui lòng hoàn tất bước xác nhận bên dưới để tiếp tục gửi thông tin."
 
@@ -412,7 +482,7 @@ export function useCaptchaSubmit<T>({
           </div>
           <DialogTitle>Xác nhận trước khi tiếp tục</DialogTitle>
           <DialogDescription>
-            Vui lòng hoàn tất bước xác nhận để tiếp tục gửi thông tin đăng ký.
+            Vui lòng hoàn tất bước xác nhận để tiếp tục {formLabel.toLowerCase()}.
           </DialogDescription>
         </DialogHeader>
 
@@ -428,7 +498,7 @@ export function useCaptchaSubmit<T>({
               size="icon"
               className="shrink-0 bg-white"
               onClick={
-                provider === "local"
+                activeProvider === "local"
                   ? refreshLocalChallenge
                   : resetExternalWidget
               }
@@ -439,7 +509,7 @@ export function useCaptchaSubmit<T>({
             </Button>
           </div>
 
-          {provider === "local" ? (
+          {activeProvider === "local" ? (
             <>
               <p className="mb-3 text-2xl font-semibold tracking-wide text-slate-900">
                 {challenge.prompt}
@@ -496,7 +566,7 @@ export function useCaptchaSubmit<T>({
             onClick={() => void confirmCaptcha()}
             disabled={
               isSubmitting ||
-              (provider === "local"
+              (activeProvider === "local"
                 ? !answer.trim()
                 : !externalToken.trim())
             }
@@ -510,7 +580,7 @@ export function useCaptchaSubmit<T>({
 
   return {
     captchaDialog,
-    captchaProvider: provider,
+    captchaProvider: activeProvider,
     isCaptchaBusy: isOpen || isSubmitting,
     isCaptchaSubmitting: isSubmitting,
     submitWithCaptcha,

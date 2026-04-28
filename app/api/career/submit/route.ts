@@ -19,11 +19,15 @@ export async function POST(req: Request): Promise<NextResponse> {
       provider: captchaProvider,
       token: captchaToken,
       remoteIp: getClientIpFromRequest(req),
+      userAgent: req.headers.get("user-agent"),
     })
 
     if (!captchaCheck.ok) {
       return NextResponse.json(
-        { message: captchaCheck.message || "Xác minh captcha thất bại." },
+        {
+          message: captchaCheck.message || "Xác minh captcha thất bại.",
+          errorCodes: captchaCheck.errorCodes,
+        },
         { status: 400 }
       )
     }

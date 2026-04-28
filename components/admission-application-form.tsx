@@ -1288,7 +1288,9 @@ export default function AdmissionApplicationForm() {
           (err as any)?.detail?.[0]?.message ||
           (err as any)?.message ||
           "Gửi thất bại, vui lòng thử lại.";
-        setSubmitError(messageFromApi);
+        if (!(err as any)?.isCaptchaError) {
+          setSubmitError(messageFromApi);
+        }
         reject(err);
       }
     });
